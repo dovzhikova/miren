@@ -1,0 +1,65 @@
+import { GlowError } from "@/lib/errors";
+import { youcamCredentials } from "@/lib/youcam/auth";
+import { runSkinAnalysis } from "@/lib/youcam/client";
+import { prepareUpload } from "@/lib/youcam/image";
+import { buildMockScan } from "@/lib/youcam/mock";
+import type { Scan } from "@/lib/types";
+
+export const maxDuration = 60;
+
+const MAX_BYTES = 8_000_000;
+
+function json(body: unknown, status = 200) {
+  return Response.json(body, { status });
+}
+
+function fail(error: unknown) {
+  if (error instanceof GlowError) return json({ error: error.message, code: error.code }, error.status);
+  console.error("analyze failed");
+  return json({ error: "Something went wrong reading that photo. Try again." }, 500);
+}
+
+function sourceOf(value: FormDataEntryValue | null): Scan["source"] {
+  return value === "camera" || value === "sample" ? value : "upload";
+}
+
+function scenarioOf(value: FormDataEntryValue | null): "baseline" | "followup" | "auto" {
+  if (value === "baseline" || value === "followup") return value;
+  return "auto";
+}
+
+export async function POST(request: Request) {
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return json({ error: "Send a photo as form data." }, 400);
+  }
+
+  const image = form.get("image");
+  if (!(image instanceof File)) return json({ error: "Add a photo first." }, 400);
+  if (image.size <= 0) return json({ error: "That file is empty." }, 400);
+  if (image.size > MAX_BYTES) return json({ error: "Use a photo under 8 MB." }, 400);
+  if (image.type && !/^image\/(jpeg|png|webp|jpg)$/.test(image.type)) {
+    return json({ error: "Use a JPEG, PNG, or WebP photo." }, 400);
+  }
+
+  const bytes = Buffer.from(await image.arrayBuffer());
+  const source = sourceOf(form.get("source"));
+
+  if (!youcamCredentials().live) {
+    const scan = buildMockScan(bytes, { scenario: scenarioOf(form.get("scenario")), source });
+    return json({ mode: "mock", status: "success", scan });
+  }
+
+  try {
+    const prepared = await prepareUpload(bytes);
+    const outcome = await runSkinAnalysis(prepared, { source });
+    if (outcome.status === "running") {
+      return json({ mode: "live", status: "running", taskId: outcome.taskId, auth: outcome.auth });
+    }
+    return json({ mode: "live", status: "success", scan: { ...outcome.scan, source }, auth: outcome.auth });
+  } catch (error) {
+    return fail(error);
+  }
+}
