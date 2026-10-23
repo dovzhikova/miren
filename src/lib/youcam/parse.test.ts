@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildMockScan, sampleBaselineScan } from "@/lib/youcam/mock";
 import { parseYoucamResult } from "@/lib/youcam/parse";
 import { buildSampleFollowUp, compareScans, productProgress } from "@/lib/progress";
-import { getProduct } from "@/lib/catalog";
+import { getProduct, listFaceProducts } from "@/lib/catalog";
 import { suitProduct } from "@/lib/suitability";
 
 describe("YouCam result parsing", () => {
@@ -45,11 +45,16 @@ describe("shelf check and tracker", () => {
   const scan = sampleBaselineScan();
 
   it("matches a low score, patches a mild one, and skips a duplicate", () => {
-    expect(suitProduct(getProduct("line-soft-serum")!, scan).verdict).toBe("suits");
-    expect(suitProduct(getProduct("clear-breakout-gel")!, scan).verdict).toBe("patch-test");
-    expect(suitProduct(getProduct("bounce-firming-cream")!, scan).verdict).toBe("skip");
-    expect(suitProduct(getProduct("soft-lip-tint")!, null).verdict).toBe("suits");
-    expect(suitProduct(getProduct("line-soft-serum")!, null).verdict).toBe("patch-test");
+    const face = listFaceProducts();
+    const wrinkle = face.find((product) => (product.concernScores.wrinkle ?? 0) >= 0.85 && (product.concernScores.acne ?? 0) < 0.6);
+    expect(wrinkle).toBeTruthy();
+    expect(suitProduct(wrinkle!, scan).verdict).toBe("suits");
+    const mild = { ...wrinkle!, concerns: ["acne" as const], concernScores: { acne: 0.8 }, warnings: ["irritation possible"] };
+    expect(suitProduct(mild, scan).verdict).toBe("patch-test");
+    const steady = { ...wrinkle!, concerns: ["firmness" as const], concernScores: { firmness: 0.9 }, warnings: [] };
+    expect(suitProduct(steady, scan).verdict).toBe("skip");
+    expect(suitProduct(wrinkle!, null).verdict).toBe("patch-test");
+    expect(getProduct(wrinkle!.slug)?.name).toBe(wrinkle!.name);
   });
 
   it("turns a sample follow-up into keep and switch", () => {
@@ -57,10 +62,11 @@ describe("shelf check and tracker", () => {
     const deltas = compareScans(scan, later);
     expect(deltas.find((item) => item.id === "wrinkle")!.delta).toBeGreaterThanOrEqual(3);
     expect(deltas.find((item) => item.id === "acne")!.delta).toBeLessThanOrEqual(-3);
-    expect(productProgress(getProduct("line-soft-serum")!, scan, later).verdict).toBe("keep");
-    expect(productProgress(getProduct("clear-breakout-gel")!, scan, later).verdict).toBe("switch");
-    expect(productProgress(getProduct("bounce-firming-cream")!, scan, later).verdict).toBe("patch-test");
-    expect(productProgress(getProduct("soft-lip-tint")!, scan, later).verdict).toBe("keep");
-    expect(productProgress(getProduct("line-soft-serum")!, scan, scan).verdict).toBe("patch-test");
+    const base = listFaceProducts()[0];
+    expect(productProgress({ ...base, concerns: ["wrinkle", "pore"], tracksSkin: true }, scan, later).verdict).toBe("keep");
+    expect(productProgress({ ...base, concerns: ["acne"], tracksSkin: true }, scan, later).verdict).toBe("switch");
+    expect(productProgress({ ...base, concerns: ["firmness"], tracksSkin: true }, scan, later).verdict).toBe("patch-test");
+    expect(productProgress({ ...base, tracksSkin: false }, scan, later).verdict).toBe("keep");
+    expect(productProgress({ ...base, concerns: ["wrinkle"], tracksSkin: true }, scan, scan).verdict).toBe("patch-test");
   });
 });

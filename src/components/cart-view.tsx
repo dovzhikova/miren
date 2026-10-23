@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ProductMark } from "@/components/product-mark";
+import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { WhySheet } from "@/components/why-sheet";
-import { formatPrice, getProduct, listProducts } from "@/lib/catalog";
+import { formatPrice, getProduct, listFaceProducts, matchScore } from "@/lib/catalog";
 import { latestScan } from "@/lib/progress";
 import { addToCart, checkout, removeFromCart, setQty, useGlow } from "@/lib/store";
 import { suitProduct } from "@/lib/suitability";
@@ -82,20 +82,22 @@ export function CartView() {
 
       <div className="flex flex-col gap-4">
         {lines.map(({ line, product, suit }) => {
-          const alternative = listProducts()
+          const alternative = listFaceProducts()
             .filter((item) => item.slug !== product.slug && !state.cart.some((cartLine) => cartLine.productId === item.slug))
             .map((item) => ({ item, suit: suitProduct(item, scan) }))
-            .find((item) => item.suit.verdict === "suits");
+            .filter((item) => item.suit.verdict === "suits")
+            .sort((a, b) => matchScore(b.item, scan) - matchScore(a.item, scan))[0];
           const showSkip = suit.verdict === "skip" && !kept.includes(product.slug);
           return (
             <article key={product.slug} className="border-b border-[var(--line)] pb-4">
               <div className="flex gap-3">
-                <div className="grid h-[88px] w-[72px] shrink-0 place-items-center rounded-[16px] border border-[var(--line)]">
-                  <ProductMark name={product.name} className="h-16 w-14" />
+                <div className="grid h-[88px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[16px] border border-[var(--line)]">
+                  <ProductPhoto product={product} className="h-full w-full object-contain" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <VerdictBadge verdict={suit.verdict} />
                   <p className="mt-1 text-[16px] font-semibold">{product.name}</p>
+                  <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
                   <p className="num text-[13px] text-[var(--meta)]">{formatPrice(product.price)}</p>
                   <div className="mt-2 flex items-center gap-2">
                     <button type="button" className="grid size-11 place-items-center rounded-full bg-[var(--surface-2)] text-lg" aria-label="Decrease quantity" onClick={() => setQty(product.slug, line.qty - 1)}>

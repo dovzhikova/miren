@@ -1,16 +1,20 @@
-import { getProduct } from "@/lib/catalog";
+import { CONCERN_SCORE_MIN, getProduct } from "@/lib/catalog";
 import type { Product, Scan, Suitability, SuitabilityVerdict } from "@/lib/types";
 
-function concern(scan: Scan, id: string) {
-  return scan.concerns.find((item) => item.id === id);
+function warningNote(product: Product): string | undefined {
+  if (!product.warnings.length) return undefined;
+  return `Low-confidence note from the product text: ${product.warnings.join(", ")}. Keyword flags are noisy, so this is not a skip.`;
 }
 
 export function suitProduct(product: Product, scan: Scan | null): Suitability {
-  if (!product.tracksSkin) {
+  const note = warningNote(product);
+
+  if (!product.tracksSkin || !product.forFace) {
     return {
-      verdict: "suits",
-      title: "Fine to buy for the look",
-      reasons: ["This is color, not a treatment. It will not move a skin score. Buy it if you like the shade."],
+      verdict: "patch-test",
+      title: "Not a face match",
+      reasons: ["Body, hair, and devices are not checked against a face scan."],
+      warningNote: note,
     };
   }
 
@@ -19,69 +23,59 @@ export function suitProduct(product: Product, scan: Scan | null): Suitability {
       verdict: "patch-test",
       title: "Scan first",
       reasons: ["A shelf guess is not a check. Scan once, then ask again."],
+      warningNote: note,
     };
   }
 
-  if (product.hardSkip) {
-    const blocker = concern(scan, product.hardSkip.concern);
-    if (blocker && blocker.uiScore < product.hardSkip.below) {
-      return { verdict: "skip", title: "Leave this one", reasons: [product.hardSkip.reason] };
-    }
-  }
+  const targeted = product.concerns.filter((id) => (product.concernScores[id] ?? 0) >= CONCERN_SCORE_MIN);
+  const rows = targeted.flatMap((id) => {
+    const found = scan.concerns.find((item) => item.id === id);
+    const weight = product.concernScores[id] ?? 0;
+    return found ? [{ id, weight, found }] : [];
+  });
 
-  const targeted = product.concerns
-    .map((id) => concern(scan, id))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item));
-
-  if (!targeted.length) {
+  if (!rows.length) {
     return {
       verdict: "patch-test",
-      title: "No score to match",
-      reasons: ["This scan did not include the concerns this product is for."],
+      title: "No strong concern score",
+      reasons: ["Nothing on this product is scored at 0.6 or above for a concern in this scan."],
+      warningNote: note,
     };
   }
 
-  const weakest = [...targeted].sort((a, b) => a.uiScore - b.uiScore)[0];
-  const cautionHit =
-    product.caution != null && (concern(scan, product.caution.concern)?.uiScore ?? 100) < product.caution.below;
-
-  if (targeted.every((item) => item.uiScore >= 85)) {
+  if (rows.every((row) => row.found.uiScore >= 85)) {
     return {
       verdict: "skip",
       title: "You don't need this",
       reasons: [
-        `${targeted.map((item) => `${item.label} ${item.uiScore}`).join(", ")} already ${targeted.length === 1 ? "looks" : "look"} steady. This would be a duplicate buy.`,
+        `${rows.map((row) => `${row.found.label} ${row.found.uiScore}`).join(", ")} already ${rows.length === 1 ? "looks" : "look"} steady. The catalog scores do not change that.`,
       ],
+      warningNote: note,
     };
   }
 
-  if (weakest.uiScore < 75 && cautionHit && product.caution) {
-    return {
-      verdict: "patch-test",
-      title: "Patch-test before you commit",
-      reasons: [
-        product.caution.reason,
-        `${weakest.label} is ${weakest.uiScore}, so the product has a job, but not on your whole face yet.`,
-      ],
-    };
-  }
+  const weakest = [...rows].sort((a, b) => a.found.uiScore - b.found.uiScore)[0];
+  const lead = [...rows].sort((a, b) => b.weight * (100 - b.found.uiScore) - a.weight * (100 - a.found.uiScore))[0];
+  const catalog = Math.round(lead.weight * 100);
 
-  if (weakest.uiScore < 75) {
+  if (weakest.found.uiScore < 75) {
     return {
       verdict: "suits",
       title: "This suits your scan",
       reasons: [
-        `${weakest.label} is ${weakest.uiScore} of 100. ${weakest.direction} That is low enough for this product to earn a place.`,
+        `${lead.found.label} scored ${lead.found.uiScore} of 100. ${lead.found.direction} This product scores ${catalog} out of 100 on that concern.`,
       ],
+      warningNote: note,
     };
   }
 
   return {
     verdict: "patch-test",
-    title: "Optional, not essential",
+    title: "Patch-test before you commit",
     reasons: [
-      `Matching scores are mild: ${targeted.map((item) => `${item.label} ${item.uiScore}`).join(", ")}. Try a small area before you make it a habit.`,
+      `The closest scores are mild: ${rows.map((row) => `${row.found.label} ${row.found.uiScore}`).join(", ")}. Catalog match on ${lead.found.label.toLowerCase()} is ${catalog}. Try a small area first.`,
     ],
+    warningNote: note,
   };
 }
 

@@ -1,227 +1,238 @@
-import type { ConcernId, Product } from "@/lib/types";
+import { concernLabel } from "@/lib/concerns";
+import type { ConcernId, Product, Scan } from "@/lib/types";
+import rawCatalog from "@/data/products.json";
 
-export const products: Product[] = [
-  {
-    slug: "line-soft-serum",
-    name: "Line Soft Serum",
-    price: 34,
-    size: "30 ml",
-    summary: "A slow retinal-style serum for lines, texture, and the look of firmness.",
-    howToUse: "Night only, two or three evenings a week at first. Follow with a plain cream.",
-    ingredients: "Encapsulated retinal, peptide blend, glycerin.",
-    concerns: ["wrinkle", "texture", "firmness"],
-    tracksSkin: true,
-    caution: {
-      concern: "redness",
-      below: 62,
-      reason: "Redness is high enough that a retinoid-style serum should wait, or stay on a tiny patch.",
-    },
-    tryOn: {
-      kind: "simulation",
-      label: "Preview softer lines",
-      simulation: { wrinkle: 0.55, texture: 0.35 },
-    },
-  },
-  {
-    slug: "pore-quiet-toner",
-    name: "Pore Quiet Toner",
-    price: 22,
-    size: "150 ml",
-    summary: "A watery niacinamide toner for visible pores and midday shine.",
-    howToUse: "After cleansing, morning and night. Skip it on nights you use a strong treatment.",
-    ingredients: "Niacinamide, zinc, panthenol.",
-    concerns: ["pore", "oiliness"],
-    tracksSkin: true,
-    caution: {
-      concern: "moisture",
-      below: 58,
-      reason: "Hydration is low. A toner can make dryness worse. Repair that first.",
-    },
-    tryOn: {
-      kind: "simulation",
-      label: "Preview quieter pores",
-      simulation: { pores: 0.55, texture: 0.25 },
-    },
-  },
-  {
-    slug: "barrier-cloud-cream",
-    name: "Barrier Cloud Cream",
-    price: 28,
-    size: "50 ml",
-    summary: "A ceramide cream for skin that looks dry or easily flushed.",
-    howToUse: "Last step, morning and night. Use it as the buffer under stronger treatments.",
-    ingredients: "Ceramides, cholesterol, glycerin, oat.",
-    concerns: ["moisture", "redness"],
-    tracksSkin: true,
-    tryOn: {
-      kind: "simulation",
-      label: "Preview calmer, more comfortable skin",
-      simulation: { redness: 0.45, texture: 0.25, radiance: 0.2 },
-    },
-  },
-  {
-    slug: "clear-breakout-gel",
-    name: "Clear Breakout Gel",
-    price: 26,
-    size: "20 ml",
-    summary: "A leave-on gel for blemishes. It is a treatment, not a moisturizer.",
-    howToUse: "Thin layer at night on the areas that break out. Stop if the skin stings for more than a few minutes.",
-    ingredients: "Azelaic-style acid, niacinamide, allantoin.",
-    concerns: ["acne"],
-    tracksSkin: true,
-    caution: {
-      concern: "redness",
-      below: 62,
-      reason: "Redness is already loud. An acid gel can make it louder. Patch-test on one spot.",
-    },
-    tryOn: {
-      kind: "simulation",
-      label: "Preview fewer blemishes",
-      simulation: { acne: 0.6 },
-    },
-  },
-  {
-    slug: "even-tone-drops",
-    name: "Even Tone Drops",
-    price: 30,
-    size: "30 ml",
-    summary: "A pigment serum for dark spots and a flat, dull look.",
-    howToUse: "Morning, under sunscreen. Pigment comes back if the sun gets to it.",
-    ingredients: "Tranexamic-style complex, niacinamide, licorice root.",
-    concerns: ["age_spot", "radiance"],
-    tracksSkin: true,
-    tryOn: {
-      kind: "simulation",
-      label: "Preview a more even tone",
-      simulation: { spots: 0.5, radiance: 0.35 },
-    },
-  },
-  {
-    slug: "rested-eye-concentrate",
-    name: "Rested Eye Concentrate",
-    price: 32,
-    size: "15 ml",
-    summary: "A small-area concentrate for shadow, puffiness, and the groove under the eye.",
-    howToUse: "Pea-size for both eyes, morning. Tap, don't drag.",
-    ingredients: "Caffeine, peptide, light glycerin.",
-    concerns: ["dark_circle", "eye_bag", "tear_trough"],
-    tracksSkin: true,
-    tryOn: {
-      kind: "simulation",
-      label: "Preview a more rested eye area",
-      simulation: { dark_circle: 0.5, eye_bags: 0.45 },
-    },
-  },
-  {
-    slug: "dew-face-oil",
-    name: "Dew Face Oil",
-    price: 29,
-    size: "30 ml",
-    summary: "A squalane oil for skin that looks dry and dull. Not for skin that already looks oily.",
-    howToUse: "Two drops mixed into cream at night.",
-    ingredients: "Squalane, jojoba, vitamin E.",
-    concerns: ["moisture", "radiance"],
-    tracksSkin: true,
-    hardSkip: {
-      concern: "oiliness",
-      below: 62,
-      reason: "Oil balance is low, which means the skin already looks oily. An oil will sit on top.",
-    },
-    tryOn: {
-      kind: "simulation",
-      label: "Preview a bit more glow",
-      simulation: { radiance: 0.4, texture: 0.2 },
-    },
-  },
-  {
-    slug: "matte-balance-fluid",
-    name: "Matte Balance Fluid",
-    price: 27,
-    size: "40 ml",
-    summary: "A light fluid that takes down shine without a powdery cast.",
-    howToUse: "Morning, under sunscreen. Skip on days your skin feels tight.",
-    ingredients: "Silica, niacinamide, green-tea extract.",
-    concerns: ["oiliness", "pore"],
-    tracksSkin: true,
-    caution: {
-      concern: "moisture",
-      below: 60,
-      reason: "The skin looks dry. A mattifying fluid will fight the cream you actually need.",
-    },
-    tryOn: {
-      kind: "simulation",
-      label: "Preview a less shiny surface",
-      simulation: { pores: 0.45, texture: 0.3 },
-    },
-  },
-  {
-    slug: "soft-lip-tint",
-    name: "Soft Lip Tint",
-    price: 16,
-    size: "4 ml",
-    summary: "A berry tint. It changes color, not a skin score.",
-    howToUse: "One swipe. Blot if you want it quieter.",
-    ingredients: "Pigment, jojoba, vitamin E.",
-    concerns: [],
-    tracksSkin: false,
-    tryOn: {
-      kind: "makeup",
-      label: "Try the tint",
-      effects: [
-        {
-          category: "lip_color",
-          shape: { name: "original" },
-          palettes: [{ color: "#a24b5c", texture: "matte", colorIntensity: 48 }],
-          style: { type: "full" },
-        },
-        { category: "skin_smooth", skinSmoothStrength: 8, skinSmoothColorIntensity: 6 },
-      ],
-    },
-  },
-  {
-    slug: "veil-complexion-tint",
-    name: "Veil Complexion Tint",
-    price: 31,
-    size: "30 ml",
-    summary: "A light tinted fluid in a neutral beige. Coverage is sheer on purpose.",
-    howToUse: "A pea-size, pressed in with fingers. It is makeup, so it washes off.",
-    ingredients: "Pigment, glycerin, squalane.",
-    concerns: [],
-    tracksSkin: false,
-    tryOn: {
-      kind: "makeup",
-      label: "Try the veil",
-      effects: [
-        { category: "skin_smooth", skinSmoothStrength: 18, skinSmoothColorIntensity: 12 },
-        {
-          category: "foundation",
-          palettes: [{ color: "#d7b09a", colorIntensity: 35, glowIntensity: 18, coverageIntensity: 32 }],
-        },
-      ],
-    },
-  },
-  {
-    slug: "bounce-firming-cream",
-    name: "Bounce Firming Cream",
-    price: 36,
-    size: "50 ml",
-    summary: "A peptide cream for skin that already looks slack. A duplicate if firmness is fine.",
-    howToUse: "Night, after serum. Give it a month before you judge it.",
-    ingredients: "Peptide blend, shea, ceramides.",
-    concerns: ["firmness"],
-    tracksSkin: true,
-    tryOn: {
-      kind: "simulation",
-      label: "Preview a firmer look",
-      simulation: { wrinkle: 0.4, texture: 0.3 },
-    },
-  },
+/** A concern tag or raw score at or above this is "what the product is for". Same cutoff as the export. */
+export const CONCERN_SCORE_MIN = 0.6;
+
+const LABEL_TO_ID: Record<string, ConcernId> = {
+  acne: "acne",
+  pores: "pore",
+  "dark circles": "dark_circle",
+  "eye bags": "eye_bag",
+  wrinkles: "wrinkle",
+  firmness: "firmness",
+  "tear trough": "tear_trough",
+  "age spots": "age_spot",
+  radiance: "radiance",
+  oiliness: "oiliness",
+  hydration: "moisture",
+  redness: "redness",
+  texture: "texture",
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  kremy: "Creams",
+  syvorotkyandampuly: "Serums",
+  ochishenie: "Cleansers",
+  maskiandbuster: "Masks",
+  glazaandguby: "Eyes and lips",
+  scrabyandpilyngi: "Exfoliants",
+  nabory: "Sets",
+  tonikiandmisty: "Toners and mists",
+  spf: "SPF",
+  specialyhod: "Treatments",
+  lechebnuyyhod: "Treatments",
+  osnovhoyyhod: "Daily care",
+  yhod: "Daily care",
+  travel: "Travel",
+  bb: "Tint",
+  telo: "Body",
+  volosy: "Hair",
+  hair: "Hair",
+  device: "Devices",
+  dlyarykandnog: "Hands",
+};
+
+const CATEGORY_PRIORITY = [
+  "spf",
+  "ochishenie",
+  "tonikiandmisty",
+  "syvorotkyandampuly",
+  "kremy",
+  "glazaandguby",
+  "maskiandbuster",
+  "scrabyandpilyngi",
+  "specialyhod",
+  "lechebnuyyhod",
+  "nabory",
+  "bb",
+  "osnovhoyyhod",
+  "yhod",
+  "travel",
+  "telo",
+  "volosy",
+  "hair",
+  "device",
+  "dlyarykandnog",
 ];
 
+const OFF_FACE = new Set(["telo", "volosy", "hair", "device", "dlyarykandnog"]);
+
+type RawScores = {
+  oily: number;
+  dry: number;
+  combination: number;
+  balanced: number;
+  acne: number;
+  blackheads: number;
+  pores: number;
+  dark_circles: number;
+  puffiness: number;
+  lines: number;
+  eye_lines: number;
+  pigmentation: number;
+  role_cleanser: number;
+  role_cream: number;
+};
+
+type RawProduct = {
+  id: string;
+  slug: string;
+  brand: string;
+  name: string;
+  category_slugs: string[];
+  key_ingredients_en: string[];
+  skin_concerns_youcam: string[];
+  skin_types: string[];
+  concern_scores_raw: RawScores | null;
+  warnings_en: string[];
+  price: number;
+  in_stock: boolean;
+  size: string | null;
+  role: string[];
+};
+
+/**
+ * Map the export's 0–1 scores onto YouCam concern ids.
+ * lines → wrinkles and firmness. eye_lines → wrinkles and tear trough.
+ * pigmentation → age spots and radiance. blackheads and pores → pores.
+ * Keyword tags (redness, texture, and the rest) fill a 0.6 when the raw file has no score.
+ */
+export function concernScoresFromRaw(raw: RawScores | null, tags: string[]): Partial<Record<ConcernId, number>> {
+  const scores: Partial<Record<ConcernId, number>> = {};
+  const put = (id: ConcernId, value: number | undefined) => {
+    if (value == null || Number.isNaN(value)) return;
+    scores[id] = Math.max(scores[id] ?? 0, value);
+  };
+
+  if (raw) {
+    put("oiliness", raw.oily);
+    put("moisture", raw.dry);
+    put("acne", raw.acne);
+    put("pore", Math.max(raw.blackheads, raw.pores));
+    put("dark_circle", raw.dark_circles);
+    put("eye_bag", raw.puffiness);
+    put("wrinkle", Math.max(raw.lines, raw.eye_lines));
+    put("firmness", raw.lines);
+    put("tear_trough", raw.eye_lines);
+    put("age_spot", raw.pigmentation);
+    put("radiance", raw.pigmentation);
+  }
+
+  for (const tag of tags) {
+    const id = LABEL_TO_ID[tag];
+    if (!id) continue;
+    if ((scores[id] ?? 0) < CONCERN_SCORE_MIN) scores[id] = CONCERN_SCORE_MIN;
+  }
+
+  return scores;
+}
+
+function categoryFor(slugs: string[]): string {
+  const match = CATEGORY_PRIORITY.find((slug) => slugs.includes(slug));
+  return match ? (CATEGORY_LABEL[match] ?? "Face") : "Face";
+}
+
+function englishSize(size: string | null): string {
+  if (!size) return "";
+  return size
+    .replace(/(\d+)\s*шт/gi, (_, count: string) => `${count} ${count === "1" ? "piece" : "pieces"}`)
+    .replace(/мл/gi, "ml")
+    .replace(/гр/gi, "g")
+    .replace(/г/g, "g")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function simulationFor(scores: Partial<Record<ConcernId, number>>): Record<string, number> {
+  const pairs: Array<[ConcernId, string]> = [
+    ["wrinkle", "wrinkle"],
+    ["pore", "pores"],
+    ["texture", "texture"],
+    ["acne", "acne"],
+    ["redness", "redness"],
+    ["radiance", "radiance"],
+    ["firmness", "wrinkle"],
+  ];
+  const simulation: Record<string, number> = {};
+  for (const [id, key] of pairs) {
+    const weight = scores[id] ?? 0;
+    if (weight < CONCERN_SCORE_MIN) continue;
+    const intensity = Math.round(Math.min(0.6, Math.max(0.2, weight * 0.6)) * 100) / 100;
+    simulation[key] = Math.max(simulation[key] ?? 0, intensity);
+  }
+  if (!Object.keys(simulation).length) simulation.texture = 0.25;
+  return simulation;
+}
+
+function toProduct(raw: RawProduct): Product {
+  const scores = concernScoresFromRaw(raw.concern_scores_raw, raw.skin_concerns_youcam);
+  const concerns = (Object.entries(scores) as Array<[ConcernId, number]>)
+    .filter(([, weight]) => weight >= CONCERN_SCORE_MIN)
+    .map(([id]) => id);
+  const slugs = raw.category_slugs;
+  const offFace = slugs.some((slug) => OFF_FACE.has(slug)) && !slugs.includes("face");
+  const deviceOrHair = slugs.includes("device") || slugs.includes("hair") || slugs.includes("volosy");
+  const hasConcernData = raw.skin_concerns_youcam.length > 0 || raw.concern_scores_raw != null;
+  const forFace = slugs.includes("face") && !deviceOrHair && !offFace && hasConcernData && concerns.length > 0;
+  const ingredients = raw.key_ingredients_en.map((item) => item.replace(/-/g, " "));
+  const concernNames = concerns.map((id) => concernLabel(id).toLowerCase());
+  const skin = raw.skin_types.map((item) => (item === "balanced" ? "normal" : item));
+  const summary = [
+    concernNames.length ? `Targets ${concernNames.join(", ")}.` : "No face concern scored at 0.6 or above.",
+    ingredients.length ? `Ingredients called out: ${ingredients.slice(0, 4).join(", ")}.` : "",
+    skin.length ? `Listed for ${skin.join(" and ")} skin.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const step = raw.role.includes("cleanser") ? "Cleanse" : raw.role.includes("cream") ? "Cream" : categoryFor(slugs);
+
+  return {
+    id: raw.id,
+    slug: raw.slug,
+    brand: raw.brand,
+    name: raw.name,
+    price: raw.price,
+    size: englishSize(raw.size),
+    summary,
+    howToUse: `${step} step. Follow the directions printed on the pack.`,
+    ingredients: ingredients.join(", "),
+    concerns,
+    concernScores: scores,
+    tracksSkin: forFace,
+    forFace,
+    warnings: raw.warnings_en,
+    category: categoryFor(slugs),
+    inStock: raw.in_stock,
+    skinTypes: skin,
+    tryOn: {
+      kind: "simulation",
+      label: "Preview this match",
+      simulation: simulationFor(scores),
+    },
+  };
+}
+
+const products: Product[] = (rawCatalog as RawProduct[]).map(toProduct);
 const bySlug = new Map(products.map((product) => [product.slug, product]));
 
 export function listProducts(): Product[] {
   return products;
+}
+
+export function listFaceProducts(): Product[] {
+  return products.filter((product) => product.forFace);
 }
 
 export function getProduct(slug: string): Product | undefined {
@@ -229,45 +240,35 @@ export function getProduct(slug: string): Product | undefined {
 }
 
 export function productsForConcern(id: ConcernId): Product[] {
-  return products.filter((product) => product.concerns.includes(id));
+  return listFaceProducts()
+    .filter((product) => product.concerns.includes(id))
+    .sort((a, b) => (b.concernScores[id] ?? 0) - (a.concernScores[id] ?? 0) || a.name.localeCompare(b.name));
+}
+
+export function productCategory(product: Product): string {
+  return product.category;
+}
+
+/** How well a product's 0–1 scores line up with the concerns this scan actually needs. */
+export function matchScore(product: Product, scan: Scan | null): number {
+  if (!product.forFace) return 0;
+  if (!scan) {
+    return product.concerns.reduce((sum, id) => sum + (product.concernScores[id] ?? 0), 0);
+  }
+  let score = 0;
+  for (const id of product.concerns) {
+    const weight = product.concernScores[id] ?? 0;
+    const found = scan.concerns.find((item) => item.id === id);
+    if (!found) continue;
+    const need = Math.max(0, 85 - found.uiScore) / 85;
+    score += weight * need;
+  }
+  return Math.round(score * 1000) / 1000;
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(price);
-}
-
-const CATEGORY: Record<string, string> = {
-  "line-soft-serum": "Serums",
-  "even-tone-drops": "Serums",
-  "pore-quiet-toner": "Toners",
-  "barrier-cloud-cream": "Creams",
-  "bounce-firming-cream": "Creams",
-  "clear-breakout-gel": "Treatments",
-  "rested-eye-concentrate": "Eyes",
-  "dew-face-oil": "Oils",
-  "matte-balance-fluid": "Fluids",
-  "soft-lip-tint": "Color",
-  "veil-complexion-tint": "Color",
-};
-
-export const CATEGORY_ORDER = ["Serums", "Treatments", "Toners", "Creams", "Oils", "Fluids", "Eyes", "Color"];
-
-export function productCategory(slug: string): string {
-  return CATEGORY[slug] ?? "Shelf";
-}
-
-export function houseBrand(): string {
-  return "GlowCheck Lab";
-}
-
-export function routineTime(product: Product): string {
-  const text = `${product.howToUse} ${product.summary}`.toLowerCase();
-  const morning = text.includes("morning");
-  const night = text.includes("night");
-  if (morning && night) return "AM + PM";
-  if (night) return "PM";
-  if (morning) return "AM";
-  return "AM + PM";
+  const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(price);
+  return `₪${amount}`;
 }
 
 export function ingredientPills(product: Product): string[] {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronRightIcon } from "lucide-react";
+import { HabitsSection } from "@/components/habits-panel";
 import { ScoreBar } from "@/components/score-bar";
 import { WhySheet } from "@/components/why-sheet";
 import { productsForConcern } from "@/lib/catalog";
@@ -143,6 +144,8 @@ export function ResultsView() {
           </button>
         ))}
       </section>
+
+      <HabitsSection scan={scan} />
 
       <button type="button" className="btn-ghost h-11 text-left" onClick={() => setHowOpen(true)}>
         How is this calculated?

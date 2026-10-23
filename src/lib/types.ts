@@ -54,6 +54,8 @@ export type Suitability = {
   verdict: SuitabilityVerdict;
   title: string;
   reasons: string[];
+  /** Keyword warning. Shown as a note. It does not decide Skip. */
+  warningNote?: string;
 };
 
 export type ProgressCall = {
@@ -90,6 +92,8 @@ export type AppState = {
   baselineId: string | null;
   cart: CartLine[];
   routine: RoutineItem[];
+  /** Habit ids the shopper checked on the follow-up. A log, not a cause. */
+  habitIds: string[];
 };
 
 export type TryOnKind = "makeup" | "simulation";
@@ -97,25 +101,27 @@ export type TryOnKind = "makeup" | "simulation";
 export type MakeupEffect = Record<string, unknown>;
 
 export type Product = {
+  id: string;
   slug: string;
+  brand: string;
   name: string;
   price: number;
   size: string;
   summary: string;
   howToUse: string;
   ingredients: string;
+  /** Concerns with a catalog score of at least 0.6, or a keyword tag when no raw scores exist. */
   concerns: ConcernId[];
+  /** Original 0–1 scores, mapped onto YouCam concern ids. */
+  concernScores: Partial<Record<ConcernId, number>>;
   tracksSkin: boolean;
-  caution?: {
-    concern: ConcernId;
-    below: number;
-    reason: string;
-  };
-  hardSkip?: {
-    concern: ConcernId;
-    below: number;
-    reason: string;
-  };
+  /** Face products with concern data. Body, hair, and devices stay off the shelf. */
+  forFace: boolean;
+  /** Keyword flags from the description. Low confidence. Never a hard skip by themselves. */
+  warnings: string[];
+  category: string;
+  inStock: boolean;
+  skinTypes: string[];
   tryOn: {
     kind: TryOnKind;
     label: string;

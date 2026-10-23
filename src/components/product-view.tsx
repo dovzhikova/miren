@@ -4,22 +4,17 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { BookmarkIcon } from "lucide-react";
 import { toast } from "sonner";
-import { ProductMark } from "@/components/product-mark";
+import { ProductPhoto } from "@/components/product-photo";
 import { ScoreBar } from "@/components/score-bar";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { WhySheet } from "@/components/why-sheet";
-import { formatPrice, getProduct, houseBrand, ingredientPills, routineTime } from "@/lib/catalog";
+import { formatPrice, getProduct, ingredientPills } from "@/lib/catalog";
 import { concernLabel } from "@/lib/concerns";
 import { dataUrlToFile, requestTryOn, type TryOnResult } from "@/lib/photos";
 import { latestScan } from "@/lib/progress";
 import { addToCart, useGlow } from "@/lib/store";
 import { suitProduct } from "@/lib/suitability";
 import { cn } from "@/lib/utils";
-
-const SHADES: Record<string, string[]> = {
-  "soft-lip-tint": ["#a24b5c", "#c46b78", "#8d3d4e", "#d0898a"],
-  "veil-complexion-tint": ["#d7b09a", "#e6c2a8", "#c49a82", "#f0d2bc"],
-};
 
 export function ProductView({ slug }: { slug: string }) {
   const product = getProduct(slug);
@@ -28,7 +23,6 @@ export function ProductView({ slug }: { slug: string }) {
   const [error, setError] = useState("");
   const [result, setResult] = useState<TryOnResult | null>(null);
   const [why, setWhy] = useState(false);
-  const [shade, setShade] = useState(0);
 
   if (!product) return null;
   if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
@@ -37,7 +31,6 @@ export function ProductView({ slug }: { slug: string }) {
   const suit = suitProduct(product, scan);
   const inCart = state.cart.some((line) => line.productId === product.slug);
   const photo = scan?.previewDataUrl;
-  const shades = SHADES[product.slug] ?? [];
   const after = result?.resultUrl || photo;
 
   async function preview() {
@@ -61,18 +54,29 @@ export function ProductView({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="micro">{product.tracksSkin ? "Treatment" : "Color"} · {houseBrand()}</p>
-        <div className="mt-2 flex items-start justify-between gap-3">
-          <h1 className="font-display text-[28px] leading-[1.15] font-bold">{product.name}</h1>
-          <ProductMark name={product.name} className="h-16 w-14 shrink-0" />
+        <p className="micro">{product.brand}</p>
+        <div className="mt-3 overflow-hidden rounded-[20px] border border-[var(--line)] bg-[var(--surface-2)]">
+          <ProductPhoto product={product} className="mx-auto h-56 w-full object-contain" />
         </div>
+        <h1 className="mt-4 font-display text-[28px] leading-[1.15] font-bold">{product.name}</h1>
         <div className="mt-3">
           <VerdictBadge verdict={suit.verdict} />
         </div>
         <p className="num mt-3 text-[15px] font-semibold">
-          {formatPrice(product.price)} · {product.size} · {routineTime(product)}
+          {formatPrice(product.price)}
+          {product.size ? ` · ${product.size}` : ""} · {product.category}
+          {!product.inStock ? " · Out of stock" : ""}
         </p>
+        <a
+          href={`https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name}`)}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 inline-flex h-11 items-center text-[15px] font-semibold text-[var(--brand)]"
+        >
+          Search this product
+        </a>
         <p className="mt-3 text-[15px] text-[var(--ink-2)]">{product.summary}</p>
+        {suit.warningNote && <p className="mt-2 text-[13px] leading-[1.4] text-[var(--meta)]">{suit.warningNote}</p>}
         <button type="button" className="btn-ghost mt-2 h-11" onClick={() => setWhy(true)}>
           Why this verdict
         </button>
@@ -86,7 +90,10 @@ export function ProductView({ slug }: { slug: string }) {
             if (!item) return null;
             return (
               <div key={id}>
-                <p className="mb-1 text-[15px] font-semibold">{concernLabel(id)}</p>
+                <p className="mb-1 text-[15px] font-semibold">
+                  {concernLabel(id)}
+                  <span className="num ml-2 text-[13px] font-medium text-[var(--meta)]">Catalog {Math.round((product.concernScores[id] ?? 0) * 100)}</span>
+                </p>
                 <ScoreBar value={item.uiScore} label={item.label} />
               </div>
             );
@@ -118,25 +125,11 @@ export function ProductView({ slug }: { slug: string }) {
               {busy ? "Asking YouCam…" : result ? "Refresh preview" : product.tryOn.label}
             </button>
             {result && after && (
-            <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={product.tryOn.kind === "makeup" && !result.resultUrl} shade={shades[shade]} />
-          )}
+              <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={false} />
+            )}
           </>
         )}
         {error && <p className="text-[13px] text-[var(--skip)]">{error}</p>}
-        {shades.length > 0 && (
-          <div className="flex gap-3" aria-label="Shade">
-            {shades.map((color, index) => (
-              <button
-                key={color}
-                type="button"
-                aria-label={`Shade ${index + 1}`}
-                className={cn("size-9 rounded-full", index === shade && "ring-2 ring-[var(--brand)] ring-offset-2")}
-                style={{ background: color }}
-                onClick={() => setShade(index)}
-              />
-            ))}
-          </div>
-        )}
         <p className="text-[12px] text-[var(--meta)]">Preview by YouCam AR. Colour may vary on screen. Sample mode shows your photo, not a YouCam render, plus the payload live mode sends.</p>
         {result && (
           <pre className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
@@ -180,6 +173,7 @@ export function ProductView({ slug }: { slug: string }) {
         {suit.reasons.map((reason) => (
           <p key={reason}>{reason}</p>
         ))}
+        {suit.warningNote && <p className="text-[13px] text-[var(--meta)]">{suit.warningNote}</p>}
       </WhySheet>
     </div>
   );
@@ -190,13 +184,11 @@ function BeforeAfter({
   after,
   live,
   makeup,
-  shade,
 }: {
   before: string;
   after: string;
   live: boolean;
   makeup: boolean;
-  shade?: string;
 }) {
   const [split, setSplit] = useState(56);
   const frame = useRef<HTMLDivElement>(null);
@@ -229,9 +221,6 @@ function BeforeAfter({
         className={cn("absolute inset-0 h-full w-full object-cover", makeup && "saturate-125")}
         style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}
       />
-      {shade && !live && (
-        <div className="pointer-events-none absolute inset-0 mix-blend-multiply opacity-40" style={{ background: shade, clipPath: `inset(0 ${100 - split}% 0 0)` }} />
-      )}
       <div className="absolute inset-y-0 z-10 w-0.5 bg-white shadow-[var(--sh-2)]" style={{ left: `${split}%` }}>
         <span className="absolute top-1/2 -left-[18px] grid size-9 -translate-y-1/2 place-items-center rounded-full bg-white text-[11px] font-semibold shadow-[var(--sh-2)]">
           ||

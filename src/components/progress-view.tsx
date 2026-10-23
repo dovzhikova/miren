@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ProductMark } from "@/components/product-mark";
+import { HabitLog } from "@/components/habits-panel";
+import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { getProduct } from "@/lib/catalog";
 import { baselineScan, buildSampleFollowUp, compareScans, latestScan, routineCalls } from "@/lib/progress";
@@ -125,6 +126,8 @@ export function ProgressView() {
         </>
       )}
 
+      <HabitLog scan={baseline} />
+
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-[22px] font-bold">Products on trial</h2>
         {calls.length === 0 ? (
@@ -136,11 +139,12 @@ export function ProgressView() {
             return (
               <article key={call.productId} className="rounded-[20px] border border-[var(--line)] p-4 shadow-[var(--sh-1)]">
                 <div className="flex gap-3">
-                  <div className="grid h-[88px] w-[72px] place-items-center rounded-[16px] bg-[var(--surface-2)]">
-                    <ProductMark name={product.name} className="h-16 w-14" />
+                  <div className="grid h-[88px] w-[72px] place-items-center overflow-hidden rounded-[16px] bg-[var(--surface-2)]">
+                    <ProductPhoto product={product} className="h-full w-full object-contain" />
                   </div>
                   <div>
                     <p className="text-[16px] font-semibold">{product.name}</p>
+                    <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
                     <div className="mt-2">
                       <VerdictBadge verdict={call.verdict} />
                     </div>

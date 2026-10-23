@@ -8,9 +8,9 @@ License: MIT (`LICENSE`)
 
 People do not wonder about their skin in the abstract. They wonder in two specific moments: standing in a shop (or a cart) deciding whether a product is for them, and a few weeks later staring at the same bottle wondering if it worked.
 
-Most skin widgets stop at a score. GlowCheck uses that score to make the purchase decision, then uses a second scan to judge the product. The shelf is a small generic catalog on purpose. There are no real brand names to license, and the value is the check, not the inventory.
+Most skin widgets stop at a score. GlowCheck uses that score to make the purchase decision, then uses a second scan to judge the product. The shelf is 175 products from Biologique Recherche, ZO Skin Health, and Circadia, with prices in ILS shown as ₪. Each face product carries YouCam concern tags and the original 0–1 scores. Those scores rank the matches. Products with no concern data (body, hair, devices) do not appear in face recommendations. Keyword warnings in the product text are low confidence: they never produce a hard Skip on their own, and the note asks for a patch-test. Photos are a neutral placeholder, and the product page does not link out to a shop.
 
-A private reference shop (a Russian skincare store in Israel with a skin widget) was not readable from this environment. The product decision carried over from that brief is the same one: do not shop moles, and do not shop eyelid shape. Those are filtered before any recommendation.
+Moles and eyelid shape are still filtered before any recommendation.
 
 ## YouCam APIs
 
@@ -33,14 +33,11 @@ Scores shown to the shopper are `ui_score`. Deltas in the routine use `raw_score
 
 ### 2. AI Makeup Virtual Try-On — color products
 
-Used by `POST /api/try-on` for **Soft Lip Tint** and **Veil Complexion Tint**.
-
-- `POST /s2s/v2.0/task/makeup-vto` with `version: "1.0"` and an `effects` array (`lip_color` + light `skin_smooth`, or `foundation` + `skin_smooth`).
-- `GET /s2s/v2.0/task/makeup-vto/{task_id}` until the result URL is ready.
+The route still accepts a makeup payload: `POST /s2s/v2.0/task/makeup-vto` with `version: "1.0"` and an `effects` array, then `GET` until the result URL is ready. None of the products in this catalog are tints, so the shelf does not call it. The client keeps the path for a product whose try-on kind is makeup.
 
 ### 3. AI Skin Simulation — treatment previews
 
-Used by `POST /api/try-on` for the treatment products.
+Used by `POST /api/try-on` for every product on this shelf. Intensities come from that product's concern scores, clamped between 0.2 and 0.6.
 
 - `POST /s2s/v2.0/task/skin-simulation` with `src_file_id` and intensities from 0.0 to 1.0 (`wrinkle`, `pores`, `acne`, `spots`, `redness`, `radiance`, `texture`, `dark_circle`, `eye_bags`).
 - `GET /s2s/v2.0/task/skin-simulation/{task_id}`.
@@ -77,7 +74,7 @@ flowchart TD
   poll --> parse[Parse ui_score and raw_score]
   mock --> parse
   parse --> filter[Drop moles and eyelid shape]
-  filter --> match[Suitability against the demo shelf]
+  filter --> match[Suitability against the face shelf]
   match --> browser[localStorage: baseline, cart, routine]
   browser --> later[Later scan or labeled sample follow-up]
   later --> verdict[Per-concern raw delta: keep, patch-test, or switch]
@@ -101,12 +98,12 @@ Capture these for the Devpost gallery. Sample mode is enough for every frame. Th
 3. Scan, empty — oval, upload, sample photo, analyze disabled until a photo is chosen.
 4. Scan, sample photo selected — illustration in the oval, Analyze with YouCam ready.
 5. Camera — dark screen, oval, lighting / face / makeup checks.
-6. Results — large score, skin-score chip, mole and eyelid note, focus concerns.
+6. Results — large score, skin-score chip, mole and eyelid note, focus concerns, and Beyond the shelf (top 3 habits).
 7. Why sheet — one concern, plain language, raw score kept for follow-up.
-8. Shelf — Suits you / Patch-test / Skip chips, skip rows still visible.
-9. Product — Line Soft Serum fit, then the before/after preview and the YouCam payload.
-10. Cart — Bounce Firming Cream skip banner inline. Checkout stays available.
-11. Routine — after “Load sample follow-up”, side-by-side photos, deltas, Keep on the serum, Switch on Clear Breakout Gel.
+8. Shelf — brand names, ₪ prices, Suits you / Patch-test / Skip chips. A keyword warning sits under the reason and does not flip a strong match to Skip.
+9. Product — Nighttime Repair plus: catalog score, neutral placeholder, search by brand and name, then the skin-simulation preview and payload.
+10. Cart — Sérum Matriciel Visage skip banner inline, because firmness is already high. Checkout stays available. A pregnancy note on a matching product stays a footnote.
+11. Routine — after “Load sample follow-up”, side-by-side photos and deltas. A line-and-pore product keeps. An acne-only score switches. Firmness-only stays a patch-test.
 
 Suggested capture width: 390×844. The column maxes out at 440px on a wider window.
 
@@ -125,16 +122,16 @@ Open Scan, tap **Use the sample photo**, then **Analyze with YouCam**.
 “Each concern has a plain-language line. Higher means healthier-looking. Moles and eyelid shape are removed before we recommend anything — a cream on this shelf cannot treat them. The number you see is YouCam’s UI score. We keep the raw score for later.”
 
 **1:00 — Suitability**  
-Open Line Soft Serum.  
-“Lines are low on this scan, so the serum suits. Bounce Firming Cream is a skip, because firmness is already high. That check happens again in the cart, before anything joins the routine.”
+Open Nighttime Repair plus.  
+“Lines are the weak score on this scan, and the catalog scores this cream highly for wrinkles, so it suits. The pregnancy and sun notes come from keywords in the product text. They are low confidence, so the chip stays Suits you and the note says to patch-test. Sérum Matriciel Visage is a skip, because it only targets firmness and that score is already high. That check happens again in the cart.”
 
 **1:20 — Try-on**  
-On Soft Lip Tint, tap **Try the tint**.  
-“Color products call the YouCam AI Makeup Virtual Try-On API. Treatments call YouCam AI Skin Simulation. In sample mode you see the exact payload. With a key, the rendered photo comes back from YouCam.”
+On the same product, tap **Preview this match**.  
+“This catalog’s products call YouCam AI Skin Simulation. The intensity comes from the product’s own 0–1 scores. Oiliness is never sent, because that slider adds shine. In sample mode you see the exact payload. With a key, the rendered photo comes back from YouCam.”
 
 **1:40 — Is it working?**  
-Add the serum and Clear Breakout Gel, pass the cart check, then on Routine tap **Load sample follow-up**.  
-“A second scan compares raw scores. The serum’s concerns went up, so the verdict is keep. Breakouts went down, so the gel is switch. Under two weeks, a tiny move stays a patch-test.”
+Add the cream, pass the cart check, then on Routine tap **Load sample follow-up**.  
+“A second scan compares raw scores. Concerns this cream targets that moved up stay a keep. A product scored only for acne would switch, because that raw score drops on the sample follow-up. Under two weeks, a tiny move stays a patch-test.”
 
 **2:00 — Close**  
 “Same YouCam model a shopper meets before they pay, and again when they ask if the bottle earned its place.”
@@ -148,8 +145,8 @@ Verified in this repo, without a YouCam account:
 - Sample-mode `POST /api/analyze` returns a full scan and filters a mole.
 - Parser covers the v2.1 JSON output shape and the nested `score_info.json` shape.
 - Two different photos in sample mode produce different scores. The same bytes do not.
-- Suitability: Line Soft Serum suits the sample, Clear Breakout Gel is a patch-test, Bounce Firming Cream is a skip, color does not need a scan.
-- Sample follow-up: serum → keep, breakout gel → switch, firming cream → patch-test.
+- Suitability on the sample scan: a product scored ≥0.85 for wrinkles suits; the same shape aimed only at mild acne is a patch-test; firmness-only is a skip. Keyword warnings do not turn a strong match into a skip. No scan stays a patch-test. Body, hair, and devices are absent from the face shelf (126 of 175 products are face matches).
+- Sample follow-up: wrinkle and pore → keep, acne-only → switch, firmness-only → patch-test.
 - RSA `id_token` decrypts to `client_id=…&timestamp=…`. Handshake retries seconds after a millisecond rejection, and falls back to the API-key bearer when auth is refused.
 - Live client, against a fake YouCam: file POST, PUT, skin-analysis POST v2.1, GET poll, HD actions, no mole or eyelid action.
 

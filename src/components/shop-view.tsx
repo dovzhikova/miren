@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ProductMark } from "@/components/product-mark";
+import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
-import { CATEGORY_ORDER, formatPrice, houseBrand, listProducts, productCategory, routineTime } from "@/lib/catalog";
+import { formatPrice, listFaceProducts, matchScore, productCategory } from "@/lib/catalog";
 import { latestScan } from "@/lib/progress";
 import { addToCart, useGlow } from "@/lib/store";
 import { suitProduct, verdictRank } from "@/lib/suitability";
@@ -26,9 +26,14 @@ export function ShopView() {
 
   const rows = useMemo(() => {
     if (!ready) return [];
-    return listProducts()
+    return listFaceProducts()
       .map((product) => ({ product, suit: suitProduct(product, scan) }))
-      .sort((a, b) => verdictRank(a.suit.verdict) - verdictRank(b.suit.verdict) || a.product.name.localeCompare(b.product.name));
+      .sort(
+        (a, b) =>
+          verdictRank(a.suit.verdict) - verdictRank(b.suit.verdict) ||
+          matchScore(b.product, scan) - matchScore(a.product, scan) ||
+          a.product.name.localeCompare(b.product.name),
+      );
   }, [ready, scan]);
 
   if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
@@ -40,10 +45,13 @@ export function ShopView() {
     skip: rows.filter((row) => row.suit.verdict === "skip").length,
   };
   const visible = rows.filter((row) => filter === "all" || row.suit.verdict === filter);
-  const groups = CATEGORY_ORDER.map((category) => ({
-    category,
-    items: visible.filter((row) => productCategory(row.product.slug) === category),
-  })).filter((group) => group.items.length);
+  const groups = [...new Set(visible.map((row) => productCategory(row.product)))]
+    .map((category) => ({
+      category,
+      items: visible.filter((row) => productCategory(row.product) === category),
+    }))
+    .filter((group) => group.items.length)
+    .sort((a, b) => matchScore(b.items[0].product, scan) - matchScore(a.items[0].product, scan));
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,8 +60,8 @@ export function ShopView() {
         <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Must-have routine for you</h1>
         <p className="mt-2 text-[13px] text-[var(--ink-2)]">
           {scan
-            ? "Skip stays on the list. A product you do not need is still a decision."
-            : "Scan first if you want each product checked. Without a scan, treatments stay a patch-test."}
+            ? "Ranked by how strongly each product is scored for the concerns this photo actually needs. Prices are in ₪."
+            : "Scan first if you want each product checked. Without a scan, face products stay a patch-test."}
         </p>
       </div>
 
@@ -83,21 +91,22 @@ export function ShopView() {
             const inCart = state.cart.some((line) => line.productId === product.slug);
             return (
               <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
-                <Link href={`/shop/${product.slug}`} className={cn("grid h-[88px] w-[72px] shrink-0 place-items-center rounded-[16px] border border-[var(--line)] bg-white", suit.verdict === "skip" && "opacity-60")}>
-                  <ProductMark name={product.name} className="h-16 w-14" />
+                <Link href={`/shop/${product.slug}`} className={cn("grid h-[88px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[16px] border border-[var(--line)] bg-white", suit.verdict === "skip" && "opacity-60")}>
+                  <ProductPhoto product={product} className="h-full w-full object-contain" />
                 </Link>
                 <div className="min-w-0 flex-1">
                   <VerdictBadge verdict={suit.verdict} />
                   <Link href={`/shop/${product.slug}`} className="mt-1 block text-[16px] leading-snug font-semibold">
                     {product.name}
                   </Link>
-                  <p className="text-[13px] text-[var(--meta)]">{houseBrand()}</p>
+                  <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{formatPrice(product.price)}</span>
-                    <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{product.size}</span>
-                    <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{routineTime(product)}</span>
+                    {product.size && <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{product.size}</span>}
+                    <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{product.category}</span>
                   </div>
                   <p className={cn("mt-2 text-[13px]", suit.verdict === "skip" ? "text-[var(--skip)]" : "text-[var(--ink-2)]")}>{suit.reasons[0]}</p>
+                  {suit.warningNote && <p className="mt-1 text-[12px] text-[var(--meta)]">{suit.warningNote}</p>}
                   <div className="mt-2 flex gap-2">
                     {product.tryOn.kind === "makeup" && (
                       <Link href={`/shop/${product.slug}#try-on`} className="btn-ghost h-11 px-2">

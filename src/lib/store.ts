@@ -10,6 +10,7 @@ export const emptyState: AppState = {
   baselineId: null,
   cart: [],
   routine: [],
+  habitIds: [],
 };
 
 type Snapshot = {
@@ -68,6 +69,7 @@ function readStorage(): AppState {
       baselineId: typeof parsed.baselineId === "string" ? parsed.baselineId : null,
       cart: Array.isArray(parsed.cart) ? (parsed.cart as CartLine[]) : [],
       routine: Array.isArray(parsed.routine) ? (parsed.routine as RoutineItem[]) : [],
+      habitIds: Array.isArray(parsed.habitIds) ? parsed.habitIds.filter((id): id is string => typeof id === "string") : [],
     };
   } catch {
     return emptyState;
@@ -123,6 +125,14 @@ export function setQty(productId: string, qty: number) {
   });
 }
 
+export function toggleHabit(habitId: string) {
+  ensureClient();
+  const habitIds = snapshot.state.habitIds.includes(habitId)
+    ? snapshot.state.habitIds.filter((id) => id !== habitId)
+    : [...snapshot.state.habitIds, habitId];
+  emit({ ...snapshot.state, habitIds });
+}
+
 export function removeFromRoutine(productId: string) {
   ensureClient();
   emit({ ...snapshot.state, routine: snapshot.state.routine.filter((item) => item.productId !== productId) });
@@ -158,6 +168,7 @@ export function useGlow() {
     addToCart,
     removeFromCart,
     removeFromRoutine,
+    toggleHabit,
     checkout,
   };
 }
