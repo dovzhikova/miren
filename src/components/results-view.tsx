@@ -2,141 +2,199 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ConcernScores } from "@/components/concern-scores";
-import { ProductMark } from "@/components/product-mark";
-import { VerdictBadge } from "@/components/verdict-badge";
-import { formatPrice, getProduct, productsForConcern } from "@/lib/catalog";
+import { ChevronRightIcon } from "lucide-react";
+import { ScoreBar } from "@/components/score-bar";
+import { WhySheet } from "@/components/why-sheet";
+import { productsForConcern } from "@/lib/catalog";
+import type { ConcernId, ConcernScore, Scan } from "@/lib/types";
 import { useGlow } from "@/lib/store";
-import { suitProduct } from "@/lib/suitability";
-import { cn } from "@/lib/utils";
+
+const HOTSPOT: Partial<Record<ConcernId, { x: number; y: number }>> = {
+  wrinkle: { x: 50, y: 26 },
+  pore: { x: 68, y: 58 },
+  acne: { x: 40, y: 76 },
+  texture: { x: 30, y: 62 },
+  redness: { x: 72, y: 66 },
+  oiliness: { x: 54, y: 46 },
+  moisture: { x: 28, y: 48 },
+  radiance: { x: 50, y: 38 },
+  dark_circle: { x: 36, y: 44 },
+  eye_bag: { x: 66, y: 48 },
+  tear_trough: { x: 38, y: 52 },
+  age_spot: { x: 64, y: 32 },
+  firmness: { x: 50, y: 84 },
+};
 
 export function ResultsView() {
   const { ready, state, setBaseline } = useGlow();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [concern, setConcern] = useState<ConcernScore | null>(null);
+  const [howOpen, setHowOpen] = useState(false);
+  const [hotspot, setHotspot] = useState<ConcernId | null>(null);
 
-  if (!ready) return <Skeleton className="h-80 w-full" />;
+  if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
 
   const scan = state.scans.find((item) => item.id === selectedId) ?? state.scans[0];
   if (!scan) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyTitle>No scan yet</EmptyTitle>
-          <EmptyDescription>Take a photo or use the sample face. The shelf has nothing to match until then.</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Link href="/scan" className={buttonVariants({ className: "h-11" })}>
-            Start a scan
-          </Link>
-        </EmptyContent>
-      </Empty>
+      <div className="flex flex-col gap-3 py-8">
+        <h1 className="font-display text-[28px] font-bold">No scan yet</h1>
+        <p className="text-[var(--ink-2)]">Take a photo or use the sample face. The shelf has nothing to match until then.</p>
+        <Link href="/scan" className="btn-primary w-full">
+          Start a scan
+        </Link>
+      </div>
     );
   }
 
-  const priorities = scan.concerns.slice(0, 3);
-  const matches = priorities.flatMap((concern) => productsForConcern(concern.id)).filter((product, index, list) => list.findIndex((item) => item.slug === product.slug) === index).slice(0, 3);
   const removed = [...new Set(scan.filtered.map((item) => (item.reason === "mole" ? "a mole" : "eyelid shape")))];
+  const focus = scan.concerns.filter((item) => item.uiScore < 75).slice(0, 3);
+  const focusIds = new Set((focus.length ? focus : scan.concerns.slice(0, 3)).map((item) => item.id));
   const isBaseline = state.baselineId === scan.id;
+  const helps = concern ? productsForConcern(concern.id).slice(0, 3) : [];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">
-          {scan.mode === "mock" ? "Sample fixture shaped like YouCam Skin Analysis v2.1" : "YouCam AI Skin Analysis v2.1"}
-          {scan.auth === "v1-rsa" ? " · RSA access token" : scan.auth === "v2-api-key" ? " · API key bearer" : ""}
+    <div className="flex flex-col gap-8">
+      <div className="relative">
+        <div className="aura pointer-events-none absolute -inset-6 -z-10 rounded-[40px]" aria-hidden />
+        <div className="relative overflow-hidden rounded-[24px] bg-[var(--surface-2)]">
+          {scan.previewDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={scan.previewDataUrl} alt="Face used for this scan" className="aspect-[4/5] w-full object-cover" />
+          ) : (
+            <div className="aspect-[4/5] w-full" />
+          )}
+          <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-[13px] font-semibold shadow-[var(--sh-1)]">
+            Skin score <span className="num">{scan.overall}</span>
+          </span>
+          {[...focusIds].map((id) => {
+            const spot = HOTSPOT[id];
+            const item = scan.concerns.find((row) => row.id === id);
+            if (!spot || !item) return null;
+            return (
+              <button
+                key={id}
+                type="button"
+                className="absolute grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center"
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+                aria-label={item.label}
+                onClick={() => setHotspot(hotspot === id ? null : id)}
+              >
+                <span className="size-2 rounded-full bg-white shadow-[0_0_0_4px_rgba(21,21,129,0.45)]" />
+                {hotspot === id && (
+                  <span className="absolute top-8 left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-1 text-[12px] font-semibold whitespace-nowrap shadow-[var(--sh-1)]">
+                    {item.label} {item.uiScore}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <p className="micro">{scan.mode === "mock" ? "Sample fixture · YouCam Skin Analysis v2.1" : "YouCam AI Skin Analysis v2.1"}</p>
+        <p className="num mt-2 text-[64px] leading-none font-bold" aria-live="polite">
+          {scan.overall}
+          <span className="text-[22px] font-semibold text-[var(--meta)]">/100</span>
         </p>
-        <h1 className="font-heading text-3xl tracking-tight sm:text-4xl">What this photo says</h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Higher is healthier-looking. The big number is YouCam&apos;s adjusted UI score. The routine tracker compares the raw score, which their docs say to keep over time.
+        <h1 className="mt-2 font-display text-[17px] leading-[1.3] font-semibold">{summaryLine(scan)}</h1>
+        <p className="mt-2 text-[13px] text-[var(--meta)]">
+          {scan.skinType ? `${scan.skinType} skin. ` : ""}
+          {scan.skinAge != null ? `Skin age estimate ${scan.skinAge}, a cosmetic read. ` : ""}
+          Raw overall {scan.overallRaw}.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[180px_1fr]">
-        <Card className="items-center text-center">
-          <CardHeader className="items-center">
-            <CardDescription>Overall</CardDescription>
-            <CardTitle className="font-heading text-5xl tabular-nums">{scan.overall}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {scan.skinType && <p>Skin type reads {scan.skinType}.</p>}
-            {scan.skinAge != null && <p>Skin age estimate {scan.skinAge}. That is a cosmetic read, not a birthday.</p>}
-            <p className="mt-2">Raw overall {scan.overallRaw}.</p>
-          </CardContent>
-        </Card>
-        <div className="flex flex-col gap-3">
-          {scan.previewDataUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={scan.previewDataUrl} alt="Face used for this scan" className="h-40 w-32 rounded-xl object-cover" />
-          )}
-          <Alert>
-            <AlertTitle>Moles and eyelid shape stay off the shelf</AlertTitle>
-            <AlertDescription>
-              A cream here cannot treat either one, so they are filtered before matching.
-              {removed.length > 0 ? ` This result included ${removed.join(" and ")}. Removed.` : " This result did not include them."}
-            </AlertDescription>
-          </Alert>
-          <div className="flex flex-wrap gap-2">
-            {isBaseline ? (
-              <p className="text-sm text-muted-foreground">This scan is the baseline later checks are measured against.</p>
-            ) : (
-              <Button type="button" variant="outline" onClick={() => setBaseline(scan.id)}>
-                Use as the new baseline
-              </Button>
-            )}
-            <Link href="/shop" className={buttonVariants({ variant: "outline" })}>
-              Shop the matches
-            </Link>
-          </div>
-        </div>
-      </div>
+      <p className="rounded-[16px] bg-[var(--surface-2)] px-4 py-3 text-[13px] leading-[1.4] text-[var(--ink-2)]">
+        Moles and eyelid shape stay off the shelf. A cream here cannot treat either one.
+        {removed.length ? ` This result included ${removed.join(" and ")}. Removed.` : " This result did not include them."}
+      </p>
 
       {state.scans.length > 1 && (
         <div className="flex gap-2 overflow-x-auto">
           {state.scans.map((item) => (
-            <Button key={item.id} type="button" size="sm" variant={item.id === scan.id ? "default" : "outline"} onClick={() => setSelectedId(item.id)}>
+            <button
+              key={item.id}
+              type="button"
+              className={`h-8 shrink-0 rounded-full px-3 text-[13px] font-semibold ${item.id === scan.id ? "bg-[var(--brand)] text-white" : "bg-[var(--surface-2)] text-[var(--ink)]"}`}
+              onClick={() => setSelectedId(item.id)}
+            >
               {new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-              {item.source === "sample" ? " sample" : ""}
-            </Button>
+            </button>
           ))}
         </div>
       )}
 
-      <ConcernScores concerns={scan.concerns} />
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-2xl">Start with the lowest scores</h2>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {matches.map((product) => {
-            const suit = suitProduct(product, scan);
-            return (
-              <Card key={product.slug}>
-                <ProductMark name={product.name} />
-                <CardHeader>
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle>{product.name}</CardTitle>
-                    <VerdictBadge verdict={suit.verdict} />
-                  </div>
-                  <CardDescription>{formatPrice(product.price)}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-3 text-sm">{suit.reasons[0]}</p>
-                  <Link href={`/shop/${product.slug}`} className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
-                    Check this product
-                  </Link>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-        {matches.length === 0 && getProduct("soft-lip-tint") && (
-          <p className="text-sm text-muted-foreground">No treatment matched these scores. The shelf still has color products that do not claim to change them.</p>
-        )}
+      <section className="flex flex-col">
+        {scan.concerns.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className="flex items-center gap-3 border-b border-[var(--line)] py-3 text-left"
+            onClick={() => setConcern(item)}
+          >
+            <span className="w-[92px] shrink-0 text-[15px] font-semibold">
+              {item.label}
+              {focusIds.has(item.id) && <span className="micro mt-0.5 block text-[var(--brand)]">Focus</span>}
+            </span>
+            <ScoreBar value={item.uiScore} label={item.label} className="flex-1" />
+            <ChevronRightIcon className="size-4 text-[var(--meta)]" />
+          </button>
+        ))}
       </section>
+
+      <button type="button" className="btn-ghost h-11 text-left" onClick={() => setHowOpen(true)}>
+        How is this calculated?
+      </button>
+
+      {isBaseline ? (
+        <p className="text-[13px] text-[var(--meta)]">This scan is the baseline later checks are measured against.</p>
+      ) : (
+        <button type="button" className="btn-ghost h-11 text-left" onClick={() => setBaseline(scan.id)}>
+          Use as the new baseline
+        </button>
+      )}
+
+      <div className="sticky-bar">
+        <Link href="/shop" className="btn-primary w-full">
+          Find products that suit me
+        </Link>
+      </div>
+
+      <WhySheet open={Boolean(concern)} title={concern?.label ?? "Concern"} onClose={() => setConcern(null)}>
+        {concern && (
+          <>
+            <p>{concern.explanation}</p>
+            <p>{concern.direction} UI score {concern.uiScore}. Raw score {concern.rawScore}, kept for the follow-up.</p>
+            {helps.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {helps.flatMap((product) =>
+                  product.ingredients.split(",").slice(0, 2).map((part) => (
+                    <span key={`${product.slug}-${part}`} className="rounded-full bg-[var(--brand-tint)] px-3 py-1 text-[13px] font-medium text-[var(--brand)]">
+                      {part.trim()}
+                    </span>
+                  )),
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </WhySheet>
+
+      <WhySheet open={howOpen} title="How is this calculated?" onClose={() => setHowOpen(false)}>
+        <p>YouCam Skin Analysis reads the photo and returns a score per concern. Higher means healthier-looking. The large number is their adjusted UI score.</p>
+        <p>GlowCheck hides moles and eyelid shape, then matches products to the scores that are actually low. The follow-up compares the raw score, which YouCam says to keep over time.</p>
+        <p>This is a cosmetic read, not a diagnosis.</p>
+      </WhySheet>
     </div>
   );
+}
+
+function summaryLine(scan: Scan): string {
+  const watch = scan.concerns.filter((item) => item.uiScore < 75).slice(0, 2);
+  if (!watch.length) return "Scores look steady across this photo.";
+  const moisture = scan.concerns.find((item) => item.id === "moisture");
+  const lead = moisture && moisture.uiScore >= 75 ? "Good barrier" : "Mixed read";
+  return `${lead}, watch ${watch.map((item) => item.label.toLowerCase()).join(" & ")}.`;
 }

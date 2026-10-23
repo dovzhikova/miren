@@ -235,3 +235,45 @@ export function productsForConcern(id: ConcernId): Product[] {
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(price);
 }
+
+const CATEGORY: Record<string, string> = {
+  "line-soft-serum": "Serums",
+  "even-tone-drops": "Serums",
+  "pore-quiet-toner": "Toners",
+  "barrier-cloud-cream": "Creams",
+  "bounce-firming-cream": "Creams",
+  "clear-breakout-gel": "Treatments",
+  "rested-eye-concentrate": "Eyes",
+  "dew-face-oil": "Oils",
+  "matte-balance-fluid": "Fluids",
+  "soft-lip-tint": "Color",
+  "veil-complexion-tint": "Color",
+};
+
+export const CATEGORY_ORDER = ["Serums", "Treatments", "Toners", "Creams", "Oils", "Fluids", "Eyes", "Color"];
+
+export function productCategory(slug: string): string {
+  return CATEGORY[slug] ?? "Shelf";
+}
+
+export function houseBrand(): string {
+  return "GlowCheck Lab";
+}
+
+export function routineTime(product: Product): string {
+  const text = `${product.howToUse} ${product.summary}`.toLowerCase();
+  const morning = text.includes("morning");
+  const night = text.includes("night");
+  if (morning && night) return "AM + PM";
+  if (night) return "PM";
+  if (morning) return "AM";
+  return "AM + PM";
+}
+
+export function ingredientPills(product: Product): string[] {
+  return product.ingredients
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .slice(0, 4);
+}

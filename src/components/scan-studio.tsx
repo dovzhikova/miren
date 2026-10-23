@@ -2,32 +2,41 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CameraIcon, ImagePlusIcon, SparklesIcon } from "lucide-react";
+import { CameraIcon, CheckIcon, ImagePlusIcon, SparklesIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { WhySheet } from "@/components/why-sheet";
 import { analyzePhoto, previewDataUrl } from "@/lib/photos";
 import { addScan } from "@/lib/store";
 import type { Scan } from "@/lib/types";
 
-const steps = [
+const tips = [
   "Face a window. Colored lights shift the scores.",
   "Look straight on. Hair off the forehead, glasses off if you can.",
   "Fill the frame with your face, forehead to chin.",
 ];
 
+const analyzingCopy = ["Mapping pores…", "Checking redness…", "Reading texture…", "Scoring hydration…"];
+
+type Check = "wait" | "pass" | "warn";
+
 export function ScanStudio() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const autoRef = useRef(false);
+  const captureRef = useRef<() => void>(() => {});
   const [cameraOn, setCameraOn] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [source, setSource] = useState<Scan["source"]>("upload");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  const [phrase, setPhrase] = useState(0);
   const [error, setError] = useState("");
+  const [tipsOpen, setTipsOpen] = useState(false);
+  const [lighting, setLighting] = useState<Check>("wait");
+  const [centered, setCentered] = useState<Check>("wait");
+  const [makeup, setMakeup] = useState<Check>("warn");
 
   useEffect(() => {
     if (cameraOn && videoRef.current && streamRef.current) {
@@ -41,10 +50,39 @@ export function ScanStudio() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!busy) return;
+    const timer = window.setInterval(() => setPhrase((value) => (value + 1) % analyzingCopy.length), 1400);
+    return () => window.clearInterval(timer);
+  }, [busy]);
+
+  useEffect(() => {
+    if (!cameraOn) return;
+    const timer = window.setInterval(() => {
+      const video = videoRef.current;
+      if (!video || !video.videoWidth) return;
+      const reading = measureFrame(video);
+      setLighting(reading.lighting ? "pass" : "warn");
+      setCentered(reading.centered ? "pass" : "warn");
+    }, 400);
+    return () => window.clearInterval(timer);
+  }, [cameraOn]);
+
+  useEffect(() => {
+    if (!cameraOn || busy || autoRef.current) return;
+    if (lighting === "pass" && centered === "pass" && makeup === "pass") {
+      const timer = window.setTimeout(() => {
+        captureRef.current();
+      }, 900);
+      return () => window.clearTimeout(timer);
+    }
+  }, [cameraOn, busy, lighting, centered, makeup]);
+
   function stopCamera() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setCameraOn(false);
+    autoRef.current = false;
   }
 
   async function startCamera() {
@@ -55,23 +93,47 @@ export function ScanStudio() {
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1600 } },
       });
       streamRef.current = stream;
+      setLighting("wait");
+      setCentered("wait");
+      setMakeup("warn");
       setCameraOn(true);
     } catch {
       setError("The camera stayed off. Upload a photo instead, or allow camera access and try again.");
     }
   }
 
+  async function run(next: File, nextSource: Scan["source"]) {
+    setBusy(true);
+    setError("");
+    setStatus("Sending the photo to YouCam Skin Analysis…");
+    try {
+      const scan = await analyzePhoto(next, nextSource);
+      const thumb = await previewDataUrl(next);
+      addScan({ ...scan, source: nextSource, previewDataUrl: thumb });
+      toast.success(scan.mode === "mock" ? "Sample scan saved" : "Scan saved");
+      router.push("/results");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The scan did not finish.");
+      setBusy(false);
+      setStatus("");
+    }
+  }
+
   function capture() {
     const video = videoRef.current;
-    if (!video || !video.videoWidth) return;
+    if (!video || !video.videoWidth || autoRef.current) return;
+    autoRef.current = true;
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d");
     if (!context) return;
+    context.translate(canvas.width, 0);
+    context.scale(-1, 1);
     context.drawImage(video, 0, 0);
     canvas.toBlob((blob) => {
       if (!blob) {
+        autoRef.current = false;
         setError("Could not grab that frame. Try the upload instead.");
         return;
       }
@@ -81,8 +143,13 @@ export function ScanStudio() {
       setPreview(URL.createObjectURL(blob));
       setSource("camera");
       stopCamera();
+      void run(next, "camera");
     }, "image/jpeg", 0.92);
   }
+
+  useEffect(() => {
+    captureRef.current = capture;
+  });
 
   function onFile(next: File | null) {
     setError("");
@@ -100,7 +167,6 @@ export function ScanStudio() {
 
   async function useSample() {
     setError("");
-    setBusy(true);
     setStatus("Loading the sample photo…");
     try {
       const response = await fetch("/demo/sample-face.jpg");
@@ -115,7 +181,6 @@ export function ScanStudio() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load the sample photo.");
     } finally {
-      setBusy(false);
       setStatus("");
     }
   }
@@ -125,116 +190,172 @@ export function ScanStudio() {
       setError("Add a photo first.");
       return;
     }
-    setBusy(true);
-    setError("");
-    setStatus("Sending the photo to YouCam Skin Analysis…");
-    try {
-      const scan = await analyzePhoto(file, source);
-      const thumb = await previewDataUrl(file);
-      addScan({ ...scan, source, previewDataUrl: thumb });
-      toast.success(scan.mode === "mock" ? "Sample scan saved" : "Scan saved");
-      router.push("/results");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The scan did not finish.");
-    } finally {
-      setBusy(false);
-      setStatus("");
-    }
+    await run(file, source);
+  }
+
+  const passed = [lighting, centered, makeup].filter((item) => item === "pass").length;
+
+  if (cameraOn) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-[var(--camera-bg)] text-white">
+        <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))]">
+          <button type="button" className="grid size-11 place-items-center rounded-full border border-white/30" onClick={() => setTipsOpen(true)} aria-label="Tips">
+            <span className="text-lg">?</span>
+          </button>
+          <button type="button" className="grid size-11 place-items-center rounded-full border border-white/30" onClick={stopCamera} aria-label="Close camera">
+            <XIcon />
+          </button>
+        </div>
+        <div className="relative mx-auto mt-6 aspect-[3/4] w-[72%] max-w-[320px]">
+          <svg className="absolute -inset-3 h-[calc(100%+24px)] w-[calc(100%+24px)]" viewBox="0 0 100 130" aria-hidden>
+            <ellipse cx="50" cy="65" rx="46" ry="60" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeDasharray="3 2" />
+            <ellipse
+              cx="50"
+              cy="65"
+              rx="46"
+              ry="60"
+              fill="none"
+              stroke="#00A36A"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray={`${(passed / 3) * 320} 320`}
+              transform="rotate(-90 50 65)"
+            />
+          </svg>
+          <video ref={videoRef} autoPlay playsInline muted className="h-full w-full rounded-[50%] object-cover [transform:scaleX(-1)]" />
+        </div>
+        <div className="mt-auto px-5 pb-[max(20px,env(safe-area-inset-bottom))]">
+          <div className="sheet-shadow rounded-[20px] bg-white p-4 text-[var(--ink)]">
+            <p className="text-[17px] leading-[1.3] font-semibold">Hold still…</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <CheckChip label="Lighting" state={lighting} />
+              <CheckChip label="Face centred" state={centered} />
+              <button type="button" onClick={() => setMakeup((value) => (value === "pass" ? "warn" : "pass"))}>
+                <CheckChip label="No makeup" state={makeup} />
+              </button>
+            </div>
+            <p className="mt-3 text-[13px] text-[var(--meta)]">Tap “No makeup” when the face is bare. The shutter is there if the checks stay cautious.</p>
+          </div>
+          <div className="mt-4 flex items-center justify-between">
+            <button type="button" className="text-[13px] font-semibold text-white/80" onClick={useSample} data-testid="sample-photo">
+              Sample photo
+            </button>
+            <button type="button" className="grid size-[72px] place-items-center rounded-full border-4 border-white/80" onClick={capture} aria-label="Shutter">
+              <span className="size-14 rounded-full bg-white" />
+            </button>
+            <span className="w-16" />
+          </div>
+        </div>
+        <WhySheet open={tipsOpen} title="A photo the scores can trust" onClose={() => setTipsOpen(false)}>
+          {tips.map((tip) => (
+            <p key={tip}>{tip}</p>
+          ))}
+        </WhySheet>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">YouCam Skin Analysis</p>
-        <h1 className="font-heading text-3xl tracking-tight sm:text-4xl">Take the photo the scores depend on</h1>
-        <p className="max-w-2xl text-muted-foreground">
-          One clear selfie. GlowCheck uploads it, asks YouCam for per-concern scores, and drops moles and eyelid shape before it recommends anything.
+        <p className="micro">YouCam Skin Analysis</p>
+        <h1 className="font-display text-[28px] leading-[1.15] font-bold">Take the photo the scores depend on</h1>
+        <p className="text-[15px] text-[var(--ink-2)]">One clear selfie. Moles and eyelid shape are dropped before anything is recommended.</p>
+      </div>
+
+      <div className="relative mx-auto h-[300px] w-[240px]">
+        <div className={`aura pointer-events-none absolute -inset-10 -z-10 rounded-full ${busy ? "aura-pulse" : ""}`} aria-hidden />
+        <div className="relative h-full w-full overflow-hidden rounded-[50%] bg-[var(--surface-2)] shadow-[var(--sh-1)]">
+          {preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={preview} alt="Selected face photo" className="h-full w-full object-cover" />
+          ) : (
+            <div className="grid h-full place-items-center px-6 text-center text-[13px] text-[var(--meta)]">
+              Camera, upload, or the sample face.
+            </div>
+          )}
+          {busy && <div className="scanline" />}
+        </div>
+      </div>
+
+      {busy ? (
+        <p className="text-center text-[17px] font-semibold" aria-live="polite">
+          {analyzingCopy[phrase]}
         </p>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-2" id="upload">
+          <button type="button" className={file ? "btn-secondary w-full" : "btn-primary w-full"} onClick={startCamera}>
+            <CameraIcon className="mr-2 size-4" />
+            Take a selfie
+          </button>
+          <label className="btn-secondary w-full cursor-pointer">
+            <ImagePlusIcon className="mr-2 size-4" />
+            Upload a photo
+            <input
+              data-testid="photo-input"
+              className="sr-only"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => onFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+          <button type="button" className="btn-ghost h-11" onClick={useSample} disabled={busy} data-testid="sample-photo">
+            <SparklesIcon className="mr-1 inline size-4" />
+            Use the sample photo
+          </button>
+          <button type="button" className={file ? "btn-primary w-full" : "btn-secondary w-full"} onClick={analyze} disabled={busy || !file} data-testid="analyze">
+            {file ? "Analyze with YouCam" : "Add a photo to analyze"}
+          </button>
+        </div>
+      )}
 
-      <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Photo</CardTitle>
-            <CardDescription>Nothing is stored on the server. The thumbnail stays in this browser.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="overflow-hidden rounded-xl bg-muted">
-              {cameraOn ? (
-                <video ref={videoRef} autoPlay playsInline muted className="aspect-[3/4] w-full object-cover" />
-              ) : preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview} alt="Selected face photo" className="aspect-[3/4] w-full object-cover" />
-              ) : (
-                <div className="flex aspect-[3/4] flex-col items-center justify-center gap-2 px-6 text-center text-sm text-muted-foreground">
-                  <CameraIcon />
-                  <p>No photo yet. Use the camera, upload one, or load the sample face.</p>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              {cameraOn ? (
-                <>
-                  <Button type="button" className="h-11 flex-1" onClick={capture}>
-                    Use this frame
-                  </Button>
-                  <Button type="button" variant="outline" className="h-11" onClick={stopCamera}>
-                    Close camera
-                  </Button>
-                </>
-              ) : (
-                <Button type="button" variant="outline" className="h-11" onClick={startCamera}>
-                  <CameraIcon data-icon="inline-start" />
-                  Open camera
-                </Button>
-              )}
-              <label className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border bg-background px-3 text-sm font-medium hover:bg-muted">
-                <ImagePlusIcon className="size-4" />
-                Upload
-                <input
-                  data-testid="photo-input"
-                  className="sr-only"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => onFile(event.target.files?.[0] ?? null)}
-                />
-              </label>
-            </div>
-            <Button type="button" variant="secondary" className="h-11" onClick={useSample} disabled={busy} data-testid="sample-photo">
-              <SparklesIcon data-icon="inline-start" />
-              Use the sample photo
-            </Button>
-            <Button type="button" className="h-11" onClick={analyze} disabled={busy || !file} data-testid="analyze">
-              {busy ? status || "Reading the photo…" : "Analyze with YouCam"}
-            </Button>
-            {error && (
-              <Alert variant="destructive">
-                <AlertTitle>Try that again</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Before you shoot</CardTitle>
-            <CardDescription>YouCam rejects photos with no face, a turned head, or a face that is too small.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="flex flex-col gap-3">
-              {steps.map((step, index) => (
-                <li key={step} className="flex gap-3">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
-                    {index + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-      </div>
+      {status && busy && <p className="sr-only">{status}</p>}
+      {error && (
+        <p className="rounded-[16px] bg-[var(--skip-bg)] px-4 py-3 text-[13px] text-[var(--skip)]" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
+}
+
+function CheckChip({ label, state }: { label: string; state: Check }) {
+  const tone = state === "pass" ? "bg-[var(--suits-bg)] text-[var(--suits)]" : state === "warn" ? "bg-[var(--patch-bg)] text-[var(--patch)]" : "bg-[var(--surface-2)] text-[var(--meta)]";
+  return (
+    <span className={`inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[13px] font-semibold ${tone}`}>
+      {state === "pass" ? <CheckIcon className="size-3.5" /> : null}
+      {label}
+      {state === "pass" ? " ✓" : state === "warn" ? " ⚠" : ""}
+    </span>
+  );
+}
+
+function measureFrame(video: HTMLVideoElement): { lighting: boolean; centered: boolean } {
+  const canvas = document.createElement("canvas");
+  canvas.width = 80;
+  canvas.height = 100;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return { lighting: false, centered: false };
+  context.drawImage(video, 0, 0, 80, 100);
+  const { data } = context.getImageData(0, 0, 80, 100);
+  let sum = 0;
+  let skin = 0;
+  let oval = 0;
+  for (let y = 0; y < 100; y += 1) {
+    for (let x = 0; x < 80; x += 1) {
+      const index = (y * 80 + x) * 4;
+      const red = data[index] ?? 0;
+      const green = data[index + 1] ?? 0;
+      const blue = data[index + 2] ?? 0;
+      const luma = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+      sum += luma;
+      const inside = ((x - 40) / 28) ** 2 + ((y - 50) / 40) ** 2 < 1;
+      if (inside) {
+        oval += 1;
+        if (red > 70 && red >= green && luma > 45 && luma < 215) skin += 1;
+      }
+    }
+  }
+  const mean = sum / (80 * 100);
+  return { lighting: mean > 55 && mean < 210, centered: oval > 0 && skin / oval > 0.28 };
 }

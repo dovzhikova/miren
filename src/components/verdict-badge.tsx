@@ -1,15 +1,43 @@
-import { Badge } from "@/components/ui/badge";
+import { CheckIcon, DropletIcon, XIcon } from "lucide-react";
 import type { ProgressVerdict, SuitabilityVerdict } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-const copy: Record<SuitabilityVerdict | ProgressVerdict, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  suits: { label: "Suits you", variant: "default" },
-  skip: { label: "Skip", variant: "destructive" },
-  keep: { label: "Keep", variant: "default" },
-  switch: { label: "Switch", variant: "destructive" },
-  "patch-test": { label: "Patch-test", variant: "outline" },
+const copy: Record<
+  SuitabilityVerdict | ProgressVerdict,
+  { label: string; tone: "suits" | "patch" | "skip"; icon: "check" | "drop" | "x" }
+> = {
+  suits: { label: "Suits you", tone: "suits", icon: "check" },
+  "patch-test": { label: "Patch-test first", tone: "patch", icon: "drop" },
+  skip: { label: "Skip", tone: "skip", icon: "x" },
+  keep: { label: "Keep", tone: "suits", icon: "check" },
+  switch: { label: "Switch", tone: "skip", icon: "x" },
 };
 
-export function VerdictBadge({ verdict }: { verdict: SuitabilityVerdict | ProgressVerdict }) {
+const toneClass = {
+  suits: "bg-[var(--suits-bg)] text-[var(--suits)]",
+  patch: "bg-[var(--patch-bg)] text-[var(--patch)]",
+  skip: "bg-[var(--skip-bg)] text-[var(--skip)]",
+};
+
+export function VerdictBadge({
+  verdict,
+  className,
+}: {
+  verdict: SuitabilityVerdict | ProgressVerdict;
+  className?: string;
+}) {
   const item = copy[verdict];
-  return <Badge variant={item.variant}>{item.label}</Badge>;
+  const Icon = item.icon === "check" ? CheckIcon : item.icon === "drop" ? DropletIcon : XIcon;
+  return (
+    <span
+      className={cn(
+        "inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-[13px] font-semibold leading-none",
+        toneClass[item.tone],
+        className,
+      )}
+    >
+      <Icon className="size-3.5" aria-hidden />
+      {item.label}
+    </span>
+  );
 }

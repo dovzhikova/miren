@@ -1,21 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { BookmarkIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ProductMark } from "@/components/product-mark";
+import { ScoreBar } from "@/components/score-bar";
 import { VerdictBadge } from "@/components/verdict-badge";
+import { WhySheet } from "@/components/why-sheet";
+import { formatPrice, getProduct, houseBrand, ingredientPills, routineTime } from "@/lib/catalog";
 import { concernLabel } from "@/lib/concerns";
-import { formatPrice, getProduct } from "@/lib/catalog";
 import { dataUrlToFile, requestTryOn, type TryOnResult } from "@/lib/photos";
 import { latestScan } from "@/lib/progress";
 import { addToCart, useGlow } from "@/lib/store";
 import { suitProduct } from "@/lib/suitability";
 import { cn } from "@/lib/utils";
+
+const SHADES: Record<string, string[]> = {
+  "soft-lip-tint": ["#a24b5c", "#c46b78", "#8d3d4e", "#d0898a"],
+  "veil-complexion-tint": ["#d7b09a", "#e6c2a8", "#c49a82", "#f0d2bc"],
+};
 
 export function ProductView({ slug }: { slug: string }) {
   const product = getProduct(slug);
@@ -23,17 +27,21 @@ export function ProductView({ slug }: { slug: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<TryOnResult | null>(null);
+  const [why, setWhy] = useState(false);
+  const [shade, setShade] = useState(0);
 
   if (!product) return null;
-  if (!ready) return <Skeleton className="h-80 w-full" />;
+  if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
 
   const scan = latestScan(state);
   const suit = suitProduct(product, scan);
   const inCart = state.cart.some((line) => line.productId === product.slug);
   const photo = scan?.previewDataUrl;
+  const shades = SHADES[product.slug] ?? [];
+  const after = result?.resultUrl || photo;
 
   async function preview() {
-    if (!photo) return;
+    if (!photo || !product) return;
     const file = dataUrlToFile(photo);
     if (!file) {
       setError("The saved photo could not be read. Scan again.");
@@ -42,7 +50,7 @@ export function ProductView({ slug }: { slug: string }) {
     setBusy(true);
     setError("");
     try {
-      setResult(await requestTryOn(file, product!.slug));
+      setResult(await requestTryOn(file, product.slug));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The preview failed.");
     } finally {
@@ -52,110 +60,185 @@ export function ProductView({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-6 md:grid-cols-[240px_1fr]">
-        <ProductMark name={product.name} />
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">{product.tracksSkin ? "Treatment" : "Color"}</p>
-          <h1 className="font-heading text-3xl tracking-tight sm:text-4xl">{product.name}</h1>
-          <p className="text-muted-foreground">
-            {formatPrice(product.price)} · {product.size}
-          </p>
-          <p className="max-w-xl">{product.summary}</p>
-          <p className="text-sm text-muted-foreground">{product.howToUse}</p>
-          <p className="text-sm text-muted-foreground">In the bottle: {product.ingredients}</p>
-          {product.concerns.length > 0 && (
-            <p className="text-sm">Matched to {product.concerns.map((id) => concernLabel(id)).join(", ")}.</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              className="h-11"
-              disabled={inCart}
-              data-testid="add-to-cart"
-              onClick={() => {
-                addToCart(product.slug);
-                toast.success(`${product.name} is in the cart`);
-              }}
-            >
-              {inCart ? "In the cart" : "Add to cart"}
-            </Button>
-            <Link href="/cart" className={cn(buttonVariants({ variant: "outline" }), "h-11")}>
-              Review the cart
-            </Link>
-          </div>
+      <div>
+        <p className="micro">{product.tracksSkin ? "Treatment" : "Color"} · {houseBrand()}</p>
+        <div className="mt-2 flex items-start justify-between gap-3">
+          <h1 className="font-display text-[28px] leading-[1.15] font-bold">{product.name}</h1>
+          <ProductMark name={product.name} className="h-16 w-14 shrink-0" />
         </div>
+        <div className="mt-3">
+          <VerdictBadge verdict={suit.verdict} />
+        </div>
+        <p className="num mt-3 text-[15px] font-semibold">
+          {formatPrice(product.price)} · {product.size} · {routineTime(product)}
+        </p>
+        <p className="mt-3 text-[15px] text-[var(--ink-2)]">{product.summary}</p>
+        <button type="button" className="btn-ghost mt-2 h-11" onClick={() => setWhy(true)}>
+          Why this verdict
+        </button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle>Does this product suit me?</CardTitle>
-            <VerdictBadge verdict={suit.verdict} />
-          </div>
-          <CardDescription>{suit.title}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          {suit.reasons.map((reason) => (
-            <p key={reason}>{reason}</p>
-          ))}
-          {!scan && (
-            <Link href="/scan" className={cn(buttonVariants({ variant: "outline" }), "mt-2 w-fit")}>
-              Scan to check it
-            </Link>
-          )}
-        </CardContent>
-      </Card>
+      {scan && product.concerns.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-[22px] font-bold">Fit on your scores</h2>
+          {product.concerns.map((id) => {
+            const item = scan.concerns.find((row) => row.id === id);
+            if (!item) return null;
+            return (
+              <div key={id}>
+                <p className="mb-1 text-[15px] font-semibold">{concernLabel(id)}</p>
+                <ScoreBar value={item.uiScore} label={item.label} />
+              </div>
+            );
+          })}
+        </section>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{product.tryOn.label}</CardTitle>
-          <CardDescription>
-            {product.tryOn.kind === "makeup"
-              ? "Live mode calls YouCam AI Makeup Virtual Try-On. Sample mode shows your photo and the exact effect payload."
-              : "Live mode calls YouCam AI Skin Simulation. Oiliness is not sent: that slider adds shine, which is the wrong direction for a treatment preview."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {!photo ? (
-            <Alert>
-              <AlertTitle>A face is required</AlertTitle>
-              <AlertDescription>Scan first. The preview uses the photo already on this device.</AlertDescription>
-            </Alert>
-          ) : (
-            <Button type="button" className="h-11 w-fit" onClick={preview} disabled={busy} data-testid="try-on">
-              {busy ? "Asking YouCam…" : product.tryOn.label}
-            </Button>
+      <div className="flex flex-wrap gap-2">
+        {ingredientPills(product).map((pill) => (
+          <span key={pill} className="rounded-full bg-[var(--brand-tint)] px-3 py-1 text-[13px] font-medium text-[var(--brand)]">
+            {pill}
+          </span>
+        ))}
+      </div>
+      <p className="text-[13px] text-[var(--meta)]">{product.howToUse}</p>
+
+      <section id="try-on" className="flex flex-col gap-3">
+        <h2 className="font-display text-[22px] font-bold">{product.tryOn.label}</h2>
+        <p className="text-[13px] text-[var(--ink-2)]">
+          {product.tryOn.kind === "makeup"
+            ? "Live mode calls YouCam AI Makeup Virtual Try-On."
+            : "Live mode calls YouCam AI Skin Simulation. Oiliness is not sent: that slider adds shine."}
+        </p>
+        {!photo ? (
+          <p className="rounded-[16px] bg-[var(--surface-2)] px-4 py-3 text-[13px]">Scan first. The preview uses the photo already on this device.</p>
+        ) : (
+          <>
+            <button type="button" className="btn-secondary w-fit" onClick={preview} disabled={busy} data-testid="try-on">
+              {busy ? "Asking YouCam…" : result ? "Refresh preview" : product.tryOn.label}
+            </button>
+            {result && after && (
+            <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={product.tryOn.kind === "makeup" && !result.resultUrl} shade={shades[shade]} />
           )}
-          {error && (
-            <Alert variant="destructive">
-              <AlertTitle>Preview failed</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {result && photo && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <figure className="flex flex-col gap-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={result.resultUrl || photo}
-                  alt={result.resultUrl ? "YouCam try-on result" : "Your scan photo with a sample preview treatment"}
-                  className={cn(
-                    "aspect-[3/4] w-full rounded-xl object-cover",
-                    !result.resultUrl && result.kind === "makeup" && "saturate-125 contrast-105",
-                    !result.resultUrl && result.kind !== "makeup" && "brightness-105 contrast-105",
-                  )}
-                />
-                <figcaption className="text-sm text-muted-foreground">
-                  {result.resultUrl
-                    ? "Rendered by YouCam."
-                    : "Sample preview. This is your photo, not a YouCam render. The payload is what live mode sends."}
-                </figcaption>
-              </figure>
-              <pre className="overflow-x-auto rounded-xl bg-muted p-3 text-xs leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        )}
+        {error && <p className="text-[13px] text-[var(--skip)]">{error}</p>}
+        {shades.length > 0 && (
+          <div className="flex gap-3" aria-label="Shade">
+            {shades.map((color, index) => (
+              <button
+                key={color}
+                type="button"
+                aria-label={`Shade ${index + 1}`}
+                className={cn("size-9 rounded-full", index === shade && "ring-2 ring-[var(--brand)] ring-offset-2")}
+                style={{ background: color }}
+                onClick={() => setShade(index)}
+              />
+            ))}
+          </div>
+        )}
+        <p className="text-[12px] text-[var(--meta)]">Preview by YouCam AR. Colour may vary on screen. Sample mode shows your photo, not a YouCam render, plus the payload live mode sends.</p>
+        {result && (
+          <pre className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
+        )}
+      </section>
+
+      {!scan && (
+        <Link href="/scan" className="btn-secondary w-fit">
+          Scan to check it
+        </Link>
+      )}
+
+      <div className="sticky-bar flex items-center gap-3">
+        <button
+          type="button"
+          className="btn-primary min-w-0 flex-1"
+          disabled={inCart}
+          data-testid="add-to-cart"
+          onClick={() => {
+            addToCart(product.slug);
+            toast.success(`${product.name} is in the cart`);
+          }}
+        >
+          {inCart ? "In the cart" : "Add to cart"}
+        </button>
+        <button
+          type="button"
+          className="grid size-[52px] shrink-0 place-items-center rounded-full bg-[var(--surface-2)]"
+          aria-label="Save look"
+          onClick={() => {
+            localStorage.setItem("glowcheck.look", product.slug);
+            toast.success("Look saved on this device");
+          }}
+        >
+          <BookmarkIcon className="size-5" />
+        </button>
+      </div>
+
+      <WhySheet open={why} title={suit.title} onClose={() => setWhy(false)}>
+        <VerdictBadge verdict={suit.verdict} />
+        {suit.reasons.map((reason) => (
+          <p key={reason}>{reason}</p>
+        ))}
+      </WhySheet>
+    </div>
+  );
+}
+
+function BeforeAfter({
+  before,
+  after,
+  live,
+  makeup,
+  shade,
+}: {
+  before: string;
+  after: string;
+  live: boolean;
+  makeup: boolean;
+  shade?: string;
+}) {
+  const [split, setSplit] = useState(56);
+  const frame = useRef<HTMLDivElement>(null);
+
+  function move(clientX: number) {
+    const bounds = frame.current?.getBoundingClientRect();
+    if (!bounds) return;
+    const next = ((clientX - bounds.left) / bounds.width) * 100;
+    setSplit(Math.min(88, Math.max(12, next)));
+  }
+
+  return (
+    <div
+      ref={frame}
+      className="relative aspect-[4/5] touch-none overflow-hidden rounded-[24px] bg-[var(--surface-2)] select-none"
+      onPointerDown={(event) => {
+        (event.currentTarget as HTMLDivElement).setPointerCapture(event.pointerId);
+        move(event.clientX);
+      }}
+      onPointerMove={(event) => {
+        if (event.buttons) move(event.clientX);
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={before} alt="Before" className="absolute inset-0 h-full w-full object-cover" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={after}
+        alt={live ? "YouCam try-on result" : "Sample preview"}
+        className={cn("absolute inset-0 h-full w-full object-cover", makeup && "saturate-125")}
+        style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}
+      />
+      {shade && !live && (
+        <div className="pointer-events-none absolute inset-0 mix-blend-multiply opacity-40" style={{ background: shade, clipPath: `inset(0 ${100 - split}% 0 0)` }} />
+      )}
+      <div className="absolute inset-y-0 z-10 w-0.5 bg-white shadow-[var(--sh-2)]" style={{ left: `${split}%` }}>
+        <span className="absolute top-1/2 -left-[18px] grid size-9 -translate-y-1/2 place-items-center rounded-full bg-white text-[11px] font-semibold shadow-[var(--sh-2)]">
+          ||
+        </span>
+      </div>
+      <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">Before</span>
+      <span className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">After</span>
     </div>
   );
 }

@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Fraunces, Outfit } from "next/font/google";
+import { Inter, Schibsted_Grotesk } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const outfit = Outfit({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-const fraunces = Fraunces({
+const display = Schibsted_Grotesk({
   subsets: ["latin"],
+  weight: ["600", "700"],
   variable: "--font-heading",
 });
 
@@ -25,10 +26,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${outfit.variable} ${fraunces.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${display.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
-        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 sm:py-10">{children}</main>
+        <main className="mx-auto flex w-full max-w-[440px] flex-1 flex-col px-5 pt-6 pb-28">{children}</main>
         <SiteFooter />
         <Toaster theme="light" position="top-center" />
       </body>

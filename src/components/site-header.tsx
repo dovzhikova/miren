@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShoppingBagIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useGlow } from "@/lib/store";
 
@@ -36,17 +34,17 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-2 px-4">
-        <Link href="/" className="font-heading text-lg tracking-tight">
+    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white/92 backdrop-blur-md">
+      <div className="mx-auto flex h-14 w-full max-w-[440px] items-center gap-1 px-5">
+        <Link href="/" className="font-display text-[17px] font-bold tracking-[-0.02em] text-[var(--brand)]">
           GlowCheck
         </Link>
         {mode && (
-          <Badge variant={mode === "live" ? "default" : "outline"} className="hidden sm:inline-flex">
-            {mode === "live" ? "YouCam live" : "Sample mode"}
-          </Badge>
+          <span className="rounded-full bg-[var(--brand-tint)] px-2 py-0.5 text-[11px] font-semibold text-[var(--brand)]">
+            {mode === "live" ? "Live" : "Sample"}
+          </span>
         )}
-        <nav className="ml-auto flex items-center gap-0.5 sm:gap-1">
+        <nav className="ml-auto flex items-center">
           {links.map((link) => {
             const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -55,17 +53,25 @@ export function SiteHeader() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground",
-                  active && "bg-muted text-foreground",
+                  "rounded-full px-2 py-2 text-[13px] font-medium text-[var(--meta)]",
+                  active && "bg-[var(--brand-tint)] text-[var(--brand)]",
                 )}
               >
                 {link.label}
               </Link>
             );
           })}
-          <Link href="/cart" className={cn(buttonVariants({ variant: "outline", size: "sm" }), "ml-1")} aria-label={`Cart, ${state.cart.length} items`}>
-            <ShoppingBagIcon data-icon="inline-start" />
-            <span className="tabular-nums">{state.cart.length}</span>
+          <Link
+            href="/cart"
+            className="relative ml-1 grid size-11 place-items-center rounded-full text-[var(--ink)]"
+            aria-label={`Cart, ${state.cart.length} items`}
+          >
+            <ShoppingBagIcon className="size-5" />
+            {state.cart.length > 0 && (
+              <span className="num absolute mt-3 ml-3 rounded-full bg-[var(--brand)] px-1 text-[10px] leading-4 font-semibold text-white">
+                {state.cart.length}
+              </span>
+            )}
           </Link>
         </nav>
       </div>

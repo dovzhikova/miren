@@ -111,6 +111,18 @@ export function removeFromCart(productId: string) {
   emit({ ...snapshot.state, cart: snapshot.state.cart.filter((line) => line.productId !== productId) });
 }
 
+export function setQty(productId: string, qty: number) {
+  ensureClient();
+  if (qty <= 0) {
+    emit({ ...snapshot.state, cart: snapshot.state.cart.filter((line) => line.productId !== productId) });
+    return;
+  }
+  emit({
+    ...snapshot.state,
+    cart: snapshot.state.cart.map((line) => (line.productId === productId ? { ...line, qty } : line)),
+  });
+}
+
 export function removeFromRoutine(productId: string) {
   ensureClient();
   emit({ ...snapshot.state, routine: snapshot.state.routine.filter((item) => item.productId !== productId) });

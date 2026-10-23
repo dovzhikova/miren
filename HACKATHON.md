@@ -96,19 +96,19 @@ See [README.md](README.md). Copy `.env.example` to `.env.local`. Leave the keys 
 
 Capture these for the Devpost gallery. Sample mode is enough for every frame. The sample face is an illustration, not a person.
 
-1. Home, desktop — headline and the three steps.
-2. Home, phone width — same page, stacked.
-3. Scan, empty — guidance and the three ways to add a photo.
-4. Scan, sample photo selected — illustration in the frame, analyze button ready.
-5. Results — overall score, skin type, mole/eyelid note, lowest concerns open.
-6. Shelf — products badged Suits you / Patch-test / Skip from that scan.
-7. Product — “Does this product suit me?” on Line Soft Serum.
-8. Product try-on — sample preview plus the YouCam payload for Soft Lip Tint or a treatment.
-9. Cart — at least one skip (Bounce Firming Cream on the sample scan) and one match.
-10. Routine — after “Load sample follow-up”, deltas and Keep on the serum plus Switch on Clear Breakout Gel.
-11. Phone results — scores readable without horizontal scroll.
+1. Home, phone — “See what your skin actually needs.”, face oval, Take a selfie.
+2. Home, returning — Last scan card and “Re-scan: is it working?”
+3. Scan, empty — oval, upload, sample photo, analyze disabled until a photo is chosen.
+4. Scan, sample photo selected — illustration in the oval, Analyze with YouCam ready.
+5. Camera — dark screen, oval, lighting / face / makeup checks.
+6. Results — large score, skin-score chip, mole and eyelid note, focus concerns.
+7. Why sheet — one concern, plain language, raw score kept for follow-up.
+8. Shelf — Suits you / Patch-test / Skip chips, skip rows still visible.
+9. Product — Line Soft Serum fit, then the before/after preview and the YouCam payload.
+10. Cart — Bounce Firming Cream skip banner inline. Checkout stays available.
+11. Routine — after “Load sample follow-up”, side-by-side photos, deltas, Keep on the serum, Switch on Clear Breakout Gel.
 
-Suggested capture width: 1280×800 for desktop, 390×844 for the two phone frames.
+Suggested capture width: 390×844. The column maxes out at 440px on a wider window.
 
 ## Demo video script (about 2 minutes)
 

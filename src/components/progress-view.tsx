@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
-import { Progress, ProgressLabel, ProgressValue } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { toast } from "sonner";
+import { ProductMark } from "@/components/product-mark";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { getProduct } from "@/lib/catalog";
 import { baselineScan, buildSampleFollowUp, compareScans, latestScan, routineCalls } from "@/lib/progress";
@@ -14,145 +12,209 @@ import { cn } from "@/lib/utils";
 
 export function ProgressView() {
   const { ready, state } = useGlow();
+  const [tab, setTab] = useState<"history" | "compare">("compare");
 
-  if (!ready) return <Skeleton className="h-80 w-full" />;
+  if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
 
   const baseline = baselineScan(state);
   const latest = latestScan(state);
   if (!baseline || !latest) {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyTitle>No baseline yet</EmptyTitle>
-          <EmptyDescription>The tracker needs a first scan. Later photos are compared with YouCam&apos;s raw score, not the friendlier UI score.</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Link href="/scan" className={buttonVariants({ className: "h-11" })}>
-            Take the first scan
-          </Link>
-        </EmptyContent>
-      </Empty>
+      <div className="flex flex-col gap-3 py-8">
+        <p className="micro">Is it working?</p>
+        <h1 className="font-display text-[28px] font-bold">No baseline yet</h1>
+        <p className="text-[var(--ink-2)]">The tracker needs a first scan. Later photos are compared on YouCam&apos;s raw score.</p>
+        <Link href="/scan" className="btn-primary w-full">
+          Take the first scan
+        </Link>
+      </div>
     );
   }
 
   const same = baseline.id === latest.id;
   const deltas = same ? [] : compareScans(baseline, latest);
   const calls = routineCalls(state);
+  const lead = calls.map((call) => getProduct(call.productId)?.name).find(Boolean);
+  const history = [...state.scans].reverse();
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <p className="text-sm text-muted-foreground">Is it working?</p>
-        <h1 className="font-heading text-3xl tracking-tight sm:text-4xl">Keep, patch-test, or switch</h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Baseline {new Date(baseline.createdAt).toLocaleDateString()} · latest {new Date(latest.createdAt).toLocaleDateString()}. A move of 3 or more raw points is the call. Under two weeks, a small move stays a patch-test.
-        </p>
+      <div>
+        <p className="micro">Is it working?</p>
+        <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Keep, patch-test, or switch</h1>
       </div>
 
-      {same && (
-        <Card>
-          <CardHeader>
-            <CardTitle>One scan is a starting point</CardTitle>
-            <CardDescription>Rescan with a new selfie, or load the sample follow-up to see the verdicts without waiting two weeks.</CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            The sample follow-up is labeled. Lines, pores, dryness, texture, and redness improve. Breakouts get worse. With a YouCam key, a real second photo replaces it.
-          </CardContent>
-          <CardFooter className="gap-2">
-            <Button
-              type="button"
-              data-testid="sample-followup"
-              onClick={() => addScan(buildSampleFollowUp(baseline))}
-            >
-              Load sample follow-up
-            </Button>
-            <Link href="/scan" className={buttonVariants({ variant: "outline" })}>
-              Rescan
-            </Link>
-          </CardFooter>
-        </Card>
-      )}
-
-      {!same && (
-        <div className="flex flex-col gap-3">
-          {deltas.map((delta) => {
-            const width = Math.max(8, Math.min(100, delta.latestRaw));
-            return (
-              <Card key={delta.id} size="sm">
-                <CardHeader>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <CardTitle>{delta.label}</CardTitle>
-                    <span className={cn("tabular-nums", delta.delta > 0 ? "text-primary" : delta.delta < 0 ? "text-destructive" : "text-muted-foreground")}>
-                      {delta.delta > 0 ? "+" : ""}
-                      {delta.delta} raw
-                    </span>
-                  </div>
-                  <CardDescription>
-                    UI score {delta.baselineUi} → {delta.latestUi}. Raw {delta.baselineRaw} → {delta.latestRaw}.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={width} aria-label={`${delta.label} latest raw score`}>
-                    <ProgressLabel className="sr-only">{delta.label}</ProgressLabel>
-                    <ProgressValue className="sr-only" />
-                  </Progress>
-                </CardContent>
-              </Card>
-            );
-          })}
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => addScan(buildSampleFollowUp(baseline))}>
-              Load another sample follow-up
-            </Button>
-            <Link href="/scan" className={buttonVariants({ variant: "outline" })}>
-              Rescan for real
-            </Link>
-          </div>
+      <section className="rounded-[20px] bg-[var(--surface-warm)] p-4">
+        <p className="text-[15px] font-semibold">
+          {lead ? `With ${lead}.` : "After a second scan."} Re-scan to see if it&apos;s working.
+        </p>
+        <p className="mt-2 text-[13px] text-[var(--ink-2)]">
+          {same
+            ? "The sample follow-up is labeled. Lines, pores, dryness, texture, and redness improve. Breakouts get worse."
+            : `Baseline ${formatDay(baseline.createdAt)} → latest ${formatDay(latest.createdAt)}. A move of 3 or more raw points is the call.`}
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          <button type="button" className="btn-primary w-full" data-testid="sample-followup" onClick={() => addScan(buildSampleFollowUp(baseline))}>
+            Load sample follow-up
+          </button>
+          <Link href="/scan" className="btn-ghost grid h-11 place-items-center">
+            Rescan for real
+          </Link>
         </div>
+      </section>
+
+      <div className="flex rounded-full bg-[var(--surface-2)] p-1">
+        {(["history", "compare"] as const).map((item) => (
+          <button
+            key={item}
+            type="button"
+            className={cn("h-9 flex-1 rounded-full text-[13px] font-semibold capitalize", tab === item ? "bg-white shadow-[var(--sh-1)]" : "text-[var(--ink-2)]")}
+            onClick={() => setTab(item)}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
+      {tab === "history" ? (
+        <ul className="flex flex-col gap-3">
+          {history.map((scan) => (
+            <li key={scan.id} className="flex items-center justify-between border-b border-[var(--line)] pb-3">
+              <div>
+                <p className="text-[15px] font-semibold">{formatDay(scan.createdAt)}</p>
+                <p className="text-[12px] text-[var(--meta)]">{scan.id === baseline.id ? "Baseline" : scan.id === latest.id ? "Latest" : "Earlier scan"}</p>
+              </div>
+              <p className="num text-[22px] font-bold">{scan.overall}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <PhotoTile label="Before" date={baseline.createdAt} src={baseline.previewDataUrl} />
+            <PhotoTile label="After" date={latest.createdAt} src={same ? undefined : latest.previewDataUrl} pending={same} />
+          </div>
+          {same ? (
+            <p className="text-[13px] text-[var(--meta)]">One scan is a starting point. Load the sample follow-up or take another selfie.</p>
+          ) : (
+            <ul className="flex flex-col">
+              {deltas.map((delta) => {
+                const uiDelta = delta.latestUi - delta.baselineUi;
+                const tone = uiDelta > 0 ? "suits" : uiDelta < 0 ? "skip" : "neutral";
+                return (
+                  <li key={delta.id} className="flex items-center gap-3 border-b border-[var(--line)] py-3">
+                    <span className="w-[92px] text-[15px] font-semibold">{delta.label}</span>
+                    <span className="num flex-1 text-[13px] text-[var(--ink-2)]">
+                      {delta.baselineUi} → {delta.latestUi}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-1 text-[12px] font-semibold",
+                        tone === "suits" && "bg-[var(--suits-bg)] text-[var(--suits)]",
+                        tone === "skip" && "bg-[var(--skip-bg)] text-[var(--skip)]",
+                        tone === "neutral" && "bg-[var(--surface-2)] text-[var(--meta)]",
+                      )}
+                    >
+                      {uiDelta > 0 ? `▲ +${uiDelta}` : uiDelta < 0 ? `▼ ${uiDelta}` : "No change"}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-heading text-2xl">Products on trial</h2>
+        <h2 className="font-display text-[22px] font-bold">Products on trial</h2>
         {calls.length === 0 ? (
-          <Empty className="border">
-            <EmptyHeader>
-              <EmptyTitle>Nothing is on trial</EmptyTitle>
-              <EmptyDescription>The cart check is what puts a product here, tied to the baseline scan.</EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Link href="/shop" className={buttonVariants({ variant: "outline" })}>
-                Find a match
-              </Link>
-            </EmptyContent>
-          </Empty>
+          <p className="text-[13px] text-[var(--ink-2)]">The cart check is what puts a product here, tied to the baseline scan.</p>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {calls.map((call) => {
-              const product = getProduct(call.productId);
-              if (!product) return null;
-              return (
-                <Card key={call.productId}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between gap-2">
-                      <CardTitle>{product.name}</CardTitle>
+          calls.map((call) => {
+            const product = getProduct(call.productId);
+            if (!product) return null;
+            return (
+              <article key={call.productId} className="rounded-[20px] border border-[var(--line)] p-4 shadow-[var(--sh-1)]">
+                <div className="flex gap-3">
+                  <div className="grid h-[88px] w-[72px] place-items-center rounded-[16px] bg-[var(--surface-2)]">
+                    <ProductMark name={product.name} className="h-16 w-14" />
+                  </div>
+                  <div>
+                    <p className="text-[16px] font-semibold">{product.name}</p>
+                    <div className="mt-2">
                       <VerdictBadge verdict={call.verdict} />
                     </div>
-                    <CardDescription>{call.title}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{call.summary}</p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="button" variant="ghost" onClick={() => removeFromRoutine(product.slug)}>
-                      Remove from routine
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
-          </div>
+                  </div>
+                </div>
+                <p className="mt-3 text-[15px] font-semibold">{call.title}</p>
+                <p className="mt-1 text-[13px] text-[var(--ink-2)]">{call.summary}</p>
+                <div className="mt-3 flex gap-2">
+                  {call.verdict === "switch" ? (
+                    <Link href="/shop" className="btn-secondary">
+                      See alternatives
+                    </Link>
+                  ) : (
+                    <button type="button" className="btn-secondary" onClick={() => toast.success(`Staying with ${product.name}`)}>
+                      Keep using
+                    </button>
+                  )}
+                  <button type="button" className="btn-ghost px-3" onClick={() => removeFromRoutine(product.slug)}>
+                    Remove
+                  </button>
+                </div>
+              </article>
+            );
+          })
         )}
       </section>
+
+      <Sparkline values={[...state.scans].reverse().map((scan) => scan.overall)} />
     </div>
   );
+}
+
+function PhotoTile({ label, date, src, pending }: { label: string; date: string; src?: string; pending?: boolean }) {
+  return (
+    <figure className="overflow-hidden rounded-[16px] bg-[var(--surface-2)]">
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={`${label} scan`} className="aspect-[3/4] w-full object-cover" />
+      ) : (
+        <div className="grid aspect-[3/4] place-items-center px-3 text-center text-[12px] text-[var(--meta)]">{pending ? "Waiting for the next photo" : "No photo saved"}</div>
+      )}
+      <figcaption className="px-2 py-2 text-[12px] text-[var(--meta)]">
+        {label} · {formatDay(date)}
+      </figcaption>
+    </figure>
+  );
+}
+
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const width = 360;
+  const height = 72;
+  const min = Math.min(...values) - 2;
+  const max = Math.max(...values) + 2;
+  const span = Math.max(1, max - min);
+  const points = values.map((value, index) => {
+    const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * (width - 16) + 8;
+    const y = height - 14 - ((value - min) / span) * (height - 28);
+    return `${x},${y}`;
+  });
+  return (
+    <section>
+      <p className="micro mb-2">Overall score</p>
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[72px] w-full" role="img" aria-label="Overall score across scans">
+        <polyline fill="none" stroke="#151581" strokeWidth="2" points={points.join(" ")} />
+        {points.map((point) => {
+          const [x, y] = point.split(",");
+          return <circle key={point} cx={x} cy={y} r="3" fill="#151581" />;
+        })}
+      </svg>
+    </section>
+  );
+}
+
+function formatDay(value: string): string {
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
