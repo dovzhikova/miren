@@ -212,6 +212,17 @@
   font-size: 17px;
 }
 
+@media (max-width: 389px) {
+  .btn-primary.btn-lg {
+    height: 48px;
+    font-size: 16px;
+  }
+  .sticky-bar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
 .btn-secondary {
   display: inline-flex;
   height: 44px;
@@ -320,11 +331,25 @@
   visibility: hidden !important;
 }
 
-.page-content { padding-bottom: calc(150px + var(--mobile-nav-height)); }
-.mobile-nav { padding-bottom: env(safe-area-inset-bottom); }
+.page-content { padding-bottom: 2rem; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.mobile-nav { padding-bottom: env(safe-area-inset-bottom, 0px); }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
-:focus { scroll-margin-top: 80px; scroll-margin-bottom: calc(150px + var(--mobile-nav-height)); }
+:focus { scroll-margin-top: 80px; scroll-margin-bottom: calc(6rem + var(--mobile-nav-height)); }
 @media (min-width: 768px) {
   :root { --mobile-nav-height: 0px; }
-  .sticky-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .page-content { padding-bottom: 3rem; }
+  .sticky-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .sticky-bar.sticky-bar-flow {
+    position: static;
+    bottom: auto;
+    left: auto;
+    z-index: auto;
+    width: 100%;
+    transform: none;
+    border-top: 0;
+    background: transparent;
+    padding: 0;
+  }
 }

@@ -65,7 +65,7 @@ export function CartView() {
         : "Cart check: nothing here is a skip";
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-24">
       <h1 className="font-display text-[28px] font-bold">Cart</h1>
       <section className="rounded-[12px] bg-[var(--surface-warm)] p-4">
         <p className="text-[15px] font-semibold">{headline}</p>

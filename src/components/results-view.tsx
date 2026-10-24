@@ -29,12 +29,7 @@ const HOTSPOT: Partial<Record<ConcernId, { x: number; y: number }>> = {
   firmness: { x: 50, y: 84 },
 };
 
-const ZONES = [
-  { label: "Forehead", x: 50, y: 18 },
-  { label: "Eyes", x: 50, y: 40 },
-  { label: "Cheeks", x: 50, y: 62 },
-  { label: "Jaw", x: 50, y: 86 },
-];
+const ZONES = ["Forehead", "Eyes", "Cheeks", "Jaw"];
 
 const TABS = [
   { id: "skin", label: "Skin" },
@@ -84,7 +79,7 @@ export function ResultsView() {
         {scan.mode === "live" && <span className="text-[12px] font-medium text-[var(--meta)]">AI Skin Analysis v2.1</span>}
       </div>
 
-      <div role="tablist" aria-label="Scan results" className="flex gap-1 overflow-x-auto rounded-[12px] bg-[var(--surface-2)] p-1">
+      <div role="tablist" aria-label="Scan results" className="grid w-full min-w-0 grid-cols-4 gap-1 rounded-[12px] bg-[var(--surface-2)] p-1">
         {TABS.map((item) => (
           <button
             key={item.id}
@@ -94,7 +89,7 @@ export function ResultsView() {
             aria-selected={tab === item.id}
             aria-controls={`panel-${item.id}`}
             className={cn(
-              "h-11 min-w-[5.5rem] flex-1 rounded-[8px] px-3 text-[15px] font-semibold",
+              "h-11 min-w-0 rounded-[8px] px-0.5 text-[12px] font-semibold tracking-[-0.01em] whitespace-nowrap min-[380px]:px-1.5 min-[380px]:text-[13px] sm:px-3 sm:text-[15px] sm:tracking-normal",
               tab === item.id ? "bg-[var(--brand)] text-white" : "text-[var(--ink)]",
             )}
             onClick={() => setTab(item.id)}
@@ -105,7 +100,7 @@ export function ResultsView() {
       </div>
 
       {state.scans.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="no-scrollbar flex min-w-0 gap-2 overflow-x-auto">
           {state.scans.map((item) => (
             <button
               key={item.id}
@@ -201,13 +196,15 @@ export function ResultsView() {
             return (
               <Link key={product.slug} href={`/shop/${product.slug}?try=1`} className="flex items-center gap-4 border-b border-[var(--line)] py-3">
                 <ProductPhoto product={product} />
-                <span className="min-w-0">
-                  <VerdictBadge verdict={suit.verdict} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="flex min-h-7 items-center">
+                    <VerdictBadge verdict={suit.verdict} />
+                  </span>
                   <span className="mt-1 block text-[16px] leading-snug font-semibold">{product.name}</span>
                   <span className="block text-[13px] text-[var(--ink-2)]">
                     {product.brand} · {product.category} · {formatPrice(product.price)}
                   </span>
-                  <span className="mt-2 inline-flex h-9 items-center rounded-[8px] bg-[var(--brand)] px-3 text-[13px] font-semibold text-white">Try this on</span>
+                  <span className="mt-2 inline-flex min-h-11 items-center self-start rounded-[8px] bg-[var(--brand)] px-3 text-[13px] font-semibold text-white">Try this on</span>
                 </span>
               </Link>
             );
@@ -251,6 +248,8 @@ function AnnotatedFace({
   hotspot: ConcernId | null;
   onHotspot: (id: ConcernId | null) => void;
 }) {
+  const legend = scan.concerns.filter((item) => HOTSPOT[item.id] && (focusIds.has(item.id) || hotspot === item.id));
+
   return (
     <div className="overflow-hidden rounded-[20px] bg-[var(--pack)]">
     <div className="relative">
@@ -261,12 +260,14 @@ function AnnotatedFace({
         <div className="aspect-[4/5] w-full" />
       )}
       <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" aria-hidden>
-        <ellipse cx="50" cy="24" rx="24" ry="12" fill="none" stroke="white" strokeWidth="0.7" />
-        <ellipse cx="37" cy="50" rx="11" ry="7" fill="none" stroke="white" strokeWidth="0.7" />
-        <ellipse cx="63" cy="50" rx="11" ry="7" fill="none" stroke="white" strokeWidth="0.7" />
-        <ellipse cx="34" cy="74" rx="13" ry="12" fill="none" stroke="white" strokeWidth="0.7" />
-        <ellipse cx="66" cy="74" rx="13" ry="12" fill="none" stroke="white" strokeWidth="0.7" />
-        <ellipse cx="50" cy="104" rx="18" ry="10" fill="none" stroke="white" strokeWidth="0.7" />
+        <g fill="none" stroke="white" strokeOpacity="0.55" strokeWidth="0.4">
+          <ellipse cx="50" cy="22" rx="16" ry="7" />
+          <ellipse cx="38" cy="47" rx="7" ry="3.4" />
+          <ellipse cx="62" cy="47" rx="7" ry="3.4" />
+          <ellipse cx="35" cy="72" rx="9" ry="7" />
+          <ellipse cx="65" cy="72" rx="9" ry="7" />
+          <ellipse cx="50" cy="104" rx="12" ry="5.5" />
+        </g>
       </svg>
       <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-[13px] font-semibold shadow-[var(--sh-1)]">
         Skin score <span className="num">{scan.overall}</span>
@@ -274,7 +275,8 @@ function AnnotatedFace({
       {scan.concerns.map((item) => {
         const spot = HOTSPOT[item.id];
         if (!spot) return null;
-        const labeled = focusIds.has(item.id);
+        const active = hotspot === item.id;
+        const focused = focusIds.has(item.id);
         return (
           <button
             key={item.id}
@@ -282,21 +284,47 @@ function AnnotatedFace({
             className="absolute grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center"
             style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
             aria-label={`${item.label} ${item.uiScore}`}
-            onClick={() => onHotspot(hotspot === item.id ? null : item.id)}
+            aria-pressed={active}
+            onClick={() => onHotspot(active ? null : item.id)}
           >
-            <span className="size-2.5 rounded-full bg-white shadow-[0_0_0_4px_rgba(26,26,26,0.55)]" />
-            {(labeled || hotspot === item.id) && (
-              <span className="absolute top-8 left-1/2 z-10 -translate-x-1/2 rounded-full bg-[var(--ink)] px-2 py-1 text-[11px] font-semibold whitespace-nowrap text-white">
-                {item.label} {item.uiScore}
-              </span>
-            )}
+            <span
+              className={cn(
+                "rounded-full bg-white",
+                active && "size-3 shadow-[0_0_0_5px_rgba(44,53,57,0.9)]",
+                !active && focused && "size-2.5 shadow-[0_0_0_4px_rgba(26,26,26,0.45)]",
+                !active && !focused && "size-2 shadow-[0_0_0_3px_rgba(26,26,26,0.28)]",
+              )}
+            />
           </button>
         );
       })}
     </div>
-    <p className="flex flex-wrap gap-2 bg-white px-3 py-2 text-[12px] font-semibold text-[var(--ink)]">
+    {legend.length > 0 && (
+      <ul className="grid grid-cols-2 gap-1.5 bg-white px-3 pt-3">
+        {legend.map((item) => {
+          const active = hotspot === item.id;
+          return (
+            <li key={item.id}>
+              <button
+                type="button"
+                aria-pressed={active}
+                className={cn(
+                  "flex min-h-11 w-full items-center justify-between gap-2 rounded-full px-3 text-left text-[13px] font-semibold",
+                  active ? "bg-[var(--brand)] text-white" : "bg-[var(--surface-2)] text-[var(--ink)]",
+                )}
+                onClick={() => onHotspot(active ? null : item.id)}
+              >
+                <span className="min-w-0 leading-tight">{item.label}</span>
+                <span className="num shrink-0">{item.uiScore}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+    <p className="grid grid-cols-4 gap-1 bg-white px-3 py-3 text-[11px] font-semibold text-[var(--ink)] min-[390px]:text-[12px]">
       {ZONES.map((zone) => (
-        <span key={zone.label} className="rounded-full bg-[var(--surface-2)] px-2 py-1">{zone.label}</span>
+        <span key={zone} className="rounded-full bg-[var(--surface-2)] px-1 py-1 text-center">{zone}</span>
       ))}
     </p>
     </div>

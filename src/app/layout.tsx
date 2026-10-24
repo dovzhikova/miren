@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={`${manrope.variable} ${display.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
-        <main id="main-content" tabIndex={-1} className="page-content mx-auto flex w-full max-w-[960px] flex-1 flex-col px-5 pt-6">{children}</main>
+        <main id="main-content" tabIndex={-1} className="page-content mx-auto flex w-full min-w-0 max-w-[960px] flex-1 flex-col px-4 pt-4 min-[390px]:px-5 min-[390px]:pt-6">{children}</main>
         <SiteFooter />
         <Toaster theme="light" position="top-center" />
       </body>

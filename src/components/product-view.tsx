@@ -86,24 +86,19 @@ function ProductContent({ slug }: { slug: string }) {
   const makeup = product.tryOn.kind === "makeup";
   const rendered = Boolean(result?.resultUrl);
   const after = result?.resultUrl || "";
+  const tryOnLabel = busy ? (scan?.mode === "live" ? "Asking YouCam…" : "Checking…") : result ? "Refresh preview" : product.tryOn.label;
+  const showMakeupBar = makeup && ready && Boolean(scan);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={cn("flex flex-col gap-4 sm:gap-6", showMakeupBar && "max-md:pb-24", !makeup && "pb-24")}>
       <div>
         <p className="micro">{product.brand}</p>
-        <h1 className="mt-2 font-display text-[32px] leading-[1.1] font-bold sm:text-[40px]">{product.name}</h1>
-        <p className="num mt-3 text-[15px] font-semibold">
+        <h1 className="mt-1 font-display text-[22px] leading-[1.1] font-bold min-[390px]:mt-2 min-[390px]:text-[32px] sm:text-[40px]">{product.name}</h1>
+        <p className="num mt-2 text-[15px] font-semibold min-[390px]:mt-3">
           {formatPrice(product.price)}
           {product.size ? ` · ${product.size}` : ""} · {product.category}
           {!product.inStock ? " · Out of stock" : ""}
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <VerdictBadge verdict={suit.verdict} />
-          <span className="inline-flex rounded-full border border-[var(--line)] px-3 py-1 text-[12px] font-semibold">
-            {makeup ? "Powered by YouCam Makeup VTO" : "YouCam skin simulation"}
-          </span>
-        </div>
-        <p className="mt-3 max-w-[40rem] text-[15px] text-[var(--ink-2)]">{product.summary}</p>
       </div>
 
       <section id="try-on" className="flex flex-col gap-3">
@@ -112,25 +107,31 @@ function ProductContent({ slug }: { slug: string }) {
         ) : !scan ? (
           <p className="rounded-[16px] bg-[var(--surface-2)] px-4 py-3 text-[13px]">Scan first. The preview uses the photo already on this device.</p>
         ) : (
-          <button type="button" className="btn-primary btn-lg w-full" onClick={preview} disabled={busy} data-testid="try-on">
-            {busy ? (scan.mode === "live" ? "Asking YouCam…" : "Checking…") : result ? "Refresh preview" : product.tryOn.label}
-          </button>
+          <div className={cn("grid items-start gap-3", photo && "sm:grid-cols-2")}>
+            {photo && (
+              <figure className="order-1 overflow-hidden rounded-[12px] bg-[var(--pack)] sm:order-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo} alt="Face photo for try-on" className="aspect-[4/5] max-h-[42dvh] w-full object-cover object-top max-[389px]:aspect-auto max-[389px]:h-[168px] sm:aspect-square sm:max-h-none sm:object-center" />
+                <figcaption className="px-3 py-2 text-[12px] font-medium text-[var(--ink-2)]">Scan photo</figcaption>
+              </figure>
+            )}
+            <ProductPhoto product={product} frame="hero" priority className={photo ? "order-2 sm:order-1 max-sm:mx-auto max-sm:max-w-[220px]" : undefined} />
+          </div>
         )}
-        <div className="grid items-start gap-3 sm:grid-cols-2">
-          <ProductPhoto product={product} frame="hero" priority />
-          {photo && (
-            <figure className="overflow-hidden rounded-[12px] bg-[var(--pack)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={photo} alt="Face photo for try-on" className="aspect-square w-full object-cover" />
-              <figcaption className="px-3 py-2 text-[12px] font-medium text-[var(--ink-2)]">Scan photo</figcaption>
-            </figure>
-          )}
+        <div className="flex flex-wrap items-center gap-2">
+          <VerdictBadge verdict={suit.verdict} />
+          <span className="inline-flex rounded-full border border-[var(--line)] px-3 py-1 text-[12px] font-semibold">
+            {makeup ? "Powered by YouCam Makeup VTO" : "YouCam skin simulation"}
+          </span>
         </div>
-        <p className="text-[13px] text-[var(--ink-2)]">
-          {makeup
-            ? "A virtual colour preview on this photo. Screen colour can vary."
-            : "An illustrative skin simulation, not a prediction of what this product will do."}
-        </p>
+        <p className="max-w-[40rem] text-[15px] text-[var(--ink-2)]">{product.summary}</p>
+        {ready && scan && (
+          <p className="text-[13px] text-[var(--ink-2)]">
+            {makeup
+              ? "A virtual colour preview on this photo. Screen colour can vary."
+              : "An illustrative skin simulation, not a prediction of what this product will do."}
+          </p>
+        )}
         {rendered && photo && after && (
           <BeforeAfter before={photo} after={after} makeup={makeup} />
         )}
@@ -145,6 +146,18 @@ function ProductContent({ slug }: { slug: string }) {
             <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-semibold">Request that would be sent</summary>
             <pre tabIndex={0} role="region" aria-label="Demo API request" className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
           </details>
+        )}
+        {ready && scan && !makeup && (
+          <button type="button" className="btn-primary btn-lg w-full" onClick={preview} disabled={busy} data-testid="try-on">
+            {tryOnLabel}
+          </button>
+        )}
+        {showMakeupBar && (
+          <div className="sticky-bar sticky-bar-flow">
+            <button type="button" className="btn-primary btn-lg w-full" onClick={preview} disabled={busy} data-testid="try-on">
+              {tryOnLabel}
+            </button>
+          </div>
         )}
       </section>
 
@@ -195,13 +208,7 @@ function ProductContent({ slug }: { slug: string }) {
         </Link>
       )}
 
-      {makeup ? (
-        <div className="sticky-bar flex flex-col gap-2 sm:hidden">
-          <button type="button" className="btn-primary w-full" onClick={preview} disabled={busy || !scan}>
-            {busy ? "Checking…" : product.tryOn.label}
-          </button>
-        </div>
-      ) : (
+      {!makeup && (
         <div className="sticky-bar flex items-center gap-3">
           <button
             type="button"
