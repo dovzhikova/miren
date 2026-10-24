@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import rawCatalog from "@/data/products.json";
-import { CONCERN_SCORE_MIN, concernScoresFromRaw, formatPrice, listFaceProducts, listProducts, matchScore } from "@/lib/catalog";
+import { CONCERN_SCORE_MIN, concernScoresFromRaw, formatPrice, isAllowedOfficialImage, listFaceProducts, listProducts, matchScore } from "@/lib/catalog";
+import { FOR_YOU_LIMIT, forYouProducts } from "@/lib/recommend";
 import { sampleBaselineScan } from "@/lib/youcam/mock";
 import { suitProduct } from "@/lib/suitability";
 
@@ -73,5 +74,46 @@ describe("product catalog", () => {
     const steady = { ...match, concerns: ["firmness" as const], concernScores: { firmness: 0.95 }, warnings: ["pregnancy"] };
     expect(suitProduct(steady, scan).verdict).toBe("skip");
     expect(suitProduct(steady, scan).warningNote).toMatch(/low-confidence/i);
+  });
+
+  it("builds a short For you list and only accepts brand-site photos", () => {
+    const scan = sampleBaselineScan();
+    const focus = new Set(scan.concerns.filter((item) => item.uiScore < 75).map((item) => item.id));
+    const list = forYouProducts(scan);
+    expect(list.length).toBeGreaterThan(0);
+    expect(list.length).toBeLessThanOrEqual(FOR_YOU_LIMIT);
+    expect(new Set(list.map((product) => product.slug)).size).toBe(list.length);
+    const counts = new Map<string, number>();
+    for (const product of list) {
+      counts.set(product.routineRole, (counts.get(product.routineRole) ?? 0) + 1);
+      expect(suitProduct(product, scan).verdict).not.toBe("skip");
+      expect(product.concerns.some((id) => focus.has(id))).toBe(true);
+      if (product.officialImageUrl) expect(isAllowedOfficialImage(product.officialImageUrl)).toBe(true);
+    }
+    const night = list.find((product) => product.slug === "nighttimerepair");
+    expect(night?.officialImageUrl).toMatch(/^https:\/\/cdn\.shopify\.com\/s\/files\/1\/0820\/7771\/2682\//);
+    const withPhoto = listProducts().filter((product) => product.officialImageUrl);
+    expect(withPhoto).toHaveLength(165);
+    expect(withPhoto.every((product) => isAllowedOfficialImage(product.officialImageUrl))).toBe(true);
+    for (const id of ["BR_105", "BR_091", "BR_025", "BR_018", "ZO_058"]) {
+      expect(listProducts().find((product) => product.id === id)?.officialImageUrl).toBeUndefined();
+    }
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(2);
+    expect(counts.size).toBeGreaterThan(1);
+    const verdicts = list.map((product) => suitProduct(product, scan).verdict);
+    const firstPatch = verdicts.indexOf("patch-test");
+    const lastSuit = verdicts.lastIndexOf("suits");
+    if (firstPatch !== -1 && lastSuit !== -1) expect(lastSuit).toBeLessThan(firstPatch);
+
+    expect(isAllowedOfficialImage("https://www.zoskinhealth.com/cdn/shop/files/cream.jpg")).toBe(true);
+    expect(isAllowedOfficialImage("https://www.biologique-recherche.com/media/cream.jpg")).toBe(true);
+    expect(isAllowedOfficialImage("https://circadia.com/images/cream.jpg")).toBe(true);
+    expect(isAllowedOfficialImage("https://cdn.shopify.com/s/files/1/0820/7771/2682/files/cream.png")).toBe(true);
+    expect(isAllowedOfficialImage("https://cdn.shopify.com/s/files/1/0973/8466/1323/files/cream.webp")).toBe(true);
+    expect(isAllowedOfficialImage("https://evil.shopify.com/cream.jpg")).toBe(false);
+    expect(isAllowedOfficialImage("https://cdn.example.com/cream.jpg")).toBe(false);
+    expect(isAllowedOfficialImage("http://www.zoskinhealth.com/cream.jpg")).toBe(false);
+    expect(isAllowedOfficialImage("https://static.tildacdn.one/cream.png")).toBe(false);
+    expect(isAllowedOfficialImage("https://cosmedoc.net/assets/products/catalog/cream.webp")).toBe(false);
   });
 });

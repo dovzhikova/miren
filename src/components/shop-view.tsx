@@ -5,7 +5,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
-import { formatPrice, listFaceProducts, matchScore, productCategory } from "@/lib/catalog";
+import { formatPrice, listFaceProducts, matchScore, productCategory, routineRoleLabel } from "@/lib/catalog";
+import { forYouProducts } from "@/lib/recommend";
 import { latestScan } from "@/lib/progress";
 import { addToCart, useGlow } from "@/lib/store";
 import { suitProduct, verdictRank } from "@/lib/suitability";
@@ -22,7 +23,9 @@ const filters: Array<{ id: "all" | SuitabilityVerdict; label: string }> = [
 export function ShopView() {
   const { ready, state } = useGlow();
   const [filter, setFilter] = useState<(typeof filters)[number]["id"]>("all");
+  const [browseAll, setBrowseAll] = useState(false);
   const scan = latestScan(state);
+  const forYou = useMemo(() => (ready && scan ? forYouProducts(scan) : []), [ready, scan]);
 
   const rows = useMemo(() => {
     if (!ready) return [];
@@ -56,15 +59,70 @@ export function ShopView() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="micro">Matched to your scan</p>
-        <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Must-have routine for you</h1>
+        <p className="micro">{browseAll ? "Full face catalog" : "For you"}</p>
+        <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">
+          {browseAll ? "Every face product" : "A short routine"}
+        </h1>
         <p className="mt-2 text-[13px] text-[var(--ink-2)]">
-          {scan
-            ? "Ranked by how strongly each product is scored for the concerns this photo actually needs. Prices are in ₪."
-            : "Scan first if you want each product checked. Without a scan, face products stay a patch-test."}
+          {browseAll
+            ? "The full face list, still ranked by the scan. Prices are in ₪."
+            : scan
+              ? "The concerns under 75, a few steps, suits ahead of patch-test. Prices are in ₪."
+              : "Scan first. Without a photo, a short list would only be a guess."}
         </p>
+        <button type="button" className="btn-ghost mt-2 h-11 text-left" onClick={() => setBrowseAll((value) => !value)}>
+          {browseAll ? "Back to For you" : "Browse all"}
+        </button>
       </div>
 
+      {!browseAll && scan && forYou.length === 0 && (
+        <p className="text-[15px] text-[var(--ink-2)]">Nothing on the shelf suits the low scores. Browse all to see the rest.</p>
+      )}
+
+      {!browseAll && scan && forYou.length > 0 && (
+        <section className="flex flex-col gap-3">
+          {forYou.map((product) => {
+            const suit = suitProduct(product, scan);
+            const inCart = state.cart.some((line) => line.productId === product.slug);
+            return (
+              <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
+                <Link href={`/shop/${product.slug}`} className="grid h-[96px] w-[80px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
+                  <ProductPhoto product={product} className="h-full w-full object-contain" />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <VerdictBadge verdict={suit.verdict} />
+                  <Link href={`/shop/${product.slug}`} className="mt-1 block text-[16px] leading-snug font-semibold">
+                    {product.name}
+                  </Link>
+                  <p className="text-[13px] text-[var(--meta)]">
+                    {product.brand} · {routineRoleLabel(product.routineRole)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{formatPrice(product.price)}</span>
+                    {product.size && <span className="rounded-full bg-[var(--surface-2)] px-2 py-1 text-[13px] font-medium text-[var(--ink-2)]">{product.size}</span>}
+                  </div>
+                  <p className="mt-2 text-[13px] text-[var(--ink-2)]">{suit.reasons[0]}</p>
+                  {suit.warningNote && <p className="mt-1 text-[12px] text-[var(--meta)]">{suit.warningNote}</p>}
+                  <button
+                    type="button"
+                    className="btn-bag mt-2"
+                    disabled={inCart}
+                    onClick={() => {
+                      addToCart(product.slug);
+                      toast.success(`${product.name} is in the cart`);
+                    }}
+                  >
+                    {inCart ? "Added" : "Add"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      )}
+
+      {browseAll && (
+      <>
       <div className="flex gap-1 overflow-x-auto">
         {filters.map((item) => (
           <button
@@ -131,6 +189,8 @@ export function ShopView() {
           })}
         </section>
       ))}
+      </>
+      )}
     </div>
   );
 }

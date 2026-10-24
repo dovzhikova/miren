@@ -1,7 +1,26 @@
+import officialImages from "@/data/official-images.json";
+import rawCatalog from "@/data/products.json";
 import { concernLabel } from "@/lib/concerns";
 import type { ConcernId, Product, Scan } from "@/lib/types";
-import rawCatalog from "@/data/products.json";
 
+export type RoutineRole = Product["routineRole"];
+
+const BRAND_HOST = /(^|\.)((zoskinhealth\.com)|(biologique-recherche\.com)|(circadia\.com))$/i;
+/** Shopify CDN used by the Biologique Recherche and Circadia stores. Not a wildcard of shopify.com. */
+const SHOPIFY_CDN = "cdn.shopify.com";
+const BLOCKED_HOST = /cosmedoc\.net|tildacdn|tilda\./i;
+
+/** Official brand HTTPS only, including the CDNs those sites actually serve. */
+export function isAllowedOfficialImage(url: unknown): url is string {
+  if (typeof url !== "string" || !url.startsWith("https://")) return false;
+  if (BLOCKED_HOST.test(url)) return false;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === SHOPIFY_CDN || BRAND_HOST.test(host);
+  } catch {
+    return false;
+  }
+}
 /** A concern tag or raw score at or above this is "what the product is for". Same cutoff as the export. */
 export const CONCERN_SCORE_MIN = 0.6;
 
@@ -101,6 +120,7 @@ type RawProduct = {
   in_stock: boolean;
   size: string | null;
   role: string[];
+  official_image_url?: string;
 };
 
 /**
@@ -137,6 +157,42 @@ export function concernScoresFromRaw(raw: RawScores | null, tags: string[]): Par
   }
 
   return scores;
+}
+
+export function routineRoleFrom(slugs: string[], roles: string[]): RoutineRole {
+  if (slugs.includes("spf")) return "spf";
+  if (slugs.includes("glazaandguby")) return "eye";
+  if (roles.includes("cleanser") || slugs.includes("ochishenie")) return "cleanser";
+  if (
+    slugs.includes("syvorotkyandampuly") ||
+    slugs.includes("specialyhod") ||
+    slugs.includes("lechebnuyyhod") ||
+    slugs.includes("scrabyandpilyngi") ||
+    slugs.includes("maskiandbuster")
+  ) {
+    return "treatment";
+  }
+  if (roles.includes("cream") || slugs.includes("kremy")) return "moisturizer";
+  return "other";
+}
+
+const ROLE_LABEL: Record<RoutineRole, string> = {
+  cleanser: "Cleanser",
+  treatment: "Treatment",
+  moisturizer: "Moisturizer",
+  eye: "Eye",
+  spf: "SPF",
+  other: "Care",
+};
+
+export function routineRoleLabel(role: RoutineRole): string {
+  return ROLE_LABEL[role];
+}
+
+function officialImageFor(raw: RawProduct): string | undefined {
+  const entry = (officialImages as { images?: Record<string, { image_url?: string }> }).images?.[raw.id];
+  const url = raw.official_image_url || entry?.image_url;
+  return isAllowedOfficialImage(url) ? url : undefined;
 }
 
 function categoryFor(slugs: string[]): string {
@@ -214,6 +270,8 @@ function toProduct(raw: RawProduct): Product {
     forFace,
     warnings: raw.warnings_en,
     category: categoryFor(slugs),
+    routineRole: routineRoleFrom(slugs, raw.role),
+    officialImageUrl: officialImageFor(raw),
     inStock: raw.in_stock,
     skinTypes: skin,
     tryOn: {

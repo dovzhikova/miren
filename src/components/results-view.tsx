@@ -5,7 +5,11 @@ import { useState } from "react";
 import { HabitsSection } from "@/components/habits-panel";
 import { WhySheet } from "@/components/why-sheet";
 import { cn } from "@/lib/utils";
-import { productsForConcern } from "@/lib/catalog";
+import { formatPrice, routineRoleLabel } from "@/lib/catalog";
+import { forYouProducts } from "@/lib/recommend";
+import { suitProduct } from "@/lib/suitability";
+import { ProductPhoto } from "@/components/product-photo";
+import { VerdictBadge } from "@/components/verdict-badge";
 import type { ConcernId, ConcernScore, Scan } from "@/lib/types";
 import { useGlow } from "@/lib/store";
 
@@ -51,7 +55,7 @@ export function ResultsView() {
   const focus = scan.concerns.filter((item) => item.uiScore < 75).slice(0, 3);
   const focusIds = new Set((focus.length ? focus : scan.concerns.slice(0, 3)).map((item) => item.id));
   const isBaseline = state.baselineId === scan.id;
-  const helps = concern ? productsForConcern(concern.id).slice(0, 3) : [];
+  const forYou = forYouProducts(scan);
 
   return (
     <div className="flex flex-col gap-8">
@@ -145,6 +149,33 @@ export function ResultsView() {
         </div>
       </section>
 
+      <section className="flex flex-col gap-3">
+        <div>
+          <p className="micro">For you</p>
+          <h2 className="mt-1 font-display text-[22px] leading-[1.2] font-bold">A short routine</h2>
+          <p className="mt-2 text-[13px] leading-[1.4] text-[var(--ink-2)]">
+            {forYou.length} products for the scores under 75. One of each step, suits ahead of patch-test.
+          </p>
+        </div>
+        {forYou.map((product) => {
+          const suit = suitProduct(product, scan);
+          return (
+            <Link key={product.slug} href={`/shop/${product.slug}`} className="flex gap-3 border-b border-[var(--line)] pb-3">
+              <span className="grid h-[72px] w-[64px] shrink-0 place-items-center overflow-hidden rounded-[8px] bg-[var(--stage)]">
+                <ProductPhoto product={product} className="h-full w-full object-contain" />
+              </span>
+              <span className="min-w-0">
+                <VerdictBadge verdict={suit.verdict} />
+                <span className="mt-1 block text-[15px] leading-snug font-semibold">{product.name}</span>
+                <span className="block text-[12px] text-[var(--meta)]">
+                  {product.brand} · {routineRoleLabel(product.routineRole)} · {formatPrice(product.price)}
+                </span>
+              </span>
+            </Link>
+          );
+        })}
+      </section>
+
       <HabitsSection scan={scan} />
 
       <button type="button" className="btn-ghost h-11 text-left" onClick={() => setHowOpen(true)}>
@@ -170,17 +201,7 @@ export function ResultsView() {
           <>
             <p>{concern.explanation}</p>
             <p>{concern.direction} UI score {concern.uiScore}. Raw score {concern.rawScore}, kept for the follow-up.</p>
-            {helps.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {helps.flatMap((product) =>
-                  product.ingredients.split(",").slice(0, 2).map((part) => (
-                    <span key={`${product.slug}-${part}`} className="rounded-full bg-[var(--surface-2)] px-3 py-1 text-[13px] font-medium text-[var(--ink-2)]">
-                      {part.trim()}
-                    </span>
-                  )),
-                )}
-              </div>
-            )}
+            <p>Products for the low scores are in For you, a short list rather than one shelf per concern.</p>
           </>
         )}
       </WhySheet>

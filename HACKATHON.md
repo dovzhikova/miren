@@ -8,7 +8,7 @@ License: MIT (`LICENSE`)
 
 People do not wonder about their skin in the abstract. They wonder in two specific moments: standing in a shop (or a cart) deciding whether a product is for them, and a few weeks later staring at the same bottle wondering if it worked.
 
-Most skin widgets stop at a score. GlowCheck uses that score to make the purchase decision, then uses a second scan to judge the product. The shelf is 175 products from Biologique Recherche, ZO Skin Health, and Circadia, with prices in ILS shown as ₪. Each face product carries YouCam concern tags and the original 0–1 scores. Those scores rank the matches. Products with no concern data (body, hair, devices) do not appear in face recommendations. Keyword warnings in the product text are low confidence: they never produce a hard Skip on their own, and the note asks for a patch-test. Photos are a neutral placeholder, and the product page does not link out to a shop.
+Most skin widgets stop at a score. GlowCheck uses that score to make the purchase decision, then uses a second scan to judge the product. The shelf is 175 products from Biologique Recherche, ZO Skin Health, and Circadia, with prices in ILS shown as ₪. Each face product carries YouCam concern tags and the original 0–1 scores. Those scores rank the matches. Results and the shop default show a short For you routine: at most eight unique products, led by concerns under 75, mixed by step, suits ahead of patch-test. Browse all opens the rest of the face catalog. Products with no concern data (body, hair, devices) do not appear in face recommendations. Keyword warnings in the product text are low confidence: they never produce a hard Skip on their own, and the note asks for a patch-test. A product photo loads only from an official brand HTTPS URL when one is mapped; otherwise a neutral placeholder. The product page does not link out to a shop.
 
 Moles and eyelid shape are still filtered before any recommendation.
 
@@ -98,10 +98,10 @@ Capture these for the Devpost gallery. Sample mode is enough for every frame. Th
 3. Scan, empty — oval, upload, sample photo, analyze disabled until a photo is chosen.
 4. Scan, sample photo selected — illustration in the oval, Analyze with YouCam ready.
 5. Camera — dark screen, oval, lighting / face / makeup checks.
-6. Results — large score, skin-score chip, mole and eyelid note, focus concerns, and Beyond the shelf (top 3 habits).
+6. Results — large score, skin-score chip, mole and eyelid note, focus concerns, For you (at most eight products), and Beyond the shelf (top 3 habits).
 7. Why sheet — one concern, plain language, raw score kept for follow-up.
 8. Shelf — brand names, ₪ prices, Suits you / Patch-test / Skip chips. A keyword warning sits under the reason and does not flip a strong match to Skip.
-9. Product — Nighttime Repair plus: catalog score, neutral placeholder, search by brand and name, then the skin-simulation preview and payload.
+9. Product — Nighttime Repair plus: catalog score, brand-site photo when mapped otherwise a neutral placeholder, search by brand and name, then the skin-simulation preview and payload.
 10. Cart — Sérum Matriciel Visage skip banner inline, because firmness is already high. Checkout stays available. A pregnancy note on a matching product stays a footnote.
 11. Routine — after “Load sample follow-up”, side-by-side photos and deltas. A line-and-pore product keeps. An acne-only score switches. Firmness-only stays a patch-test.
 

@@ -120,6 +120,10 @@ export type Product = {
   /** Keyword flags from the description. Low confidence. Never a hard skip by themselves. */
   warnings: string[];
   category: string;
+  /** Step in a short routine. Used to keep a shortlist from being eight serums. */
+  routineRole: "cleanser" | "treatment" | "moisturizer" | "eye" | "spf" | "other";
+  /** HTTPS image on the brand's own site. Absent until an official photo is mapped. */
+  officialImageUrl?: string;
   inStock: boolean;
   skinTypes: string[];
   tryOn: {
