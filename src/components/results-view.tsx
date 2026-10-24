@@ -97,7 +97,7 @@ export function ResultsView() {
       </div>
 
       <div>
-        <p className="micro">{scan.mode === "mock" ? "Sample fixture · YouCam Skin Analysis v2.1" : "YouCam AI Skin Analysis v2.1"}</p>
+        <p className="micro">{scan.mode === "mock" ? "Demo data · generated example scores" : "YouCam AI Skin Analysis v2.1"}</p>
         <p className={cn("num mt-2 text-[64px] leading-none font-semibold", scoreToneClass(scan.overall))} aria-live="polite">
           {scan.overall}
           <span className="text-[22px] font-semibold text-[var(--meta)]">/100</span>
@@ -106,7 +106,7 @@ export function ResultsView() {
         <p className="mt-2 text-[13px] text-[var(--meta)]">
           {scan.skinType ? `${scan.skinType} skin. ` : ""}
           {scan.skinAge != null ? `Skin age estimate ${scan.skinAge}, a cosmetic read. ` : ""}
-          Raw overall {scan.overallRaw}.
+          Raw overall {scan.overallRaw ?? "unavailable"}.
         </p>
       </div>
 
@@ -130,7 +130,9 @@ export function ResultsView() {
         </div>
       )}
 
-      <section className="flex flex-col gap-3">
+      <details className="rounded-[12px] border border-[var(--line)] p-4">
+        <summary className="cursor-pointer text-[15px] font-semibold">All concern scores</summary>
+      <section className="mt-4 flex flex-col gap-3">
         <p className="micro">Markers</p>
         <ScoreSpread concerns={scan.concerns} />
         <div className="grid grid-cols-2 gap-2">
@@ -149,6 +151,7 @@ export function ResultsView() {
           ))}
         </div>
       </section>
+      </details>
 
       <section className="flex flex-col gap-3">
         <div>
@@ -231,7 +234,7 @@ export function ResultsView() {
         {concern && (
           <>
             <p>{concern.explanation}</p>
-            <p>{concern.direction} UI score {concern.uiScore}. Raw score {concern.rawScore}, kept for the follow-up.</p>
+            <p>{concern.direction} UI score {concern.uiScore}. Raw score {concern.rawScore ?? "unavailable"}. Only measured raw scores enter comparisons.</p>
             <p>Products for the low scores are in For you, a short list rather than one shelf per concern.</p>
           </>
         )}

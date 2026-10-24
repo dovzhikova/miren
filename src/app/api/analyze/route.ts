@@ -1,3 +1,5 @@
+import { authorizeLive, issueTask } from "@/lib/live-access";
+import { analysisProfile } from "@/lib/youcam/image";
 import { GlowError } from "@/lib/errors";
 import { youcamCredentials } from "@/lib/youcam/auth";
 import { runSkinAnalysis } from "@/lib/youcam/client";
@@ -47,18 +49,21 @@ export async function POST(request: Request) {
   const bytes = Buffer.from(await image.arrayBuffer());
   const source = sourceOf(form.get("source"));
 
-  if (!youcamCredentials().live) {
+  if (source === "sample" || form.get("mode") === "mock" || !youcamCredentials().live) {
+    if (source !== "sample" && form.get("mode") === "live") return json({ error: "Personal scans are unavailable right now. Switch to Demo data to explore the app." }, 503);
     const scan = buildMockScan(bytes, { scenario: scenarioOf(form.get("scenario")), source });
     return json({ mode: "mock", status: "success", scan });
   }
 
   try {
     const prepared = await prepareUpload(bytes);
+    const sessionId = await authorizeLive(request);
+    const createdAt = new Date().toISOString();
     const outcome = await runSkinAnalysis(prepared, { source });
     if (outcome.status === "running") {
-      return json({ mode: "live", status: "running", taskId: outcome.taskId, auth: outcome.auth });
+      return json({ mode: "live", status: "running", taskToken: issueTask({ sessionId, taskId: outcome.taskId, kind: "skin-analysis", source, profile: analysisProfile(prepared.width, prepared.height), createdAt }), auth: outcome.auth });
     }
-    return json({ mode: "live", status: "success", scan: { ...outcome.scan, source }, auth: outcome.auth });
+    return json({ mode: "live", status: "success", scan: { ...outcome.scan, source, createdAt }, auth: outcome.auth });
   } catch (error) {
     return fail(error);
   }

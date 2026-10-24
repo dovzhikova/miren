@@ -26,8 +26,11 @@ export function ProductPhoto({
 
   if (!src) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={PLACEHOLDER} alt={product.name} className={className} />
+      <span className={cn("relative grid place-items-center", className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={PLACEHOLDER} alt="" className="h-full w-full object-contain" />
+        <span className="absolute bottom-1 inset-x-1 text-center text-[10px] text-[var(--meta)]">Photo unavailable</span>
+      </span>
     );
   }
 

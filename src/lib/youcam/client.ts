@@ -248,6 +248,7 @@ export async function runSkinAnalysis(image: PreparedImage, options?: { source?:
     source: options?.source ?? "upload",
     auth: finished.auth.auth,
   });
+  scan.profile = profile;
   return { status: "success", scan, auth: finished.auth.auth };
 }
 
@@ -257,7 +258,7 @@ export async function scanFromTaskBody(body: unknown, extras: Pick<Scan, "source
   const results = data.results;
   const hasOutput = Boolean(results && typeof results === "object" && Array.isArray((results as { output?: unknown }).output));
   const payload = !hasOutput && mediaUrl ? await scoreInfoFromZip(mediaUrl) : body;
-  return parseYoucamResult(payload, {
+  const scan = parseYoucamResult(payload, {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     source: extras.source,
@@ -265,6 +266,8 @@ export async function scanFromTaskBody(body: unknown, extras: Pick<Scan, "source
     auth: extras.auth,
     engine: "youcam-skin-analysis-v2.1",
   });
+  if (!scan.concerns.length) throw new GlowError("YouCam returned no usable concern scores. Please try another photo.", 502, "invalid-result");
+  return scan;
 }
 
 export async function runTryOn(image: PreparedImage, kind: "makeup-vto" | "skin-simulation", payload: Record<string, unknown>) {

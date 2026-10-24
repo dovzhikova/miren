@@ -2,7 +2,7 @@ import { clampScore, concernDirection, concernLabel, explainConcern, isConcernId
 import type { ConcernId, ConcernScore, FilteredFinding, Scan } from "@/lib/types";
 
 type ScoreBits = {
-  raw: number;
+  raw: number | null;
   ui: number;
   maskUrl?: string;
 };
@@ -65,7 +65,7 @@ function readScore(value: unknown): ScoreBits | null {
   if (raw == null && ui == null) return null;
   const mask = firstString(record.mask_urls) ?? stringField(record.output_mask_name);
   return {
-    raw: raw ?? ui ?? 0,
+    raw,
     ui: ui ?? Math.round(raw ?? 0),
     maskUrl: mask,
   };
@@ -87,7 +87,9 @@ function firstString(value: unknown): string | undefined {
 function preferWhole(regions: { region?: string; bits: ScoreBits }[]): ScoreBits {
   const whole = regions.find((item) => !item.region || /whole|all|overall/i.test(item.region));
   if (whole) return whole.bits;
-  const raw = regions.reduce((sum, item) => sum + item.bits.raw, 0) / regions.length;
+  const raw = regions.every((item) => item.bits.raw != null)
+    ? regions.reduce((sum, item) => sum + item.bits.raw!, 0) / regions.length
+    : null;
   const ui = regions.reduce((sum, item) => sum + item.bits.ui, 0) / regions.length;
   const mask = regions.find((item) => item.bits.maskUrl)?.bits.maskUrl;
   return { raw, ui, maskUrl: mask };
@@ -136,9 +138,9 @@ export function youcamErrorMessage(code: string | undefined, fallback?: string):
     case "error_nsfw_content_detected":
       return "YouCam rejected this photo. Use a normal face selfie.";
     case "InvalidApiKey":
-      return "YouCam rejected the API key. Check YOUCAM_API_KEY and YOUCAM_PUBLIC_KEY.";
+      return "Personal analysis is temporarily unavailable. Please try later or use Demo data.";
     case "CreditInsufficiency":
-      return "The YouCam account is out of units. Remove the API key to keep using sample mode.";
+      return "The live service has reached its usage allowance. Try later or use Demo data.";
     case "invalid_parameter":
     case "InvalidParameters":
       return "YouCam rejected the analysis settings. Try the photo again.";
@@ -180,7 +182,7 @@ export function parseYoucamResult(body: unknown, extras?: Partial<Pick<Scan, "id
     if (alias === "all") {
       const record = asRecord(value);
       overall = numberFrom(record?.score) ?? numberFrom(record?.ui_score) ?? numberFrom(value) ?? overall;
-      overallRaw = numberFrom(record?.raw_score) ?? numberFrom(record?.score) ?? overallRaw;
+      overallRaw = numberFrom(record?.raw_score) ?? overallRaw;
       return;
     }
     if (alias === "skin_type") {
@@ -232,7 +234,7 @@ export function parseYoucamResult(body: unknown, extras?: Partial<Pick<Scan, "id
     concerns.push({
       id,
       label: concernLabel(id),
-      rawScore: Math.round(clampScore(bits.raw) * 10) / 10,
+      rawScore: bits.raw == null ? null : clampScore(bits.raw),
       uiScore,
       explanation: explainConcern(id, uiScore),
       direction: concernDirection(id),
@@ -245,8 +247,8 @@ export function parseYoucamResult(body: unknown, extras?: Partial<Pick<Scan, "id
   if (overall == null && concerns.length) {
     overall = concerns.reduce((sum, item) => sum + item.uiScore, 0) / concerns.length;
   }
-  if (overallRaw == null && concerns.length) {
-    overallRaw = concerns.reduce((sum, item) => sum + item.rawScore, 0) / concerns.length;
+  if (overallRaw == null && concerns.length && concerns.every((item) => item.rawScore != null)) {
+    overallRaw = concerns.reduce((sum, item) => sum + item.rawScore!, 0) / concerns.length;
   }
 
   return {
@@ -257,7 +259,7 @@ export function parseYoucamResult(body: unknown, extras?: Partial<Pick<Scan, "id
     auth: extras?.auth ?? "none",
     engine: extras?.engine ?? "youcam-skin-analysis-v2.1",
     overall: Math.round(clampScore(overall ?? 0)),
-    overallRaw: Math.round(clampScore(overallRaw ?? overall ?? 0) * 10) / 10,
+    overallRaw: overallRaw == null ? null : Math.round(clampScore(overallRaw) * 10) / 10,
     skinAge: skinAge == null ? null : Math.round(skinAge),
     skinType,
     concerns,

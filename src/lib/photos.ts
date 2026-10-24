@@ -49,21 +49,29 @@ export function dataUrlToFile(dataUrl: string, name = "scan.jpg"): File | null {
 }
 
 async function readJson(response: Response) {
-  const data = (await response.json().catch(() => ({}))) as { error?: string; status?: string; taskId?: string; scan?: Scan; resultUrl?: string | null; mode?: string; preview?: unknown; kind?: string };
+  const data = (await response.json().catch(() => ({}))) as { error?: string; status?: string; taskToken?: string; scan?: Scan; resultUrl?: string | null; mode?: string; preview?: unknown; kind?: string };
   if (!response.ok) throw new Error(data.error || "Request failed.");
   return data;
 }
 
-export async function analyzePhoto(file: File, source: Scan["source"]): Promise<Scan> {
-  const prepared = await shrinkPhoto(file);
+async function ensureLiveSession(signal?: AbortSignal) {
+  const response = await fetch("/api/config", { cache: "no-store", signal });
+  const data = await response.json() as { liveAvailable?: boolean };
+  if (!response.ok || !data.liveAvailable) throw new Error("Personal scans are unavailable right now. Switch to Demo data to explore the app.");
+}
+
+export async function analyzePhoto(file: File, source: Scan["source"], mode: Scan["mode"], signal?: AbortSignal): Promise<Scan> {
   const form = new FormData();
-  form.set("image", prepared);
+  form.set("image", file);
   form.set("source", source);
-  let data = await readJson(await fetch("/api/analyze", { method: "POST", body: form }));
-  for (let attempt = 0; data.status === "running" && data.taskId && attempt < 20; attempt += 1) {
+  form.set("mode", mode);
+  if (mode === "live" && source !== "sample") await ensureLiveSession(signal);
+  let data = await readJson(await fetch("/api/analyze", { method: "POST", body: form, signal }));
+  for (let attempt = 0; data.status === "running" && data.taskToken && attempt < 20; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    data = await readJson(await fetch(`/api/task?kind=skin-analysis&taskId=${encodeURIComponent(data.taskId)}&source=${source}`));
+    data = await readJson(await fetch(`/api/task?token=${encodeURIComponent(data.taskToken)}`, { signal }));
   }
+  signal?.throwIfAborted();
   if (!data.scan) throw new Error("This is taking longer than usual. Try the photo again.");
   return data.scan;
 }
@@ -75,21 +83,24 @@ export type TryOnResult = {
   preview: unknown;
 };
 
-export async function requestTryOn(file: File, product: string): Promise<TryOnResult> {
+export async function requestTryOn(file: File, product: string, mode: Scan["mode"], signal?: AbortSignal): Promise<TryOnResult> {
   const prepared = await shrinkPhoto(file);
   const form = new FormData();
   form.set("image", prepared);
   form.set("product", product);
-  let data = await readJson(await fetch("/api/try-on", { method: "POST", body: form }));
+  form.set("mode", mode);
+  if (mode === "live") await ensureLiveSession(signal);
+  let data = await readJson(await fetch("/api/try-on", { method: "POST", body: form, signal }));
   const preview = data.preview;
   const kind = data.kind === "makeup" ? "makeup-vto" : "skin-simulation";
-  for (let attempt = 0; data.status === "running" && data.taskId && attempt < 20; attempt += 1) {
+  for (let attempt = 0; data.status === "running" && data.taskToken && attempt < 20; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    const taskId = data.taskId;
-    data = await readJson(await fetch(`/api/task?kind=${kind}&taskId=${encodeURIComponent(taskId)}`));
+    const taskToken = data.taskToken;
+    data = await readJson(await fetch(`/api/task?token=${encodeURIComponent(taskToken)}`, { signal }));
     data.preview = data.preview ?? preview;
     data.kind = data.kind ?? (kind === "makeup-vto" ? "makeup" : "simulation");
   }
+  signal?.throwIfAborted();
   if (data.status !== "success") throw new Error("The preview is taking too long. Try again.");
   return {
     mode: data.mode || "mock",

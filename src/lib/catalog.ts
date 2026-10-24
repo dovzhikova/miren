@@ -205,7 +205,8 @@ export function routineRoleLabel(role: RoutineRole): string {
 }
 
 function officialImageFor(raw: RawProduct): string | undefined {
-  const entry = (officialImages as { images?: Record<string, { image_url?: string }> }).images?.[raw.id];
+  const entry = (officialImages as { images?: Record<string, { image_url?: string; unavailable?: boolean }> }).images?.[raw.id];
+  if (entry?.unavailable) return undefined;
   const url = raw.official_image_url || entry?.image_url;
   if (!isAllowedOfficialImage(url)) return undefined;
   return sharpenOfficialImageUrl(url);
@@ -315,7 +316,7 @@ function toMakeup(raw: MakeupSource): Product {
     ingredients: "",
     concerns,
     concernScores: raw.concerns,
-    tracksSkin: true,
+    tracksSkin: false,
     forFace: true,
     warnings: [],
     category: raw.category,

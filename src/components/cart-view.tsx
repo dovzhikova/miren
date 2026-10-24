@@ -49,7 +49,7 @@ export function CartView() {
     return (
       <div className="flex flex-col gap-3 py-8">
         <h1 className="font-display text-[28px] font-bold">The cart is empty</h1>
-        <p className="text-[var(--ink-2)]">Add a product after the suitability check. Checkout here is a demo. Nothing is charged.</p>
+        <p className="text-[var(--ink-2)]">Add a product after the suitability check. This cart starts a routine on this device. Nothing is charged.</p>
         <Link href="/shop" className="btn-primary w-full">
           Browse the shelf
         </Link>
@@ -72,7 +72,7 @@ export function CartView() {
         <p className="num mt-2 text-[13px] text-[var(--ink-2)]">
           Suits {suits.length} · Patch-test {patches.length} · Skip {skips.length}
         </p>
-        <p className="mt-2 text-[13px] text-[var(--meta)]">Advice, not a lock. Checkout still works.</p>
+        <p className="mt-2 text-[13px] text-[var(--meta)]">Advice, not a lock. You can still choose what to track.</p>
         {skips.length > 0 && keepers.length > 0 && (
           <button type="button" className="btn-ghost mt-2 h-11" onClick={() => buy(keepers.map((line) => line.product.slug))}>
             Add the matches only
@@ -138,7 +138,7 @@ export function CartView() {
               )}
               {suit.verdict === "patch-test" && (
                 <div className="mt-3 rounded-[16px] border-l-[3px] border-[var(--patch)] bg-[var(--patch-bg)] px-3 py-3 text-[13px]">
-                  Try on your jaw for 24h first.{" "}
+                  Follow the product instructions before first use.{" "}
                   <button type="button" className="font-semibold text-[var(--brand)]" onClick={() => setHow(true)}>
                     How to patch-test
                   </button>
@@ -152,17 +152,16 @@ export function CartView() {
       <div className="sticky-bar flex items-center gap-3">
         <div>
           <p className="num text-[18px] font-bold">{formatPrice(total)}</p>
-          <p className="text-[12px] text-[var(--meta)]">Demo total</p>
+          <p className="text-[12px] text-[var(--meta)]">Catalog total</p>
         </div>
         <button type="button" className="btn-primary min-w-0 flex-1" data-testid="checkout" onClick={() => buy()}>
-          Checkout
+          Start tracking
         </button>
       </div>
 
       <WhySheet open={how} title="How to patch-test" onClose={() => setHow(false)}>
-        <p>Put a pea-size amount along the jaw, once a day, for 24 hours. Leave the rest of the face alone.</p>
-        <p>Stinging that fades in a minute is common. Spreading redness, burning, or swelling means stop and skip it.</p>
-        <p>The follow-up scan is the second opinion, after about two weeks of actual use.</p>
+        <p>Follow the manufacturer’s directions for a small-area test and seek qualified advice if you have a reaction or a concern about suitability.</p>
+        <p>A follow-up photo records cosmetic score changes. It cannot establish product safety or effectiveness.</p>
       </WhySheet>
     </div>
   );

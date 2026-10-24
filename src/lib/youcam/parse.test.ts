@@ -57,16 +57,25 @@ describe("shelf check and tracker", () => {
     expect(getProduct(wrinkle!.slug)?.name).toBe(wrinkle!.name);
   });
 
-  it("turns a sample follow-up into keep and switch", () => {
+  it("describes generated changes without prescribing a product decision", () => {
     const later = buildSampleFollowUp(scan);
     const deltas = compareScans(scan, later);
     expect(deltas.find((item) => item.id === "wrinkle")!.delta).toBeGreaterThanOrEqual(3);
     expect(deltas.find((item) => item.id === "acne")!.delta).toBeLessThanOrEqual(-3);
     const base = listFaceProducts()[0];
-    expect(productProgress({ ...base, concerns: ["wrinkle", "pore"], tracksSkin: true }, scan, later).verdict).toBe("keep");
-    expect(productProgress({ ...base, concerns: ["acne"], tracksSkin: true }, scan, later).verdict).toBe("switch");
-    expect(productProgress({ ...base, concerns: ["firmness"], tracksSkin: true }, scan, later).verdict).toBe("patch-test");
-    expect(productProgress({ ...base, tracksSkin: false }, scan, later).verdict).toBe("keep");
-    expect(productProgress({ ...base, concerns: ["wrinkle"], tracksSkin: true }, scan, scan).verdict).toBe("patch-test");
+    expect(productProgress({ ...base, concerns: ["wrinkle", "pore"], tracksSkin: true }, scan, later).verdict).toBe("improved");
+    expect(productProgress({ ...base, concerns: ["acne"], tracksSkin: true }, scan, later).verdict).toBe("declined");
+    expect(productProgress({ ...base, concerns: ["firmness"], tracksSkin: true }, scan, later).verdict).toBe("observe");
+    expect(productProgress({ ...base, tracksSkin: false }, scan, later).verdict).toBe("untracked");
+    expect(productProgress({ ...base, concerns: ["wrinkle"], tracksSkin: true }, scan, scan).verdict).toBe("observe");
+  });
+});
+
+describe("missing raw measurements", () => {
+  it("keeps a missing raw score null instead of inventing it from ui_score", () => {
+    const scan = parseYoucamResult({ data: { results: { output: [{ type: "wrinkle", ui_score: 70 }] } } });
+    expect(scan.concerns[0].uiScore).toBe(70);
+    expect(scan.concerns[0].rawScore).toBeNull();
+    expect(scan.overallRaw).toBeNull();
   });
 });

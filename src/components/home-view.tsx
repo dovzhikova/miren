@@ -6,9 +6,9 @@ import { latestScan } from "@/lib/progress";
 import { useGlow } from "@/lib/store";
 
 const trusts = [
-  { icon: ScanFaceIcon, text: "14 skin concerns analysed" },
-  { icon: LockIcon, text: "Photo processed, not stored" },
-  { icon: ClockIcon, text: "Results in ~10s" },
+  { icon: ScanFaceIcon, text: "13 cosmetic concern scores" },
+  { icon: LockIcon, text: "Photo saved on this device" },
+  { icon: ClockIcon, text: "A routine you can track" },
 ];
 
 export function HomeView() {
@@ -18,13 +18,13 @@ export function HomeView() {
   // Relative age is read at render; the stored timestamp does not change underneath it.
   // eslint-disable-next-line react-hooks/purity
   const days = latest ? Math.max(0, Math.round((Date.now() - Date.parse(latest.createdAt)) / 86_400_000)) : 0;
-  const when = days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`;
+  const when = latest?.mode === "mock" ? (latest.engine === "sample-follow-up" ? "Generated follow-up" : "Demo scan") : days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`;
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
         <p className="micro">YouCam Skin AI</p>
-        <h1 className="font-display text-[28px] leading-[1.15] font-bold text-[var(--ink)]">See what your skin actually needs.</h1>
+        <h1 className="font-display text-[28px] leading-[1.15] font-bold text-[var(--ink)]">Check the match. Track the changes.</h1>
       </div>
 
       <div className="relative mx-auto h-[300px] w-[240px]">
@@ -55,7 +55,7 @@ export function HomeView() {
 
       <div className="sticky-bar flex flex-col gap-2">
         <Link href="/scan" className="btn-primary w-full" data-testid="start-scan">
-          {latest ? "Re-scan: is it working?" : "Take a selfie"}
+          {latest ? "Take a follow-up scan" : "Take a selfie"}
         </Link>
         <Link href="/scan#upload" className="btn-ghost grid h-11 place-items-center">
           Upload a photo

@@ -7,12 +7,12 @@ import { HabitLog } from "@/components/habits-panel";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { getProduct } from "@/lib/catalog";
-import { baselineScan, buildSampleFollowUp, compareScans, latestScan, routineCalls } from "@/lib/progress";
+import { baselineScan, buildSampleFollowUp, compareScans, comparisonIssue, latestScan, routineCalls } from "@/lib/progress";
 import { addScan, removeFromRoutine, useGlow } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export function ProgressView() {
-  const { ready, state } = useGlow();
+  const { ready, state, workspace, setWorkspace } = useGlow();
   const [tab, setTab] = useState<"history" | "compare">("compare");
 
   if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
@@ -33,16 +33,19 @@ export function ProgressView() {
   }
 
   const same = baseline.id === latest.id;
+  const issue = same ? null : comparisonIssue(baseline, latest);
   const deltas = same ? [] : compareScans(baseline, latest);
   const calls = routineCalls(state);
   const lead = calls.map((call) => getProduct(call.productId)?.name).find(Boolean);
   const history = [...state.scans].reverse();
+  const trend = history.filter((scan) => !comparisonIssue(scan, latest)).flatMap((scan) => scan.overallRaw == null ? [] : [scan.overallRaw]);
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <p className="micro">Is it working?</p>
-        <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Keep, patch-test, or switch</h1>
+        {workspace === "mock" && <p className="mb-2 text-[13px] font-semibold">Demo data: all changes are generated examples.</p>}
+        <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Your routine over time</h1>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -52,35 +55,39 @@ export function ProgressView() {
         </div>
         <div className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3">
           <p className="micro">Latest</p>
-          <p className="num mt-1 text-[36px] leading-none font-semibold">{same ? "—" : latest.overall}</p>
+          <p className="num mt-1 text-[36px] leading-none font-semibold">{same ? "Pending" : latest.overall}</p>
         </div>
       </div>
 
       <section className="rounded-[12px] bg-[var(--surface-warm)] p-4">
         <p className="text-[15px] font-semibold">
-          {lead ? `With ${lead}.` : "After a second scan."} Re-scan to see if it&apos;s working.
+          {lead ? `Tracking ${lead}.` : "Track changes between scans."}
         </p>
         <p className="mt-2 text-[13px] text-[var(--ink-2)]">
           {same
-            ? "The sample follow-up is labeled. Lines, pores, dryness, texture, and redness improve. Breakouts get worse."
-            : `Baseline ${formatDay(baseline.createdAt)} → latest ${formatDay(latest.createdAt)}. A move of 3 or more raw points is the call.`}
+            ? "Use the same camera, framing, and lighting for your next scan. Scores alone cannot establish whether a product worked."
+            : `Baseline ${formatDay(baseline.createdAt)} to latest ${formatDay(latest.createdAt)}. Changes below use measured raw scores.`}
         </p>
         <div className="mt-3 flex flex-col gap-2">
-          <button type="button" className="btn-primary w-full" data-testid="sample-followup" onClick={() => addScan(buildSampleFollowUp(baseline))}>
-            Load sample follow-up
-          </button>
-          <Link href="/scan" className="btn-ghost grid h-11 place-items-center">
-            Rescan for real
-          </Link>
+          {workspace === "mock" ? (
+            <>
+              <p className="text-[13px] font-semibold">Demo data only. The example below generates a follow-up dated 21 days after the baseline.</p>
+              <button type="button" className="btn-primary w-full" data-testid="sample-followup" onClick={() => addScan(buildSampleFollowUp(baseline))}>Generate demo follow-up</button>
+            </>
+          ) : (
+            <button type="button" className="btn-secondary" onClick={() => setWorkspace("mock")}>Explore separate demo data</button>
+          )}
+          <Link href="/scan" className="btn-ghost grid h-11 place-items-center">{workspace === "mock" ? "Take another demo scan" : "Take a follow-up scan"}</Link>
         </div>
       </section>
 
-      <div className="flex rounded-[8px] bg-[var(--surface-2)] p-1">
+      <div className="flex rounded-[8px] bg-[var(--surface-2)] p-1" aria-label="Routine view">
         {(["history", "compare"] as const).map((item) => (
           <button
             key={item}
             type="button"
             className={cn("h-9 flex-1 rounded-[6px] text-[13px] font-semibold capitalize", tab === item ? "bg-white text-[var(--ink)]" : "text-[var(--ink-2)]")}
+            aria-pressed={tab === item}
             onClick={() => setTab(item)}
           >
             {item}
@@ -107,17 +114,21 @@ export function ProgressView() {
             <PhotoTile label="After" date={latest.createdAt} src={same ? undefined : latest.previewDataUrl} pending={same} />
           </div>
           {same ? (
-            <p className="text-[13px] text-[var(--meta)]">One scan is a starting point. Load the sample follow-up or take another selfie.</p>
+            <p className="text-[13px] text-[var(--meta)]">One scan is a starting point. Take another comparable photo to see changes.</p>
+          ) : issue ? (
+            <p role="status" className="text-[13px]">{issue}</p>
+          ) : deltas.length === 0 ? (
+            <p role="status" className="text-[13px]">No shared measured raw scores are available for comparison.</p>
           ) : (
             <ul className="flex flex-col">
               {deltas.map((delta) => {
-                const uiDelta = delta.latestUi - delta.baselineUi;
-                const tone = uiDelta > 0 ? "suits" : uiDelta < 0 ? "skip" : "neutral";
+                const rawDelta = delta.delta;
+                const tone = rawDelta > 0 ? "suits" : rawDelta < 0 ? "skip" : "neutral";
                 return (
                   <li key={delta.id} className="flex items-center gap-3 border-b border-[var(--line)] py-3">
                     <span className="w-[92px] text-[15px] font-semibold">{delta.label}</span>
                     <span className="num flex-1 text-[13px] text-[var(--ink-2)]">
-                      {delta.baselineUi} → {delta.latestUi}
+                      {delta.baselineRaw.toFixed(1)} to {delta.latestRaw.toFixed(1)} raw
                     </span>
                     <span
                       className={cn(
@@ -127,7 +138,7 @@ export function ProgressView() {
                         tone === "neutral" && "bg-[var(--surface-2)] text-[var(--meta)]",
                       )}
                     >
-                      {uiDelta > 0 ? `▲ +${uiDelta}` : uiDelta < 0 ? `▼ ${uiDelta}` : "No change"}
+                      {rawDelta > 0 ? `▲ +${rawDelta}` : rawDelta < 0 ? `▼ ${rawDelta}` : "No change"}
                     </span>
                   </li>
                 );
@@ -142,10 +153,11 @@ export function ProgressView() {
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-[22px] font-bold">Products on trial</h2>
         {calls.length === 0 ? (
-          <p className="text-[13px] text-[var(--ink-2)]">The cart check is what puts a product here, tied to the baseline scan.</p>
+          <p className="text-[13px] text-[var(--ink-2)]">Start tracking a product from the cart. Its latest scan becomes its starting point.</p>
         ) : (
           calls.map((call) => {
             const product = getProduct(call.productId);
+            const trial = state.routine.find((item) => item.productId === call.productId);
             if (!product) return null;
             return (
               <article key={call.productId} className="rounded-[12px] border border-[var(--line)] p-4">
@@ -156,6 +168,7 @@ export function ProgressView() {
                   <div>
                     <p className="text-[16px] font-semibold">{product.name}</p>
                     <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
+                    {trial && <p className="text-[12px] text-[var(--meta)]">Tracking since {formatDay(trial.startedAt)}</p>}
                     <div className="mt-2">
                       <VerdictBadge verdict={call.verdict} />
                     </div>
@@ -164,13 +177,13 @@ export function ProgressView() {
                 <p className="mt-3 text-[15px] font-semibold">{call.title}</p>
                 <p className="mt-1 text-[13px] text-[var(--ink-2)]">{call.summary}</p>
                 <div className="mt-3 flex gap-2">
-                  {call.verdict === "switch" ? (
+                  {call.verdict === "declined" ? (
                     <Link href="/shop" className="btn-secondary">
                       See alternatives
                     </Link>
                   ) : (
                     <button type="button" className="btn-secondary" onClick={() => toast.success(`Staying with ${product.name}`)}>
-                      Keep using
+                      Keep tracking
                     </button>
                   )}
                   <button type="button" className="btn-ghost px-3" onClick={() => removeFromRoutine(product.slug)}>
@@ -183,7 +196,7 @@ export function ProgressView() {
         )}
       </section>
 
-      <Sparkline values={[...state.scans].reverse().map((scan) => scan.overall)} />
+      <Sparkline values={trend} />
     </div>
   );
 }
@@ -218,8 +231,8 @@ function Sparkline({ values }: { values: number[] }) {
   });
   return (
     <section>
-      <p className="micro mb-2">Overall score</p>
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-[72px] w-full" role="img" aria-label="Overall score across scans">
+      <p className="micro mb-2">Measured raw overall</p>
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-[72px] w-full" role="img" aria-label="Measured raw overall across compatible scans">
         <polyline fill="none" stroke="#2C3539" strokeWidth="2" points={points.join(" ")} />
         {points.map((point) => {
           const [x, y] = point.split(",");
