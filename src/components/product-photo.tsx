@@ -1,51 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const PLACEHOLDER = "/demo/product-placeholder.svg";
 
-/** List, cart, and results tiles are about 112px. Ask for 2–3× that. */
-export const LIST_PHOTO_SIZES = "(max-width: 440px) 112px, 112px";
-
+/** Square packshot. Official CDN bytes load directly so a failed optimizer cannot blank the tile. */
 export function ProductPhoto({
   product,
+  frame = "tile",
   className,
-  sizes = LIST_PHOTO_SIZES,
   priority = false,
 }: {
   product: Product;
+  frame?: "tile" | "compact" | "hero";
   className?: string;
-  sizes?: string;
   priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const src = !failed ? product.officialImageUrl : undefined;
 
-  if (!src) {
-    return (
-      <span className={cn("relative grid place-items-center", className)}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={PLACEHOLDER} alt="" className="h-full w-full object-contain" />
-        <span className="absolute bottom-1 inset-x-1 text-center text-[10px] text-[var(--meta)]">Photo unavailable</span>
-      </span>
-    );
-  }
-
   return (
-    <span className={cn("relative block", className)}>
-      <Image
-        src={src}
-        alt={product.name}
-        fill
-        sizes={sizes}
-        quality={90}
-        priority={priority}
-        className="object-contain"
-        onError={() => setFailed(true)}
-      />
+    <span
+      className={cn(
+        "relative block overflow-hidden rounded-[12px] bg-[var(--pack)]",
+        frame === "hero" && "mx-auto aspect-square w-full max-w-[440px]",
+        frame === "tile" && "size-28 shrink-0",
+        frame === "compact" && "size-24 shrink-0",
+        className,
+      )}
+    >
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={product.name}
+          className="absolute inset-0 h-full w-full object-contain p-1.5"
+          fetchPriority={priority ? "high" : "auto"}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={PLACEHOLDER} alt="" className="absolute inset-0 h-full w-full object-contain p-3" />
+          <span className="absolute inset-x-1 bottom-1 text-center text-[10px] font-medium text-[var(--ink-2)]">Photo unavailable</span>
+        </>
+      )}
     </span>
   );
 }

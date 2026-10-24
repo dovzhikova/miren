@@ -7,7 +7,7 @@ import { HabitLog } from "@/components/habits-panel";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { getProduct } from "@/lib/catalog";
-import { baselineScan, buildSampleFollowUp, compareScans, comparisonIssue, latestScan, routineCalls } from "@/lib/progress";
+import { baselineScan, buildSampleFollowUp, compareScans, comparisonIssue, demoComparisonState, latestScan, routineCalls } from "@/lib/progress";
 import { addScan, removeFromRoutine, useGlow } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +17,10 @@ export function ProgressView() {
 
   if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
 
-  const baseline = baselineScan(state);
-  const latest = latestScan(state);
+  const seeded = workspace === "mock" && state.scans.length === 0;
+  const view = seeded ? demoComparisonState() : state;
+  const baseline = baselineScan(view);
+  const latest = latestScan(view);
   if (!baseline || !latest) {
     return (
       <div className="flex flex-col gap-3 py-8">
@@ -35,9 +37,9 @@ export function ProgressView() {
   const same = baseline.id === latest.id;
   const issue = same ? null : comparisonIssue(baseline, latest);
   const deltas = same ? [] : compareScans(baseline, latest);
-  const calls = routineCalls(state);
+  const calls = routineCalls(view);
   const lead = calls.map((call) => getProduct(call.productId)?.name).find(Boolean);
-  const history = [...state.scans].reverse();
+  const history = [...view.scans].reverse();
   const trend = history.filter((scan) => !comparisonIssue(scan, latest)).flatMap((scan) => scan.overallRaw == null ? [] : [scan.overallRaw]);
 
   return (
@@ -45,6 +47,11 @@ export function ProgressView() {
       <div>
         <p className="micro">Is it working?</p>
         {workspace === "mock" && <p className="mb-2 text-[13px] font-semibold">Demo data: all changes are generated examples.</p>}
+        {seeded && (
+          <p data-testid="demo-story" className="mt-2 text-[14px] text-[var(--ink-2)]">
+            Example comparison: a baseline and a follow-up 21 days later, on the sample face. Nothing here is a live YouCam result.
+          </p>
+        )}
         <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Your routine over time</h1>
       </div>
 
@@ -72,7 +79,24 @@ export function ProgressView() {
           {workspace === "mock" ? (
             <>
               <p className="text-[13px] font-semibold">Demo data only. The example below generates a follow-up dated 21 days after the baseline.</p>
-              <button type="button" className="btn-primary w-full" data-testid="sample-followup" onClick={() => addScan(buildSampleFollowUp(baseline))}>Generate demo follow-up</button>
+              <button
+                type="button"
+                className="btn-primary w-full"
+                data-testid="sample-followup"
+                onClick={() => {
+                  if (seeded) {
+                    const story = demoComparisonState();
+                    const base = story.scans.find((scan) => scan.id === story.baselineId);
+                    const follow = story.scans.find((scan) => scan.id !== story.baselineId);
+                    if (base) addScan(base);
+                    if (follow) addScan(follow);
+                    return;
+                  }
+                  addScan(buildSampleFollowUp(baseline));
+                }}
+              >
+                Generate demo follow-up
+              </button>
             </>
           ) : (
             <button type="button" className="btn-secondary" onClick={() => setWorkspace("mock")}>Explore separate demo data</button>
@@ -157,14 +181,12 @@ export function ProgressView() {
         ) : (
           calls.map((call) => {
             const product = getProduct(call.productId);
-            const trial = state.routine.find((item) => item.productId === call.productId);
+            const trial = view.routine.find((item) => item.productId === call.productId);
             if (!product) return null;
             return (
               <article key={call.productId} className="rounded-[12px] border border-[var(--line)] p-4">
                 <div className="flex gap-3">
-                  <div className="grid h-[88px] w-[72px] place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
-                    <ProductPhoto product={product} className="h-full w-full object-contain" />
-                  </div>
+                  <ProductPhoto product={product} frame="compact" />
                   <div>
                     <p className="text-[16px] font-semibold">{product.name}</p>
                     <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
@@ -186,9 +208,11 @@ export function ProgressView() {
                       Keep tracking
                     </button>
                   )}
-                  <button type="button" className="btn-ghost px-3" onClick={() => removeFromRoutine(product.slug)}>
-                    Remove
-                  </button>
+                  {!seeded && (
+                    <button type="button" className="btn-ghost px-3" onClick={() => removeFromRoutine(product.slug)}>
+                      Remove
+                    </button>
+                  )}
                 </div>
               </article>
             );

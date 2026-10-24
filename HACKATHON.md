@@ -2,7 +2,7 @@
 
 ## Product
 
-The shopper has two questions: how does this product match the concerns on a scan, and what changed in later scans? GlowCheck links a curated catalog with cosmetic scores, saved products, a local routine, and habit check-ins.
+The shopper’s question is whether a product is working on their own face. GlowCheck runs a YouCam Skin AI scan, matches the low scores to products, tries makeup on that photo, and compares a later scan. It also keeps saved products and habit check-ins.
 
 A scan does not diagnose a condition or establish that a product caused a change. Catalog concern weights and matching thresholds are prototype heuristics. Skin simulation is an illustrative preview, not a product-outcome forecast.
 
@@ -50,12 +50,12 @@ The source image is stored in IndexedDB for previews. A smaller thumbnail is use
 
 ## Two-minute demonstration
 
-1. **The question:** open the home screen. Explain product matching and later observations.
-2. **The demo boundary:** keep the selector on Demo data. State that all scores in this run are generated examples and no provider request is being made.
-3. **Scan:** choose the sample illustration and analyze. Show the focus concerns, then expand all concern scores if needed.
-4. **Matching:** open Nighttime Repair plus. Explain that the catalog weight is a matching heuristic. Show the rationale and the notes from product text.
-5. **Preview:** show the labeled demo preview and keyboard-operable comparison slider. Explain that an authorized live run uses the stored source image and the corresponding YouCam API.
-6. **Routine:** add the product to the cart and choose Start tracking. No payment occurs. Generate a demo follow-up and show the dates, raw changes, and the statement that causation is unknown.
+1. **The question:** open the home screen. The line is whether this product is working on the shopper’s own face: Skin AI scan, matched products, try-on, re-scan.
+2. **Live recording:** with credentials configured, leave the selector on My scans (the first-visit default). State that the selfie and makeup try-on are real YouCam calls. Without credentials, stay on Demo data, point at the single banner, and do not describe a render as live.
+3. **Scan:** on Demo data, choose the sample photo (the same portrait as the home hero) and analyze. The Skin tab shows the annotated face, the overall verdict, and all concern scores.
+4. **Matching:** open the For you tab and Nighttime Repair plus. Explain that the catalog weight is a matching heuristic.
+5. **Preview:** on a makeup product, Try this on is the primary action. A live render shows before and after side by side. Demo data says the try-on did not run.
+6. **Routine:** add the product to the cart and choose Start tracking. No payment occurs. Demo mode already shows an example baseline and follow-up. Generate demo follow-up still adds another labeled example. Causation is unknown.
 7. **Separation:** switch to My scans and show that the demo history and routine are absent. Return to Demo data to restore them.
 8. **Privacy:** show the data explanation and deletion control.
 

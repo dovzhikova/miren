@@ -287,7 +287,7 @@ function ScanContent() {
 
       <div className="rounded-[12px] bg-[var(--surface-2)] p-4 text-[13px]">
         {workspace === "mock" || source === "sample" ? (
-          <p>Demo data: scores are generated examples, even when you upload your own photo. No YouCam analysis is performed.</p>
+          <p>Demo data uses generated example scores. YouCam is not called for this photo.</p>
         ) : (
           <label className="flex items-start gap-3">
             <input type="checkbox" className="mt-1 size-5 shrink-0" checked={consent} onChange={(event) => setConsent(event.target.checked)} />

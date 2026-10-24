@@ -1,8 +1,26 @@
 # GlowCheck
 
-GlowCheck helps a shopper compare a skincare product with cosmetic skin-analysis scores, then record changes across later scans. It also includes makeup previews, saved products, and habit check-ins.
+A shopper can read a product page and still not know whether it is doing anything on their own face. GlowCheck answers “is this product working on *my* face?” with one flow: a YouCam Skin AI scan, catalog matches for the low scores, makeup virtual try-on on that same photo, and a later scan compared on measured raw scores. Scores are a cosmetic read, not a diagnosis, and a photo comparison cannot prove that a product caused a change.
 
-Scores and catalog matches are heuristics. A photo comparison cannot establish product safety, effectiveness, or the cause of a change. This is a cosmetic prototype.
+Demo: [https://glowcheck-beta.vercel.app](https://glowcheck-beta.vercel.app)
+
+This repository is private. To share it with the YouCam hackathon, invite `contact_event@PerfectCorp.com` (GitHub: Settings → Collaborators → Add people).
+
+## YouCam APIs
+
+Credentialed calls stay on the server. When `YOUCAM_API_KEY` is set and live access is fully configured, Skin analysis and makeup try-on use the real YouCam APIs. Demo data never calls them.
+
+| Step | Endpoint |
+| --- | --- |
+| Register source image | `POST /s2s/v2.0/file` |
+| Upload image bytes | Returned presigned PUT URL |
+| Skin analysis | `POST /s2s/v2.1/task/skin-analysis` (HD or SD actions) |
+| Poll analysis | `GET /s2s/v2.1/task/skin-analysis/{task_id}` |
+| Makeup try-on | `POST /s2s/v2.0/task/makeup-vto` |
+| Skin simulation | `POST /s2s/v2.0/task/skin-simulation` |
+| Poll a preview | The matching task URL |
+
+Optional RSA handshake: `POST /s2s/v1.0/client/auth` when `YOUCAM_PUBLIC_KEY` is set, with fallback to the API-key bearer. See [HACKATHON.md](HACKATHON.md) for the longer map.
 
 ## Run
 
@@ -18,11 +36,13 @@ Open the URL printed by Next.js. No credentials are needed for Demo data.
 
 ## Demo data and My scans
 
-The header switches between two separate workspaces. Each has its own scans, cart, routine, saved products, and habit check-ins.
+The header switches between two separate workspaces. Each has its own scans, cart, routine, saved products, and habit check-ins. The control stays in the header but is visually quiet.
 
-- **Demo data:** every score is generated, including scores for uploaded photos. No YouCam API call is made. The sample illustration always enters this workspace, even if selected from My scans or when live credentials exist.
-- **My scans:** requires configured YouCam credentials and durable request protection. There is no silent fallback to generated scores when the live service is unavailable.
-- **Generated follow-ups:** available only in Demo data. They are dated 21 days after their baseline and remain labeled as generated examples.
+- **Live path (judged default when configured):** if YouCam credentials, the session secret, and Upstash are all set, a first visit opens **My scans**. A selfie or upload is sent to YouCam Skin Analysis. Makeup **Try this on** calls Makeup VTO and shows the returned before/after. There is no silent fallback to generated scores, and the demo “try-on did not run” line is not shown on that path.
+- **Demo data:** every score is generated, including scores for uploaded photos. No YouCam API call is made. The sample photo always enters this workspace, even if selected from My scans or when live credentials exist. A try-on in this workspace does not invent a render.
+- **Keys missing:** one banner states that YouCam is not connected. Try-on reports that it did not run.
+- **Routine in demo mode:** the first open shows a pre-seeded baseline and a follow-up 21 days later, labeled as a generated example, so the tracker is not an empty Pending state. **Generate demo follow-up** is still there.
+- **Generated follow-ups:** available only in Demo data. They stay labeled as generated examples.
 
 Existing `glowcheck.v1` browser data is migrated to `glowcheck.v2`. Legacy generated follow-ups that inherited a live flag are moved into the demo history. Missing product baselines are reported instead of being replaced with unrelated scans.
 
@@ -68,7 +88,9 @@ A two-week observation window is applied before a product-specific trend label. 
 
 Catalog concern weights rank matches; they are not clinical efficacy measurements. Product detail explains this distinction. Treatment previews are illustrative skin simulations, not predicted outcomes. Makeup previews use the colour API.
 
-Official image URLs are retained with their source metadata. Confirmed unavailable assets display a labeled placeholder without repeatedly requesting blocked images. Recheck flagged image URLs before restoring them.
+Official image URLs are brand Shopify or brand-site CDN links only. Cosmedoc and Tilda URLs are rejected. Packshots are square, with `object-fit: contain` on a soft neutral background. ZO Skin Health demandware files that previously returned 403 were rechecked on 24 October 2026 and restored, including Daily Sheer Broad Spectrum SPF 50. Circadia Nighttime Repair plus uses the Circadia Shopify CDN.
+
+The sample face on the home screen and in **Use the sample photo** is the same file: [Pexels photo 415829](https://www.pexels.com/photo/woman-wearing-black-spaghetti-strap-top-415829/), “Woman Wearing Black Spaghetti Strap Top” by Pixabay, used under the [Pexels License](https://www.pexels.com/license/). It replaces an earlier cartoon illustration.
 
 The cart starts a local routine and never charges a payment. Saved products have a separate destination. Mobile navigation and the cart remain visible at 320px wide.
 

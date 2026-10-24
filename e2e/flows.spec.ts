@@ -52,14 +52,11 @@ test("complete demo flow, preview, saved products, routine and habit persistence
   await demoScan(page);
   await expect(page.getByText("All concern scores")).toBeVisible();
   await assertAccessible(page);
+  await page.getByRole("tab", { name: "For you" }).click();
   await page.getByRole("link", { name: /Nighttime Repair plus Suits/ }).click();
   await page.getByTestId("try-on").click();
-  const split = page.getByRole("slider", { name: "Before and preview split" });
-  await expect(split).toBeVisible();
-  const before = Number(await split.inputValue());
-  await split.focus();
-  await split.press("ArrowRight");
-  expect(Number(await split.inputValue())).toBeGreaterThan(before);
+  await expect(page.getByText("Try-on did not run")).toBeVisible();
+  await expect(page.getByRole("slider")).toHaveCount(0);
   await assertAccessible(page);
   await page.getByRole("button", { name: "Why this verdict" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -192,7 +189,7 @@ test("live UI uploads the source portrait after reload and polls using opaque ta
   await page.getByTestId("checkout").click();
   await expect(page.getByTestId("sample-followup")).toHaveCount(0);
   await page.getByLabel("Data mode").selectOption("mock");
-  await expect(page.getByRole("heading", { name: "No baseline yet" })).toBeVisible();
+  await expect(page.getByTestId("demo-story")).toBeVisible();
   await page.getByLabel("Data mode").selectOption("live");
   await expect(page.getByText("Baseline saved", { exact: true })).toBeVisible();
 });
@@ -215,7 +212,8 @@ test("deletion clears both workspaces and the IndexedDB source photo", async ({ 
   }))).toBe(0);
   await page.reload();
   await page.goto("/progress");
-  await expect(page.getByRole("heading", { name: "No baseline yet" })).toBeVisible();
+  await expect(page.getByTestId("demo-story")).toBeVisible();
+  await expect(page.getByText("Pending")).toHaveCount(0);
 });
 
 test("malformed storage and absent photos recover without a blank page", async ({ page }) => {
@@ -311,7 +309,9 @@ test("a failed preview can be retried without leaving a stale result", async ({ 
   await expect(page.getByRole("alert").filter({ hasText: "The preview could not finish" })).toBeVisible();
   await expect(page.getByRole("slider")).toHaveCount(0);
   await page.getByTestId("try-on").click();
-  await expect(page.getByRole("slider")).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "The preview could not finish" })).toHaveCount(0);
+  await expect(page.getByText("Try-on did not run")).toBeVisible();
+  await expect(page.getByRole("slider")).toHaveCount(0);
 });
 
 test("deletion in another tab clears cached scores in the current tab", async ({ page, context }) => {

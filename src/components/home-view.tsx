@@ -1,15 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ClockIcon, LockIcon, ScanFaceIcon } from "lucide-react";
 import { latestScan } from "@/lib/progress";
 import { useGlow } from "@/lib/store";
 
-const trusts = [
-  { icon: ScanFaceIcon, text: "13 cosmetic concern scores" },
-  { icon: LockIcon, text: "Photo saved on this device" },
-  { icon: ClockIcon, text: "A routine you can track" },
-];
+const steps = ["Skin AI scan", "Matched products", "Try-on", "Re-scan tracker"];
 
 export function HomeView() {
   const { ready, state } = useGlow();
@@ -22,24 +17,40 @@ export function HomeView() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <p className="micro">YouCam Skin AI</p>
-        <h1 className="font-display text-[28px] leading-[1.15] font-bold text-[var(--ink)]">Check the match. Track the changes.</h1>
-      </div>
-
-      <div className="relative mx-auto h-[300px] w-[240px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo} alt="Face framed for a skin scan" className="h-full w-full rounded-[50%] object-cover ring-1 ring-[var(--ink)]" />
-      </div>
-
-      <ul className="flex flex-col gap-3">
-        {trusts.map((row) => (
-          <li key={row.text} className="flex items-center gap-3 text-[13px] text-[var(--meta)]">
-            <row.icon className="size-4 text-[var(--ink-2)]" aria-hidden />
-            {row.text}
-          </li>
-        ))}
-      </ul>
+      <section className="grid items-center gap-8 lg:min-h-[calc(100dvh-9rem)] lg:grid-cols-2 lg:gap-12">
+        <div className="overflow-hidden rounded-[28px] bg-[var(--pack)] lg:h-[min(760px,calc(100dvh-10rem))]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo} alt="Sample face used for the skin scan" className="h-[220px] w-full object-cover object-[center_18%] sm:h-[280px] lg:h-full" />
+        </div>
+        <div className="flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
+          <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+            <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--ink)]">Powered by YouCam Skin AI</span>
+            <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--ink)]">Makeup VTO</span>
+          </div>
+          <h1 className="font-display text-[36px] leading-[1.05] font-bold text-[var(--ink)] sm:text-[52px]">
+            Is this product working on <em className="italic">my</em> face?
+          </h1>
+          <p className="max-w-[36rem] text-[17px] leading-snug text-[var(--ink-2)]">
+            YouCam Skin AI scan, then matched products, a try-on, and a re-scan tracker.
+          </p>
+          <div className="flex w-full max-w-md flex-col gap-3">
+            <Link href="/scan" className="btn-primary btn-lg w-full" data-testid="start-scan">
+              Take a selfie
+            </Link>
+            <Link href="/scan#upload" className="btn-secondary h-12 w-full">
+              Upload a photo
+            </Link>
+          </div>
+          <ol className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+            {steps.map((step, index) => (
+              <li key={step} className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
+                {index > 0 && <span aria-hidden className="text-[var(--meta)]">→</span>}
+                <span className="rounded-full bg-[var(--surface-2)] px-3 py-1">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
       {latest && (
         <Link href="/results" className="flex items-center justify-between gap-3 rounded-[12px] border border-[var(--line)] bg-[var(--surface-warm)] p-4">
@@ -52,15 +63,6 @@ export function HomeView() {
           <span className="text-[13px] font-semibold text-[var(--ink)]">Open</span>
         </Link>
       )}
-
-      <div className="sticky-bar flex flex-col gap-2">
-        <Link href="/scan" className="btn-primary w-full" data-testid="start-scan">
-          {latest ? "Take a follow-up scan" : "Take a selfie"}
-        </Link>
-        <Link href="/scan#upload" className="btn-ghost grid h-11 place-items-center">
-          Upload a photo
-        </Link>
-      </div>
     </div>
   );
 }

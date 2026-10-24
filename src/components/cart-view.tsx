@@ -91,9 +91,7 @@ export function CartView() {
           return (
             <article key={product.slug} className="border-b border-[var(--line)] pb-4">
               <div className="flex gap-3">
-                <div className="grid h-[88px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
-                  <ProductPhoto product={product} className="h-full w-full object-contain" />
-                </div>
+                <ProductPhoto product={product} frame="compact" />
                 <div className="min-w-0 flex-1">
                   <VerdictBadge verdict={suit.verdict} />
                   <p className="mt-1 text-[16px] font-semibold">{product.name}</p>

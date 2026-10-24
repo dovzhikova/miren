@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { listFaceProducts, listMakeupProducts } from "@/lib/catalog";
 import { sampleBaselineScan } from "@/lib/youcam/mock";
-import { buildSampleFollowUp, compareScans, comparisonIssue, productProgress, routineCalls } from "@/lib/progress";
+import { buildSampleFollowUp, compareScans, comparisonIssue, demoComparisonState, productProgress, routineCalls } from "@/lib/progress";
 import { newState } from "@/lib/state";
 import type { Scan } from "@/lib/types";
 
@@ -61,6 +61,19 @@ describe("progress evidence", () => {
   it("does not replace a lost product baseline with another scan", () => {
     const state = { ...newState(), scans: [later(8), baseline], baselineId: baseline.id, routine: [{ productId: product.slug, startedAt: baseline.createdAt, baselineScanId: "missing" }] };
     expect(routineCalls(state)[0].title).toBe("Starting scan unavailable");
+  });
+});
+
+describe("demo story", () => {
+  it("opens with a baseline and a later follow-up instead of a pending score", () => {
+    const state = demoComparisonState();
+    const baseline = state.scans.find((scan) => scan.id === state.baselineId)!;
+    const latest = state.scans[0];
+    expect(latest.id).not.toBe(baseline.id);
+    expect(comparisonIssue(baseline, latest)).toBeNull();
+    expect(Date.parse(latest.createdAt)).toBeGreaterThan(Date.parse(baseline.createdAt));
+    expect(latest.previewDataUrl).toBe("/demo/sample-face.jpg");
+    expect(routineCalls(state)[0]?.verdict).toBe("improved");
   });
 });
 

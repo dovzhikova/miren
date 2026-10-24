@@ -51,7 +51,10 @@ export async function POST(request: Request) {
 
   if (source === "sample" || form.get("mode") === "mock" || !youcamCredentials().live) {
     if (source !== "sample" && form.get("mode") === "live") return json({ error: "Personal scans are unavailable right now. Switch to Demo data to explore the app." }, 503);
-    const scan = buildMockScan(bytes, { scenario: scenarioOf(form.get("scenario")), source });
+    // The sample portrait is a fixed example. Its scores do not depend on which JPEG bytes we ship.
+    const requested = scenarioOf(form.get("scenario"));
+    const scenario = source === "sample" && requested === "auto" ? "baseline" : requested;
+    const scan = buildMockScan(bytes, { scenario, source });
     return json({ mode: "mock", status: "success", scan });
   }
 

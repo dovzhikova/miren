@@ -59,6 +59,7 @@
   --surface-2: #f5f3ef;
   --surface-warm: #f6f4ee;
   --stage: #e7e2d8;
+  --pack: #f7f6f3;
   --ink: #1a1a1a;
   --ink-2: #4a5e67;
   --meta: #69655f;
@@ -206,6 +207,11 @@
   background: var(--brand-soft);
 }
 
+.btn-primary.btn-lg {
+  height: 56px;
+  font-size: 17px;
+}
+
 .btn-secondary {
   display: inline-flex;
   height: 44px;
@@ -252,7 +258,7 @@
   bottom: var(--mobile-nav-height);
   left: 50%;
   z-index: 30;
-  width: min(440px, 100%);
+  width: min(960px, 100%);
   transform: translateX(-50%);
   border-top: 1px solid var(--line);
   background: #fff;
@@ -318,7 +324,7 @@
 .mobile-nav { padding-bottom: env(safe-area-inset-bottom); }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 :focus { scroll-margin-top: 80px; scroll-margin-bottom: calc(150px + var(--mobile-nav-height)); }
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   :root { --mobile-nav-height: 0px; }
   .sticky-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
