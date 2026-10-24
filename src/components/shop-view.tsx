@@ -86,7 +86,7 @@ export function ShopView() {
             const inCart = state.cart.some((line) => line.productId === product.slug);
             return (
               <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
-                <Link href={`/shop/${product.slug}`} className="grid h-[96px] w-[80px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
+                <Link href={`/shop/${product.slug}`} className="grid h-[112px] w-[112px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
                   <ProductPhoto product={product} className="h-full w-full object-contain" />
                 </Link>
                 <div className="min-w-0 flex-1">
@@ -149,7 +149,7 @@ export function ShopView() {
             const inCart = state.cart.some((line) => line.productId === product.slug);
             return (
               <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
-                <Link href={`/shop/${product.slug}`} className={cn("grid h-[96px] w-[80px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]", suit.verdict === "skip" && "opacity-60")}>
+                <Link href={`/shop/${product.slug}`} className={cn("grid h-[112px] w-[112px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]", suit.verdict === "skip" && "opacity-60")}>
                   <ProductPhoto product={product} className="h-full w-full object-contain" />
                 </Link>
                 <div className="min-w-0 flex-1">

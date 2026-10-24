@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp"],
   images: {
+    qualities: [75, 90],
     remotePatterns: [
       { protocol: "https", hostname: "zoskinhealth.com" },
       { protocol: "https", hostname: "**.zoskinhealth.com" },

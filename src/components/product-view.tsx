@@ -56,7 +56,12 @@ export function ProductView({ slug }: { slug: string }) {
       <div>
         <p className="micro">{product.brand}</p>
         <div className="mt-3 overflow-hidden rounded-[12px] bg-[var(--stage)]">
-          <ProductPhoto product={product} className="mx-auto h-56 w-full object-contain" />
+          <ProductPhoto
+            product={product}
+            priority
+            sizes="(max-width: 440px) 90vw, 480px"
+            className="mx-auto h-[320px] w-full object-contain"
+          />
         </div>
         <h1 className="mt-4 font-display text-[28px] leading-[1.15] font-bold">{product.name}</h1>
         <div className="mt-3">

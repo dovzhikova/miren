@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import rawCatalog from "@/data/products.json";
-import { CONCERN_SCORE_MIN, concernScoresFromRaw, formatPrice, isAllowedOfficialImage, listFaceProducts, listProducts, matchScore } from "@/lib/catalog";
+import { CONCERN_SCORE_MIN, concernScoresFromRaw, formatPrice, isAllowedOfficialImage, listFaceProducts, listProducts, matchScore, sharpenOfficialImageUrl } from "@/lib/catalog";
 import { FOR_YOU_LIMIT, forYouProducts } from "@/lib/recommend";
 import { sampleBaselineScan } from "@/lib/youcam/mock";
 import { suitProduct } from "@/lib/suitability";
@@ -92,9 +92,23 @@ describe("product catalog", () => {
     }
     const night = list.find((product) => product.slug === "nighttimerepair");
     expect(night?.officialImageUrl).toMatch(/^https:\/\/cdn\.shopify\.com\/s\/files\/1\/0820\/7771\/2682\//);
+    expect(night?.officialImageUrl).toContain("v=1771596558");
+    expect(night?.officialImageUrl).toContain("width=1600");
     const withPhoto = listProducts().filter((product) => product.officialImageUrl);
     expect(withPhoto).toHaveLength(165);
     expect(withPhoto.every((product) => isAllowedOfficialImage(product.officialImageUrl))).toBe(true);
+    const shopify = withPhoto.filter((product) => product.officialImageUrl?.includes("cdn.shopify.com"));
+    const zo = withPhoto.filter((product) => product.officialImageUrl?.includes("zoskinhealth.com"));
+    expect(shopify.length).toBeGreaterThan(0);
+    expect(zo.length).toBeGreaterThan(0);
+    expect(shopify.every((product) => product.officialImageUrl?.includes("width=1600"))).toBe(true);
+    expect(zo.every((product) => !product.officialImageUrl?.includes("width="))).toBe(true);
+    expect(sharpenOfficialImageUrl("https://cdn.shopify.com/s/files/1/1/files/cream.png?v=9")).toBe(
+      "https://cdn.shopify.com/s/files/1/1/files/cream.png?v=9&width=1600",
+    );
+    expect(sharpenOfficialImageUrl("https://zoskinhealth.com/on/demandware.static/cream.full.plp.gbl.png")).toBe(
+      "https://zoskinhealth.com/on/demandware.static/cream.full.plp.gbl.png",
+    );
     for (const id of ["BR_105", "BR_091", "BR_025", "BR_018", "ZO_058"]) {
       expect(listProducts().find((product) => product.id === id)?.officialImageUrl).toBeUndefined();
     }

@@ -7,7 +7,20 @@ import { cn } from "@/lib/utils";
 
 const PLACEHOLDER = "/demo/product-placeholder.svg";
 
-export function ProductPhoto({ product, className }: { product: Product; className?: string }) {
+/** List, cart, and results tiles are about 112px. Ask for 2–3× that. */
+export const LIST_PHOTO_SIZES = "(max-width: 440px) 112px, 112px";
+
+export function ProductPhoto({
+  product,
+  className,
+  sizes = LIST_PHOTO_SIZES,
+  priority = false,
+}: {
+  product: Product;
+  className?: string;
+  sizes?: string;
+  priority?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   const src = !failed ? product.officialImageUrl : undefined;
 
@@ -24,7 +37,9 @@ export function ProductPhoto({ product, className }: { product: Product; classNa
         src={src}
         alt={product.name}
         fill
-        sizes="200px"
+        sizes={sizes}
+        quality={90}
+        priority={priority}
         className="object-contain"
         onError={() => setFailed(true)}
       />

@@ -21,6 +21,19 @@ export function isAllowedOfficialImage(url: unknown): url is string {
     return false;
   }
 }
+
+/**
+ * Shopify file URLs omit a size, so the CDN may hand back a soft default.
+ * `width=1600` asks for a crisp master and keeps `v=`.
+ * ZO Demandware assets are already full-size (about 2200×3000), including
+ * files whose names say "plp", so those URLs are left alone.
+ */
+export function sharpenOfficialImageUrl(url: string): string {
+  const parsed = new URL(url);
+  if (parsed.hostname.toLowerCase() !== SHOPIFY_CDN) return url;
+  parsed.searchParams.set("width", "1600");
+  return parsed.toString();
+}
 /** A concern tag or raw score at or above this is "what the product is for". Same cutoff as the export. */
 export const CONCERN_SCORE_MIN = 0.6;
 
@@ -192,7 +205,8 @@ export function routineRoleLabel(role: RoutineRole): string {
 function officialImageFor(raw: RawProduct): string | undefined {
   const entry = (officialImages as { images?: Record<string, { image_url?: string }> }).images?.[raw.id];
   const url = raw.official_image_url || entry?.image_url;
-  return isAllowedOfficialImage(url) ? url : undefined;
+  if (!isAllowedOfficialImage(url)) return undefined;
+  return sharpenOfficialImageUrl(url);
 }
 
 function categoryFor(slugs: string[]): string {

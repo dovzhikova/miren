@@ -161,7 +161,7 @@ export function ResultsView() {
           const suit = suitProduct(product, scan);
           return (
             <Link key={product.slug} href={`/shop/${product.slug}`} className="flex gap-3 border-b border-[var(--line)] pb-3">
-              <span className="grid h-[72px] w-[64px] shrink-0 place-items-center overflow-hidden rounded-[8px] bg-[var(--stage)]">
+              <span className="grid h-[112px] w-[112px] shrink-0 place-items-center overflow-hidden rounded-[8px] bg-[var(--stage)]">
                 <ProductPhoto product={product} className="h-full w-full object-contain" />
               </span>
               <span className="min-w-0">
