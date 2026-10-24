@@ -15,7 +15,7 @@ export function SavedView() {
       {!products.length && <><p>No products saved yet.</p><Link href="/shop" className="btn-secondary">Browse the shelf</Link></>}
       {products.map((product) => (
         <article key={product.slug} className="flex gap-4 border-b border-[var(--line)] pb-4">
-          <ProductPhoto product={product} className="h-24 w-20 shrink-0 object-contain" />
+          <ProductPhoto product={product} frame="compact" />
           <div className="min-w-0">
             <Link href={`/shop/${product.slug}`} className="font-semibold underline">{product.name}</Link>
             <p className="mt-1 text-[13px]">{product.brand} · {formatPrice(product.price)}</p>

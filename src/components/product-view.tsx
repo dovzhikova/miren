@@ -19,8 +19,7 @@ import { cn } from "@/lib/utils";
 
 export function ProductView({ slug }: { slug: string }) {
   const { ready, state, workspace } = useGlow();
-  if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
-  return <ProductContent key={`${workspace}:${state.scans[0]?.id}:${slug}`} slug={slug} />;
+  return <ProductContent key={`${workspace}:${ready ? state.scans[0]?.id : "pending"}:${slug}`} slug={slug} />;
 }
 
 function ProductContent({ slug }: { slug: string }) {
@@ -28,6 +27,7 @@ function ProductContent({ slug }: { slug: string }) {
   const { ready, state } = useGlow();
   const requestRef = useRef<AbortController | null>(null);
   const whyTrigger = useRef<HTMLButtonElement>(null);
+  const started = useRef(false);
   useEffect(() => () => requestRef.current?.abort(), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,15 +35,8 @@ function ProductContent({ slug }: { slug: string }) {
   const [restoredPhoto, setRestoredPhoto] = useState<string>();
   const [why, setWhy] = useState(false);
 
-  if (!product) return null;
-  if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
-
-  const scan = latestScan(state);
-  const suit = suitProduct(product, scan);
-  const saved = state.savedProductIds.includes(product.slug);
-  const inCart = state.cart.some((line) => line.productId === product.slug);
+  const scan = ready ? latestScan(state) : null;
   const photo = scan?.previewDataUrl ?? restoredPhoto;
-  const after = result?.resultUrl || photo;
 
   async function preview() {
     if (!scan || !product) return;
@@ -70,41 +63,90 @@ function ProductContent({ slug }: { slug: string }) {
     }
   }
 
+  useEffect(() => {
+    if (!ready || !scan) return;
+    const params = new URLSearchParams(window.location.search);
+    const wants = params.get("try") === "1" || window.location.hash === "#try-on";
+    if (!wants) return;
+    const timer = window.setTimeout(() => {
+      if (started.current) return;
+      started.current = true;
+      void preview();
+    }, 0);
+    return () => window.clearTimeout(timer);
+    // The click that opened ?try=1 already asked for this render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, scan?.id]);
+
+  if (!product) return null;
+
+  const suit = suitProduct(product, scan);
+  const saved = state.savedProductIds.includes(product.slug);
+  const inCart = state.cart.some((line) => line.productId === product.slug);
+  const makeup = product.tryOn.kind === "makeup";
+  const rendered = Boolean(result?.resultUrl);
+  const after = result?.resultUrl || "";
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <p className="micro">{product.brand}</p>
-        <div className="mt-3 overflow-hidden rounded-[12px] bg-[var(--stage)]">
-          <ProductPhoto
-            product={product}
-            priority
-            sizes="(max-width: 440px) 90vw, 480px"
-            className="mx-auto h-[320px] w-full object-contain"
-          />
-        </div>
-        <h1 className="mt-4 font-display text-[28px] leading-[1.15] font-bold">{product.name}</h1>
-        <div className="mt-3">
-          <VerdictBadge verdict={suit.verdict} />
-        </div>
+        <h1 className="mt-2 font-display text-[32px] leading-[1.1] font-bold sm:text-[40px]">{product.name}</h1>
         <p className="num mt-3 text-[15px] font-semibold">
           {formatPrice(product.price)}
           {product.size ? ` · ${product.size}` : ""} · {product.category}
           {!product.inStock ? " · Out of stock" : ""}
         </p>
-        <a
-          href={`https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name}`)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-2 inline-flex h-11 items-center text-[15px] font-semibold text-[var(--brand)]"
-        >
-          Search this product
-        </a>
-        <p className="mt-3 text-[15px] text-[var(--ink-2)]">{product.summary}</p>
-        {suit.warningNote && <p className="mt-2 text-[13px] leading-[1.4] text-[var(--meta)]">{suit.warningNote}</p>}
-        <button type="button" ref={whyTrigger} className="btn-ghost mt-2 h-11" onClick={() => setWhy(true)}>
-          Why this verdict
-        </button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <VerdictBadge verdict={suit.verdict} />
+          <span className="inline-flex rounded-full border border-[var(--line)] px-3 py-1 text-[12px] font-semibold">
+            {makeup ? "Powered by YouCam Makeup VTO" : "YouCam skin simulation"}
+          </span>
+        </div>
+        <p className="mt-3 max-w-[40rem] text-[15px] text-[var(--ink-2)]">{product.summary}</p>
       </div>
+
+      <section id="try-on" className="flex flex-col gap-3">
+        {!ready ? (
+          <p className="text-[13px] text-[var(--meta)]">Loading the scan photo…</p>
+        ) : !scan ? (
+          <p className="rounded-[16px] bg-[var(--surface-2)] px-4 py-3 text-[13px]">Scan first. The preview uses the photo already on this device.</p>
+        ) : (
+          <button type="button" className="btn-primary btn-lg w-full" onClick={preview} disabled={busy} data-testid="try-on">
+            {busy ? (scan.mode === "live" ? "Asking YouCam…" : "Checking…") : result ? "Refresh preview" : product.tryOn.label}
+          </button>
+        )}
+        <div className="grid items-start gap-3 sm:grid-cols-2">
+          <ProductPhoto product={product} frame="hero" priority />
+          {photo && (
+            <figure className="overflow-hidden rounded-[12px] bg-[var(--pack)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photo} alt="Face photo for try-on" className="aspect-square w-full object-cover" />
+              <figcaption className="px-3 py-2 text-[12px] font-medium text-[var(--ink-2)]">Scan photo</figcaption>
+            </figure>
+          )}
+        </div>
+        <p className="text-[13px] text-[var(--ink-2)]">
+          {makeup
+            ? "A virtual colour preview on this photo. Screen colour can vary."
+            : "An illustrative skin simulation, not a prediction of what this product will do."}
+        </p>
+        {rendered && photo && after && (
+          <BeforeAfter before={photo} after={after} makeup={makeup} />
+        )}
+        {result && !rendered && (
+          <p role="status" className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3 text-[13px] leading-snug text-[var(--ink)]">
+            Try-on did not run. This demo did not send the photo to YouCam.
+          </p>
+        )}
+        {error && <p role="alert" className="text-[13px] text-[var(--skip)]">{error}</p>}
+        {result && scan?.mode === "mock" && (
+          <details>
+            <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-semibold">Request that would be sent</summary>
+            <pre tabIndex={0} role="region" aria-label="Demo API request" className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
+          </details>
+        )}
+      </section>
 
       {scan && product.concerns.length > 0 && (
         <section className="flex flex-col gap-3">
@@ -134,68 +176,88 @@ function ProductContent({ slug }: { slug: string }) {
         ))}
       </div>
       <p className="text-[13px] text-[var(--meta)]">{product.howToUse}</p>
+      {suit.warningNote && <p className="text-[13px] leading-[1.4] text-[var(--meta)]">{suit.warningNote}</p>}
+      <button type="button" ref={whyTrigger} className="btn-ghost h-11 w-fit" onClick={() => setWhy(true)}>
+        Why this verdict
+      </button>
+      <a
+        href={`https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name}`)}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex h-11 items-center text-[15px] font-semibold text-[var(--brand)]"
+      >
+        Search this product
+      </a>
 
-      <section id="try-on" className="flex flex-col gap-3">
-        <h2 className="font-display text-[22px] font-bold">{product.tryOn.label}</h2>
-        <p className="text-[13px] text-[var(--ink-2)]">
-          {product.tryOn.kind === "makeup"
-            ? "A virtual colour preview. Screen colour can vary."
-            : "An illustrative skin simulation, not a prediction of what this product will do."}
-        </p>
-        {!scan ? (
-          <p className="rounded-[16px] bg-[var(--surface-2)] px-4 py-3 text-[13px]">Scan first. The preview uses the photo already on this device.</p>
-        ) : (
-          <>
-            <button type="button" className="btn-secondary w-fit" onClick={preview} disabled={busy} data-testid="try-on">
-              {busy ? "Asking YouCam…" : result ? "Refresh preview" : product.tryOn.label}
-            </button>
-            {result && after && photo && (
-              <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={product.tryOn.kind === "makeup"} />
-            )}
-          </>
-        )}
-        {error && <p role="alert" className="text-[13px] text-[var(--skip)]">{error}</p>}
-        <p className="text-[12px] text-[var(--meta)]">{scan?.mode === "mock" ? "Demo preview: this uses the saved photo and a generated example. No YouCam render is requested." : "Your saved source photo is sent to YouCam to create this preview."}</p>
-        {result && scan?.mode === "mock" && (
-          <details>
-            <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-semibold">Demo request details</summary>
-            <pre tabIndex={0} role="region" aria-label="Demo API request" className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
-          </details>
-        )}
-      </section>
-
-      {!scan && (
+      {!scan && ready && (
         <Link href="/scan" className="btn-secondary w-fit">
           Scan to check it
         </Link>
       )}
 
-      <div className="sticky-bar flex items-center gap-3">
-        <button
-          type="button"
-          className="btn-primary min-w-0 flex-1"
-          disabled={inCart}
-          data-testid="add-to-cart"
-          onClick={() => {
-            addToCart(product.slug);
-            toast.success(`${product.name} is in the cart`);
-          }}
-        >
-          {inCart ? "In the cart" : "Add to cart"}
-        </button>
-        <button
-          type="button"
-          className="grid size-12 shrink-0 place-items-center rounded-[8px] bg-[var(--surface-2)]"
-          aria-label={saved ? "Unsave product" : "Save product"}
-          aria-pressed={saved}
-          onClick={() => {
-            toggleSaved(product.slug);
-            toast.success(saved ? "Product removed from Saved" : "Product saved on this device");
-          }}
-        >
-          <BookmarkIcon className="size-5" fill={saved ? "currentColor" : "none"} />
-        </button>
-      </div>
+      {makeup ? (
+        <div className="sticky-bar flex flex-col gap-2 sm:hidden">
+          <button type="button" className="btn-primary w-full" onClick={preview} disabled={busy || !scan}>
+            {busy ? "Checking…" : product.tryOn.label}
+          </button>
+        </div>
+      ) : (
+        <div className="sticky-bar flex items-center gap-3">
+          <button
+            type="button"
+            className="btn-primary min-w-0 flex-1"
+            disabled={inCart}
+            data-testid="add-to-cart"
+            onClick={() => {
+              addToCart(product.slug);
+              toast.success(`${product.name} is in the cart`);
+            }}
+          >
+            {inCart ? "In the cart" : "Add to cart"}
+          </button>
+          <button
+            type="button"
+            className="grid size-12 shrink-0 place-items-center rounded-[8px] bg-[var(--surface-2)]"
+            aria-label={saved ? "Unsave product" : "Save product"}
+            aria-pressed={saved}
+            onClick={() => {
+              toggleSaved(product.slug);
+              toast.success(saved ? "Product removed from Saved" : "Product saved on this device");
+            }}
+          >
+            <BookmarkIcon className="size-5" fill={saved ? "currentColor" : "none"} />
+          </button>
+        </div>
+      )}
+
+      {makeup && (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="btn-ghost h-11"
+            disabled={inCart}
+            data-testid="add-to-cart"
+            onClick={() => {
+              addToCart(product.slug);
+              toast.success(`${product.name} is in the cart`);
+            }}
+          >
+            {inCart ? "In the cart" : "Add to cart"}
+          </button>
+          <button
+            type="button"
+            className="grid size-12 shrink-0 place-items-center rounded-[8px] bg-[var(--surface-2)]"
+            aria-label={saved ? "Unsave product" : "Save product"}
+            aria-pressed={saved}
+            onClick={() => {
+              toggleSaved(product.slug);
+              toast.success(saved ? "Product removed from Saved" : "Product saved on this device");
+            }}
+          >
+            <BookmarkIcon className="size-5" fill={saved ? "currentColor" : "none"} />
+          </button>
+        </div>
+      )}
 
       <WhySheet returnFocus={whyTrigger} open={why} title={suit.title} onClose={() => setWhy(false)}>
         <VerdictBadge verdict={suit.verdict} />
@@ -208,52 +270,45 @@ function ProductContent({ slug }: { slug: string }) {
   );
 }
 
-function BeforeAfter({
-  before,
-  after,
-  live,
-  makeup,
-}: {
-  before: string;
-  after: string;
-  live: boolean;
-  makeup: boolean;
-}) {
+function BeforeAfter({ before, after, makeup }: { before: string; after: string; makeup: boolean }) {
   const [split, setSplit] = useState(56);
   return (
-    <figure>
-    <div
-      className="relative aspect-[4/5] overflow-hidden rounded-[12px] bg-[var(--stage)] select-none"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={before} alt="Before" className="absolute inset-0 h-full w-full object-cover" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={after}
-        alt={live ? "YouCam try-on result" : "Sample preview"}
-        className={cn("absolute inset-0 h-full w-full object-cover", makeup && !live && "saturate-125")}
-        style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}
-      />
-      {makeup && !live && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            clipPath: `inset(0 ${100 - split}% 0 0)`,
-            background: "linear-gradient(to bottom, transparent 46%, rgba(166, 72, 78, 0.35) 58%, transparent 72%)",
-          }}
-        />
-      )}
-      <div className="absolute inset-y-0 z-10 w-0.5 bg-white shadow-[var(--sh-2)]" style={{ left: `${split}%` }}>
-        <span className="absolute top-1/2 -left-[18px] grid size-9 -translate-y-1/2 place-items-center rounded-full bg-white text-[11px] font-semibold shadow-[var(--sh-2)]">
-          ||
-        </span>
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2">
+        <figure className="overflow-hidden rounded-[12px] bg-[var(--pack)]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={before} alt="Before" className="aspect-[3/4] w-full object-cover" />
+          <figcaption className="px-2 py-2 text-[12px] font-semibold">Before</figcaption>
+        </figure>
+        <figure className="overflow-hidden rounded-[12px] bg-[var(--pack)]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={after} alt="YouCam try-on result" className="aspect-[3/4] w-full object-cover" />
+          <figcaption className="px-2 py-2 text-[12px] font-semibold">{makeup ? "YouCam makeup" : "YouCam simulation"}</figcaption>
+        </figure>
       </div>
-      <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">Before</span>
-      <span className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">{live ? "Preview" : "Demo"}</span>
+      <figure>
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[12px] bg-[var(--pack)] select-none">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={before} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={after}
+            alt=""
+            className={cn("absolute inset-0 h-full w-full object-cover")}
+            style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}
+          />
+          <div className="absolute inset-y-0 z-10 w-0.5 bg-white shadow-[var(--sh-2)]" style={{ left: `${split}%` }}>
+            <span className="absolute top-1/2 -left-[18px] grid size-9 -translate-y-1/2 place-items-center rounded-full bg-white text-[11px] font-semibold shadow-[var(--sh-2)]">
+              ||
+            </span>
+          </div>
+          <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">Before</span>
+          <span className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">Preview</span>
+        </div>
+        <label className="mt-3 flex flex-col gap-2 text-[13px]">Compare before and preview
+          <input type="range" min="12" max="88" value={split} onChange={(event) => setSplit(Number(event.target.value))} aria-label="Before and preview split" className="w-full" />
+        </label>
+      </figure>
     </div>
-    <label className="mt-3 flex flex-col gap-2 text-[13px]">Compare before and preview
-      <input type="range" min="12" max="88" value={split} onChange={(event) => setSplit(Number(event.target.value))} aria-label="Before and preview split" className="w-full" />
-    </label>
-    </figure>
   );
 }

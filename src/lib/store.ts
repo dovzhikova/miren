@@ -76,6 +76,17 @@ export function setWorkspace(workspace: Workspace) {
   emit(stored.workspaces[workspace]);
 }
 
+/** First visit with a configured live server opens My scans. A saved choice wins. */
+export function noteLiveDefault() {
+  ensureClient();
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY)) return;
+  if (stored.workspace === "live") return;
+  stored.workspace = "live";
+  snapshot = { hydrated: true, state: stored.workspaces.live, workspace: "live" };
+  listeners.forEach((listener) => listener());
+}
+
 export async function deleteAllData() {
   ensureClient();
   // Clear blobs first so a failed browser transaction is reported and retryable.

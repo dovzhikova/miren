@@ -96,7 +96,8 @@ describe("product catalog", () => {
     expect(night?.officialImageUrl).toContain("width=1600");
     const withPhoto = listProducts().filter((product) => product.officialImageUrl);
     expect(withPhoto.length).toBeGreaterThan(100);
-    expect(withPhoto.some((product) => product.id === "ZO_024" || product.id === "ZO_031")).toBe(false);
+    expect(listProducts().find((product) => product.id === "ZO_024")?.officialImageUrl).toContain("zoskinhealth.com");
+    expect(listProducts().find((product) => product.id === "ZO_031")?.officialImageUrl).toContain("zoskinhealth.com");
     expect(withPhoto.every((product) => isAllowedOfficialImage(product.officialImageUrl))).toBe(true);
     const shopify = withPhoto.filter((product) => product.officialImageUrl?.includes("cdn.shopify.com"));
     const zo = withPhoto.filter((product) => product.officialImageUrl?.includes("zoskinhealth.com"));

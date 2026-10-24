@@ -1,7 +1,9 @@
 import { getProduct } from "@/lib/catalog";
 import { explainConcern } from "@/lib/concerns";
 import { isDemoScan } from "@/lib/scan-kind";
+import { newState } from "@/lib/state";
 import type { AppState, ConcernDelta, ConcernId, Product, ProgressCall, Scan } from "@/lib/types";
+import { sampleBaselineScan } from "@/lib/youcam/mock";
 
 const MOVE = 3;
 export const OBSERVATION_DAYS = 14;
@@ -79,6 +81,20 @@ export function routineCalls(state: AppState): ProgressCall[] {
 
 const SAMPLE_BOOST = new Set<ConcernId>(["wrinkle", "pore", "moisture", "texture", "redness"]);
 const SAMPLE_DROP = new Set<ConcernId>(["acne"]);
+
+const SAMPLE_FACE = "/demo/sample-face.jpg";
+
+/** Coherent demo baseline and 21-day follow-up so Routine is not an empty Pending state. */
+export function demoComparisonState(): AppState {
+  const baseline: Scan = { ...sampleBaselineScan(), previewDataUrl: SAMPLE_FACE };
+  const follow = { ...buildSampleFollowUp(baseline), id: "sample-follow-up-demo" };
+  return {
+    ...newState(),
+    scans: [follow, baseline],
+    baselineId: baseline.id,
+    routine: [{ productId: "nighttimerepair", startedAt: baseline.createdAt, baselineScanId: baseline.id }],
+  };
+}
 
 export function buildSampleFollowUp(baseline: Scan): Scan {
   if (!isDemoScan(baseline)) throw new Error("Open Demo data to generate an example follow-up.");
