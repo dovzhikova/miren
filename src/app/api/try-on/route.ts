@@ -1,3 +1,4 @@
+import { authorizeLive, issueTask } from "@/lib/live-access";
 import { getProduct } from "@/lib/catalog";
 import { GlowError } from "@/lib/errors";
 import { youcamCredentials } from "@/lib/youcam/auth";
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
   const product = getProduct(slug);
   if (!product) return json({ error: "That product is not on the shelf." }, 404);
   if (!(image instanceof File) || image.size <= 0) return json({ error: "Add the scan photo to preview this." }, 400);
+  if (image.type && !/^image\/(jpeg|png|webp|jpg)$/.test(image.type)) return json({ error: "Use a JPEG, PNG, or WebP photo." }, 400);
   if (image.size > MAX_BYTES) return json({ error: "Use a photo under 8 MB." }, 400);
 
   const preview = {
@@ -36,7 +38,8 @@ export async function POST(request: Request) {
       : product.tryOn.simulation),
   };
 
-  if (!youcamCredentials().live) {
+  if (form.get("mode") === "mock" || !youcamCredentials().live) {
+    if (form.get("mode") === "live") return json({ error: "Personal previews are unavailable right now. Switch to Demo data to explore the app." }, 503);
     return json({
       mode: "mock",
       status: "success",
@@ -48,6 +51,7 @@ export async function POST(request: Request) {
 
   try {
     const prepared = await prepareUpload(Buffer.from(await image.arrayBuffer()));
+    const sessionId = await authorizeLive(request);
     const payload =
       product.tryOn.kind === "makeup"
         ? { version: "1.0", effects: product.tryOn.effects }
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
     const kind = product.tryOn.kind === "makeup" ? "makeup-vto" : "skin-simulation";
     const outcome = await runTryOn(prepared, kind, payload);
     if (outcome.status === "running") {
-      return json({ mode: "live", status: "running", taskId: outcome.taskId, kind: product.tryOn.kind, auth: outcome.auth, preview });
+      return json({ mode: "live", status: "running", taskToken: issueTask({ sessionId, taskId: outcome.taskId, kind, source: "upload", createdAt: new Date().toISOString() }), kind: product.tryOn.kind, auth: outcome.auth, preview });
     }
     return json({
       mode: "live",

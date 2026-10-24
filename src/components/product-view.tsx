@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookmarkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ProductPhoto } from "@/components/product-photo";
@@ -10,18 +10,29 @@ import { VerdictBadge } from "@/components/verdict-badge";
 import { WhySheet } from "@/components/why-sheet";
 import { formatPrice, getProduct, ingredientPills } from "@/lib/catalog";
 import { concernLabel } from "@/lib/concerns";
-import { dataUrlToFile, requestTryOn, type TryOnResult } from "@/lib/photos";
+import { dataUrlToFile, previewDataUrl, requestTryOn, type TryOnResult } from "@/lib/photos";
+import { readPhoto } from "@/lib/photo-vault";
 import { latestScan } from "@/lib/progress";
-import { addToCart, useGlow } from "@/lib/store";
+import { addToCart, toggleSaved, useGlow } from "@/lib/store";
 import { suitProduct } from "@/lib/suitability";
 import { cn } from "@/lib/utils";
 
 export function ProductView({ slug }: { slug: string }) {
+  const { ready, state, workspace } = useGlow();
+  if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
+  return <ProductContent key={`${workspace}:${state.scans[0]?.id}:${slug}`} slug={slug} />;
+}
+
+function ProductContent({ slug }: { slug: string }) {
   const product = getProduct(slug);
   const { ready, state } = useGlow();
+  const requestRef = useRef<AbortController | null>(null);
+  const whyTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => () => requestRef.current?.abort(), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<TryOnResult | null>(null);
+  const [restoredPhoto, setRestoredPhoto] = useState<string>();
   const [why, setWhy] = useState(false);
 
   if (!product) return null;
@@ -29,23 +40,31 @@ export function ProductView({ slug }: { slug: string }) {
 
   const scan = latestScan(state);
   const suit = suitProduct(product, scan);
+  const saved = state.savedProductIds.includes(product.slug);
   const inCart = state.cart.some((line) => line.productId === product.slug);
-  const photo = scan?.previewDataUrl;
+  const photo = scan?.previewDataUrl ?? restoredPhoto;
   const after = result?.resultUrl || photo;
 
   async function preview() {
-    if (!photo || !product) return;
-    const file = dataUrlToFile(photo);
-    if (!file) {
-      setError("The saved photo could not be read. Scan again.");
-      return;
-    }
+    if (!scan || !product) return;
     setBusy(true);
     setError("");
+    const controller = new AbortController();
+    requestRef.current?.abort();
+    requestRef.current = controller;
     try {
-      setResult(await requestTryOn(file, product.slug));
+      // Never send the display thumbnail to the live API.
+      const source = await readPhoto(scan.id);
+      const file = source ?? (scan.mode === "mock" && photo ? dataUrlToFile(photo) : null);
+      if (!file) throw new Error("The original photo is no longer on this device. Take a new scan to restore previews.");
+      if (!photo) {
+        const thumbnail = await previewDataUrl(file);
+        controller.signal.throwIfAborted();
+        setRestoredPhoto(thumbnail);
+      }
+      setResult(await requestTryOn(file, product.slug, scan.mode, controller.signal));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The preview failed.");
+      if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "The preview failed.");
     } finally {
       setBusy(false);
     }
@@ -82,7 +101,7 @@ export function ProductView({ slug }: { slug: string }) {
         </a>
         <p className="mt-3 text-[15px] text-[var(--ink-2)]">{product.summary}</p>
         {suit.warningNote && <p className="mt-2 text-[13px] leading-[1.4] text-[var(--meta)]">{suit.warningNote}</p>}
-        <button type="button" className="btn-ghost mt-2 h-11" onClick={() => setWhy(true)}>
+        <button type="button" ref={whyTrigger} className="btn-ghost mt-2 h-11" onClick={() => setWhy(true)}>
           Why this verdict
         </button>
       </div>
@@ -90,6 +109,7 @@ export function ProductView({ slug }: { slug: string }) {
       {scan && product.concerns.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="font-display text-[22px] font-bold">Fit on your scores</h2>
+          <p className="text-[13px] text-[var(--ink-2)]">Catalog weights come from the supplied product export and concern-tag mappings. They rank matches; they are not clinical efficacy measurements.</p>
           {product.concerns.map((id) => {
             const item = scan.concerns.find((row) => row.id === id);
             if (!item) return null;
@@ -119,25 +139,28 @@ export function ProductView({ slug }: { slug: string }) {
         <h2 className="font-display text-[22px] font-bold">{product.tryOn.label}</h2>
         <p className="text-[13px] text-[var(--ink-2)]">
           {product.tryOn.kind === "makeup"
-            ? "Live mode calls YouCam AI Makeup Virtual Try-On."
-            : "Live mode calls YouCam AI Skin Simulation. Oiliness is not sent: that slider adds shine."}
+            ? "A virtual colour preview. Screen colour can vary."
+            : "An illustrative skin simulation, not a prediction of what this product will do."}
         </p>
-        {!photo ? (
+        {!scan ? (
           <p className="rounded-[16px] bg-[var(--surface-2)] px-4 py-3 text-[13px]">Scan first. The preview uses the photo already on this device.</p>
         ) : (
           <>
             <button type="button" className="btn-secondary w-fit" onClick={preview} disabled={busy} data-testid="try-on">
               {busy ? "Asking YouCam…" : result ? "Refresh preview" : product.tryOn.label}
             </button>
-            {result && after && (
+            {result && after && photo && (
               <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={product.tryOn.kind === "makeup"} />
             )}
           </>
         )}
-        {error && <p className="text-[13px] text-[var(--skip)]">{error}</p>}
-        <p className="text-[12px] text-[var(--meta)]">Preview by YouCam AR. Colour may vary on screen. Sample mode shows your photo, not a YouCam render, plus the payload live mode sends.</p>
-        {result && (
-          <pre className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
+        {error && <p role="alert" className="text-[13px] text-[var(--skip)]">{error}</p>}
+        <p className="text-[12px] text-[var(--meta)]">{scan?.mode === "mock" ? "Demo preview: this uses the saved photo and a generated example. No YouCam render is requested." : "Your saved source photo is sent to YouCam to create this preview."}</p>
+        {result && scan?.mode === "mock" && (
+          <details>
+            <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-semibold">Demo request details</summary>
+            <pre tabIndex={0} role="region" aria-label="Demo API request" className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
+          </details>
         )}
       </section>
 
@@ -163,17 +186,18 @@ export function ProductView({ slug }: { slug: string }) {
         <button
           type="button"
           className="grid size-12 shrink-0 place-items-center rounded-[8px] bg-[var(--surface-2)]"
-          aria-label="Save look"
+          aria-label={saved ? "Unsave product" : "Save product"}
+          aria-pressed={saved}
           onClick={() => {
-            localStorage.setItem("glowcheck.look", product.slug);
-            toast.success("Look saved on this device");
+            toggleSaved(product.slug);
+            toast.success(saved ? "Product removed from Saved" : "Product saved on this device");
           }}
         >
-          <BookmarkIcon className="size-5" />
+          <BookmarkIcon className="size-5" fill={saved ? "currentColor" : "none"} />
         </button>
       </div>
 
-      <WhySheet open={why} title={suit.title} onClose={() => setWhy(false)}>
+      <WhySheet returnFocus={whyTrigger} open={why} title={suit.title} onClose={() => setWhy(false)}>
         <VerdictBadge verdict={suit.verdict} />
         {suit.reasons.map((reason) => (
           <p key={reason}>{reason}</p>
@@ -196,26 +220,10 @@ function BeforeAfter({
   makeup: boolean;
 }) {
   const [split, setSplit] = useState(56);
-  const frame = useRef<HTMLDivElement>(null);
-
-  function move(clientX: number) {
-    const bounds = frame.current?.getBoundingClientRect();
-    if (!bounds) return;
-    const next = ((clientX - bounds.left) / bounds.width) * 100;
-    setSplit(Math.min(88, Math.max(12, next)));
-  }
-
   return (
+    <figure>
     <div
-      ref={frame}
-      className="relative aspect-[4/5] touch-none overflow-hidden rounded-[12px] bg-[var(--stage)] select-none"
-      onPointerDown={(event) => {
-        (event.currentTarget as HTMLDivElement).setPointerCapture(event.pointerId);
-        move(event.clientX);
-      }}
-      onPointerMove={(event) => {
-        if (event.buttons) move(event.clientX);
-      }}
+      className="relative aspect-[4/5] overflow-hidden rounded-[12px] bg-[var(--stage)] select-none"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={before} alt="Before" className="absolute inset-0 h-full w-full object-cover" />
@@ -241,7 +249,11 @@ function BeforeAfter({
         </span>
       </div>
       <span className="absolute top-3 left-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">Before</span>
-      <span className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">After</span>
+      <span className="absolute top-3 right-3 rounded-full bg-black/50 px-2 py-1 text-[12px] text-white">{live ? "Preview" : "Demo"}</span>
     </div>
+    <label className="mt-3 flex flex-col gap-2 text-[13px]">Compare before and preview
+      <input type="range" min="12" max="88" value={split} onChange={(event) => setSplit(Number(event.target.value))} aria-label="Before and preview split" className="w-full" />
+    </label>
+    </figure>
   );
 }

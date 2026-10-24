@@ -23,18 +23,11 @@ export async function prepareUpload(input: Buffer): Promise<PreparedImage> {
     throw new GlowError("That file is not a photo we can read. Use a JPEG or PNG.", 400);
   }
 
-  const longSide = Math.max(meta.width, meta.height);
-  const sized =
-    longSide > 1920
-      ? pipeline.resize({
-          width: meta.width >= meta.height ? 1920 : undefined,
-          height: meta.height > meta.width ? 1920 : undefined,
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-      : pipeline;
-
-  const { data, info } = await sized.jpeg({ quality: 90 }).toBuffer({ resolveWithObject: true });
+  // Fit after EXIF rotation, so portrait dimensions are never calculated from an unrotated header.
+  const { data, info } = await pipeline
+    .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality: 90 })
+    .toBuffer({ resolveWithObject: true });
   const shortSide = Math.min(info.width, info.height);
   if (shortSide < 480) {
     throw new GlowError(

@@ -19,7 +19,7 @@ export type ConcernId = (typeof CONCERN_IDS)[number];
 export type ConcernScore = {
   id: ConcernId;
   label: string;
-  rawScore: number;
+  rawScore: number | null;
   uiScore: number;
   explanation: string;
   direction: string;
@@ -39,7 +39,8 @@ export type Scan = {
   auth: "none" | "v2-api-key" | "v1-rsa";
   engine: string;
   overall: number;
-  overallRaw: number;
+  overallRaw: number | null;
+  profile?: "hd" | "sd";
   skinAge: number | null;
   skinType: string | null;
   concerns: ConcernScore[];
@@ -48,7 +49,7 @@ export type Scan = {
 };
 
 export type SuitabilityVerdict = "suits" | "patch-test" | "skip";
-export type ProgressVerdict = "keep" | "patch-test" | "switch";
+export type ProgressVerdict = "observe" | "improved" | "declined" | "untracked";
 
 export type Suitability = {
   verdict: SuitabilityVerdict;
@@ -96,6 +97,7 @@ export type AppState = {
   habitIds: string[];
   /** YYYY-MM-DD check-ins per habit. This week only, not a cause of a score change. */
   habitChecks: Record<string, string[]>;
+  savedProductIds: string[];
 };
 
 export type TryOnKind = "makeup" | "simulation";

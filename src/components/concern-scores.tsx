@@ -23,7 +23,7 @@ export function ConcernScores({ concerns }: { concerns: ConcernScore[] }) {
           </AccordionTrigger>
           <AccordionContent>
             <p>{concern.explanation}</p>
-            <p className="mt-2 text-muted-foreground">{concern.direction} The adjusted score is {concern.uiScore}. The raw score, used later to see if a product worked, is {concern.rawScore}.</p>
+            <p className="mt-2 text-muted-foreground">{concern.direction} The adjusted score is {concern.uiScore}. The measured raw score for comparisons is {concern.rawScore ?? "unavailable"}.</p>
             {concern.maskUrl && (
               <p className="mt-2">
                 <a href={concern.maskUrl} className="underline underline-offset-4" target="_blank" rel="noreferrer">

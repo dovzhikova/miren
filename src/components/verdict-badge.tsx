@@ -9,8 +9,10 @@ const copy: Record<
   suits: { label: "Suits you", tone: "suits", icon: "check" },
   "patch-test": { label: "Patch-test first", tone: "patch", icon: "drop" },
   skip: { label: "Skip", tone: "skip", icon: "x" },
-  keep: { label: "Keep", tone: "suits", icon: "check" },
-  switch: { label: "Switch", tone: "skip", icon: "x" },
+  observe: { label: "Observing", tone: "patch", icon: "drop" },
+  improved: { label: "Scores improved", tone: "suits", icon: "check" },
+  declined: { label: "Scores declined", tone: "skip", icon: "x" },
+  untracked: { label: "Colour only", tone: "patch", icon: "drop" },
 };
 
 const toneClass = {
