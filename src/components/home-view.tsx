@@ -28,9 +28,8 @@ export function HomeView() {
       </div>
 
       <div className="relative mx-auto h-[300px] w-[240px]">
-        <div className="aura pointer-events-none absolute -inset-10 -z-10 rounded-full" aria-hidden />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo} alt="Face framed for a skin scan" className="h-full w-full rounded-[50%] object-cover shadow-[var(--sh-1)]" />
+        <img src={photo} alt="Face framed for a skin scan" className="h-full w-full rounded-[50%] object-cover ring-1 ring-[var(--ink)]" />
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -43,14 +42,14 @@ export function HomeView() {
       </ul>
 
       {latest && (
-        <Link href="/results" className="card-shadow flex items-center justify-between gap-3 rounded-[20px] border border-[var(--line)] bg-white p-4">
+        <Link href="/results" className="flex items-center justify-between gap-3 rounded-[12px] border border-[var(--line)] bg-[var(--surface-warm)] p-4">
           <div>
             <p className="micro">Last scan</p>
             <p className="mt-1 text-[15px] font-semibold text-[var(--ink)]">
               {when} · Overall <span className="num">{latest.overall}</span>
             </p>
           </div>
-          <span className="text-[13px] font-semibold text-[var(--brand)]">Open</span>
+          <span className="text-[13px] font-semibold text-[var(--ink)]">Open</span>
         </Link>
       )}
 

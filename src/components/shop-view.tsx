@@ -65,14 +65,14 @@ export function ShopView() {
         </p>
       </div>
 
-      <div className="flex gap-0.5 overflow-x-auto rounded-full bg-[var(--surface-2)] p-1">
+      <div className="flex gap-1 overflow-x-auto">
         {filters.map((item) => (
           <button
             key={item.id}
             type="button"
             className={cn(
-              "h-9 shrink-0 rounded-full px-3 text-[12px] font-semibold whitespace-nowrap",
-              filter === item.id ? "bg-white text-[var(--ink)] shadow-[var(--sh-1)]" : "text-[var(--ink-2)]",
+              "h-9 shrink-0 rounded-full border border-transparent px-3 text-[12px] font-semibold whitespace-nowrap",
+              filter === item.id ? "border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink)]" : "text-[var(--ink-2)]",
             )}
             onClick={() => setFilter(item.id)}
           >
@@ -91,7 +91,7 @@ export function ShopView() {
             const inCart = state.cart.some((line) => line.productId === product.slug);
             return (
               <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
-                <Link href={`/shop/${product.slug}`} className={cn("grid h-[88px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[16px] border border-[var(--line)] bg-white", suit.verdict === "skip" && "opacity-60")}>
+                <Link href={`/shop/${product.slug}`} className={cn("grid h-[96px] w-[80px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]", suit.verdict === "skip" && "opacity-60")}>
                   <ProductPhoto product={product} className="h-full w-full object-contain" />
                 </Link>
                 <div className="min-w-0 flex-1">
@@ -115,7 +115,7 @@ export function ShopView() {
                     )}
                     <button
                       type="button"
-                      className="btn-secondary h-11"
+                      className="btn-bag"
                       disabled={inCart}
                       onClick={() => {
                         addToCart(product.slug);

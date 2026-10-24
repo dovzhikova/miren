@@ -67,7 +67,7 @@ export function CartView() {
   return (
     <div className="flex flex-col gap-5">
       <h1 className="font-display text-[28px] font-bold">Cart</h1>
-      <section className="rounded-[20px] bg-[var(--surface-warm)] p-4">
+      <section className="rounded-[12px] bg-[var(--surface-warm)] p-4">
         <p className="text-[15px] font-semibold">{headline}</p>
         <p className="num mt-2 text-[13px] text-[var(--ink-2)]">
           Suits {suits.length} · Patch-test {patches.length} · Skip {skips.length}
@@ -91,7 +91,7 @@ export function CartView() {
           return (
             <article key={product.slug} className="border-b border-[var(--line)] pb-4">
               <div className="flex gap-3">
-                <div className="grid h-[88px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[16px] border border-[var(--line)]">
+                <div className="grid h-[88px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
                   <ProductPhoto product={product} className="h-full w-full object-contain" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -100,11 +100,11 @@ export function CartView() {
                   <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
                   <p className="num text-[13px] text-[var(--meta)]">{formatPrice(product.price)}</p>
                   <div className="mt-2 flex items-center gap-2">
-                    <button type="button" className="grid size-11 place-items-center rounded-full bg-[var(--surface-2)] text-lg" aria-label="Decrease quantity" onClick={() => setQty(product.slug, line.qty - 1)}>
+                    <button type="button" className="grid size-11 place-items-center rounded-[8px] bg-[var(--surface-2)] text-lg" aria-label="Decrease quantity" onClick={() => setQty(product.slug, line.qty - 1)}>
                       −
                     </button>
                     <span className="num w-4 text-center text-[15px] font-semibold">{line.qty}</span>
-                    <button type="button" className="grid size-11 place-items-center rounded-full bg-[var(--surface-2)] text-lg" aria-label="Increase quantity" onClick={() => setQty(product.slug, line.qty + 1)}>
+                    <button type="button" className="grid size-11 place-items-center rounded-[8px] bg-[var(--surface-2)] text-lg" aria-label="Increase quantity" onClick={() => setQty(product.slug, line.qty + 1)}>
                       +
                     </button>
                     <button type="button" className="ml-auto text-[13px] font-semibold text-[var(--meta)]" onClick={() => removeFromCart(product.slug)}>

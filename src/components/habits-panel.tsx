@@ -42,9 +42,18 @@ export function HabitsSection({ scan }: { scan: Scan }) {
       ))}
 
       <div className="flex flex-col gap-2">
-        <p className="micro">Top 3 for this photo</p>
-        {top.map((row, index) => (
-          <HabitRow key={row.habit.id} habit={row.habit} index={index + 1} onOpen={() => setOpenId(row.habit.id)} />
+        <p className="micro">Daily wins</p>
+        {top.map((row) => (
+          <button
+            key={row.habit.id}
+            type="button"
+            className="rounded-[16px] bg-[var(--surface-warm)] px-4 py-3 text-left"
+            onClick={() => setOpenId(row.habit.id)}
+          >
+            <span className="micro">{CATEGORY_LABEL[row.habit.category]}</span>
+            <span className="mt-1 block text-[16px] font-semibold">{row.habit.title}</span>
+            <span className="mt-1 line-clamp-3 block text-[13px] leading-snug text-[var(--ink-2)]">{row.habit.why}</span>
+          </button>
         ))}
       </div>
 
@@ -129,7 +138,7 @@ export function HabitLog({ scan }: { scan: Scan }) {
 function HabitRow({ habit, index, onOpen }: { habit: Habit; index?: number; onOpen: () => void }) {
   return (
     <button type="button" className="flex min-h-11 w-full items-center gap-3 py-2 text-left" onClick={onOpen}>
-      {index != null && <span className="num w-5 text-[15px] font-semibold text-[var(--brand)]">{index}</span>}
+      {index != null && <span className="num w-5 text-[15px] font-semibold text-[var(--ink)]">{index}</span>}
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] leading-snug font-semibold">{habit.title}</span>
         <span className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -147,7 +156,7 @@ function EvidenceChip({ level }: { level: Habit["evidence"] }) {
     <span
       className={cn(
         "rounded-full px-2 py-0.5 text-[11px] font-semibold",
-        level === "strong" && "bg-[var(--brand-tint)] text-[var(--brand)]",
+        level === "strong" && "bg-[var(--surface-2)] text-[var(--ink)]",
         level === "moderate" && "bg-[var(--surface-2)] text-[var(--ink-2)]",
         level === "low" && "bg-[var(--surface-2)] text-[var(--meta)]",
       )}

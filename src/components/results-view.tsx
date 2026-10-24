@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRightIcon } from "lucide-react";
 import { HabitsSection } from "@/components/habits-panel";
-import { ScoreBar } from "@/components/score-bar";
 import { WhySheet } from "@/components/why-sheet";
+import { cn } from "@/lib/utils";
 import { productsForConcern } from "@/lib/catalog";
 import type { ConcernId, ConcernScore, Scan } from "@/lib/types";
 import { useGlow } from "@/lib/store";
@@ -57,8 +56,7 @@ export function ResultsView() {
   return (
     <div className="flex flex-col gap-8">
       <div className="relative">
-        <div className="aura pointer-events-none absolute -inset-6 -z-10 rounded-[40px]" aria-hidden />
-        <div className="relative overflow-hidden rounded-[24px] bg-[var(--surface-2)]">
+        <div className="relative overflow-hidden rounded-[12px] bg-[var(--surface-2)]">
           {scan.previewDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={scan.previewDataUrl} alt="Face used for this scan" className="aspect-[4/5] w-full object-cover" />
@@ -81,7 +79,7 @@ export function ResultsView() {
                 aria-label={item.label}
                 onClick={() => setHotspot(hotspot === id ? null : id)}
               >
-                <span className="size-2 rounded-full bg-white shadow-[0_0_0_4px_rgba(21,21,129,0.45)]" />
+                <span className="size-2 rounded-full bg-white shadow-[0_0_0_4px_rgba(26,26,26,0.45)]" />
                 {hotspot === id && (
                   <span className="absolute top-8 left-1/2 -translate-x-1/2 rounded-full bg-white px-2 py-1 text-[12px] font-semibold whitespace-nowrap shadow-[var(--sh-1)]">
                     {item.label} {item.uiScore}
@@ -95,7 +93,7 @@ export function ResultsView() {
 
       <div>
         <p className="micro">{scan.mode === "mock" ? "Sample fixture · YouCam Skin Analysis v2.1" : "YouCam AI Skin Analysis v2.1"}</p>
-        <p className="num mt-2 text-[64px] leading-none font-bold" aria-live="polite">
+        <p className={cn("num mt-2 text-[64px] leading-none font-semibold", scoreToneClass(scan.overall))} aria-live="polite">
           {scan.overall}
           <span className="text-[22px] font-semibold text-[var(--meta)]">/100</span>
         </p>
@@ -127,22 +125,24 @@ export function ResultsView() {
         </div>
       )}
 
-      <section className="flex flex-col">
-        {scan.concerns.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className="flex items-center gap-3 border-b border-[var(--line)] py-3 text-left"
-            onClick={() => setConcern(item)}
-          >
-            <span className="w-[92px] shrink-0 text-[15px] font-semibold">
-              {item.label}
-              {focusIds.has(item.id) && <span className="micro mt-0.5 block text-[var(--brand)]">Focus</span>}
-            </span>
-            <ScoreBar value={item.uiScore} label={item.label} className="flex-1" />
-            <ChevronRightIcon className="size-4 text-[var(--meta)]" />
-          </button>
-        ))}
+      <section className="flex flex-col gap-3">
+        <p className="micro">Markers</p>
+        <ScoreSpread concerns={scan.concerns} />
+        <div className="grid grid-cols-2 gap-2">
+          {scan.concerns.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="rounded-[12px] bg-[var(--surface-2)] px-3 py-3 text-left"
+              onClick={() => setConcern(item)}
+            >
+              <span className="block text-[13px] leading-snug font-medium text-[var(--ink)]">{item.label}</span>
+              <span className={cn("num mt-1 block text-[28px] leading-none font-semibold", scoreToneClass(item.uiScore))}>{item.uiScore}</span>
+              <span className="mt-1 block text-[12px] text-[var(--meta)]">{item.uiScore >= 75 ? "Steady" : item.uiScore >= 50 ? "Watch" : "Priority"}</span>
+              {focusIds.has(item.id) && <span className="micro mt-1 block">Focus</span>}
+            </button>
+          ))}
+        </div>
       </section>
 
       <HabitsSection scan={scan} />
@@ -174,7 +174,7 @@ export function ResultsView() {
               <div className="flex flex-wrap gap-2">
                 {helps.flatMap((product) =>
                   product.ingredients.split(",").slice(0, 2).map((part) => (
-                    <span key={`${product.slug}-${part}`} className="rounded-full bg-[var(--brand-tint)] px-3 py-1 text-[13px] font-medium text-[var(--brand)]">
+                    <span key={`${product.slug}-${part}`} className="rounded-full bg-[var(--surface-2)] px-3 py-1 text-[13px] font-medium text-[var(--ink-2)]">
                       {part.trim()}
                     </span>
                   )),
@@ -190,6 +190,31 @@ export function ResultsView() {
         <p>GlowCheck hides moles and eyelid shape, then matches products to the scores that are actually low. The follow-up compares the raw score, which YouCam says to keep over time.</p>
         <p>This is a cosmetic read, not a diagnosis.</p>
       </WhySheet>
+    </div>
+  );
+}
+
+function scoreToneClass(score: number): string {
+  if (score >= 75) return "text-[var(--suits)]";
+  if (score >= 50) return "text-[var(--patch)]";
+  return "text-[var(--skip)]";
+}
+
+function ScoreSpread({ concerns }: { concerns: Scan["concerns"] }) {
+  const steady = concerns.filter((item) => item.uiScore >= 75).length;
+  const watch = concerns.filter((item) => item.uiScore >= 50 && item.uiScore < 75).length;
+  const priority = concerns.filter((item) => item.uiScore < 50).length;
+  const total = concerns.length || 1;
+  return (
+    <div className="rounded-[12px] border border-[var(--line)] bg-white p-3">
+      <div className="flex h-2 overflow-hidden rounded-full bg-[var(--surface-2)]">
+        <div className="bg-[var(--suits)]" style={{ width: `${(steady / total) * 100}%` }} />
+        <div className="bg-[var(--patch)]" style={{ width: `${(watch / total) * 100}%` }} />
+        <div className="bg-[var(--skip)]" style={{ width: `${(priority / total) * 100}%` }} />
+      </div>
+      <p className="num mt-2 text-[12px] text-[var(--ink-2)]">
+        Steady {steady} · Watch {watch} · Priority {priority}
+      </p>
     </div>
   );
 }

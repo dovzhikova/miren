@@ -55,7 +55,7 @@ export function ProductView({ slug }: { slug: string }) {
     <div className="flex flex-col gap-6">
       <div>
         <p className="micro">{product.brand}</p>
-        <div className="mt-3 overflow-hidden rounded-[20px] border border-[var(--line)] bg-[var(--surface-2)]">
+        <div className="mt-3 overflow-hidden rounded-[12px] bg-[var(--stage)]">
           <ProductPhoto product={product} className="mx-auto h-56 w-full object-contain" />
         </div>
         <h1 className="mt-4 font-display text-[28px] leading-[1.15] font-bold">{product.name}</h1>
@@ -103,7 +103,7 @@ export function ProductView({ slug }: { slug: string }) {
 
       <div className="flex flex-wrap gap-2">
         {ingredientPills(product).map((pill) => (
-          <span key={pill} className="rounded-full bg-[var(--brand-tint)] px-3 py-1 text-[13px] font-medium text-[var(--brand)]">
+          <span key={pill} className="rounded-full bg-[var(--surface-2)] px-3 py-1 text-[13px] font-medium text-[var(--ink-2)]">
             {pill}
           </span>
         ))}
@@ -157,7 +157,7 @@ export function ProductView({ slug }: { slug: string }) {
         </button>
         <button
           type="button"
-          className="grid size-[52px] shrink-0 place-items-center rounded-full bg-[var(--surface-2)]"
+          className="grid size-12 shrink-0 place-items-center rounded-[8px] bg-[var(--surface-2)]"
           aria-label="Save look"
           onClick={() => {
             localStorage.setItem("glowcheck.look", product.slug);
@@ -203,7 +203,7 @@ function BeforeAfter({
   return (
     <div
       ref={frame}
-      className="relative aspect-[4/5] touch-none overflow-hidden rounded-[24px] bg-[var(--surface-2)] select-none"
+      className="relative aspect-[4/5] touch-none overflow-hidden rounded-[12px] bg-[var(--stage)] select-none"
       onPointerDown={(event) => {
         (event.currentTarget as HTMLDivElement).setPointerCapture(event.pointerId);
         move(event.clientX);

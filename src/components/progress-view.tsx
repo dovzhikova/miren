@@ -45,7 +45,18 @@ export function ProgressView() {
         <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Keep, patch-test, or switch</h1>
       </div>
 
-      <section className="rounded-[20px] bg-[var(--surface-warm)] p-4">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3">
+          <p className="micro">Baseline</p>
+          <p className="num mt-1 text-[36px] leading-none font-semibold">{baseline.overall}</p>
+        </div>
+        <div className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3">
+          <p className="micro">Latest</p>
+          <p className="num mt-1 text-[36px] leading-none font-semibold">{same ? "—" : latest.overall}</p>
+        </div>
+      </div>
+
+      <section className="rounded-[12px] bg-[var(--surface-warm)] p-4">
         <p className="text-[15px] font-semibold">
           {lead ? `With ${lead}.` : "After a second scan."} Re-scan to see if it&apos;s working.
         </p>
@@ -64,12 +75,12 @@ export function ProgressView() {
         </div>
       </section>
 
-      <div className="flex rounded-full bg-[var(--surface-2)] p-1">
+      <div className="flex rounded-[8px] bg-[var(--surface-2)] p-1">
         {(["history", "compare"] as const).map((item) => (
           <button
             key={item}
             type="button"
-            className={cn("h-9 flex-1 rounded-full text-[13px] font-semibold capitalize", tab === item ? "bg-white shadow-[var(--sh-1)]" : "text-[var(--ink-2)]")}
+            className={cn("h-9 flex-1 rounded-[6px] text-[13px] font-semibold capitalize", tab === item ? "bg-white text-[var(--ink)]" : "text-[var(--ink-2)]")}
             onClick={() => setTab(item)}
           >
             {item}
@@ -137,9 +148,9 @@ export function ProgressView() {
             const product = getProduct(call.productId);
             if (!product) return null;
             return (
-              <article key={call.productId} className="rounded-[20px] border border-[var(--line)] p-4 shadow-[var(--sh-1)]">
+              <article key={call.productId} className="rounded-[12px] border border-[var(--line)] p-4">
                 <div className="flex gap-3">
-                  <div className="grid h-[88px] w-[72px] place-items-center overflow-hidden rounded-[16px] bg-[var(--surface-2)]">
+                  <div className="grid h-[88px] w-[72px] place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
                     <ProductPhoto product={product} className="h-full w-full object-contain" />
                   </div>
                   <div>
@@ -179,7 +190,7 @@ export function ProgressView() {
 
 function PhotoTile({ label, date, src, pending }: { label: string; date: string; src?: string; pending?: boolean }) {
   return (
-    <figure className="overflow-hidden rounded-[16px] bg-[var(--surface-2)]">
+    <figure className="overflow-hidden rounded-[12px] bg-[var(--surface-2)]">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={`${label} scan`} className="aspect-[3/4] w-full object-cover" />
@@ -209,10 +220,10 @@ function Sparkline({ values }: { values: number[] }) {
     <section>
       <p className="micro mb-2">Overall score</p>
       <svg viewBox={`0 0 ${width} ${height}`} className="h-[72px] w-full" role="img" aria-label="Overall score across scans">
-        <polyline fill="none" stroke="#151581" strokeWidth="2" points={points.join(" ")} />
+        <polyline fill="none" stroke="#2C3539" strokeWidth="2" points={points.join(" ")} />
         {points.map((point) => {
           const [x, y] = point.split(",");
-          return <circle key={point} cx={x} cy={y} r="3" fill="#151581" />;
+          return <circle key={point} cx={x} cy={y} r="3" fill="#2C3539" />;
         })}
       </svg>
     </section>

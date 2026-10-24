@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Schibsted_Grotesk } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-const display = Schibsted_Grotesk({
+const display = Manrope({
   subsets: ["latin"],
   weight: ["600", "700"],
   variable: "--font-heading",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" className={`${manrope.variable} ${display.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         <main className="mx-auto flex w-full max-w-[440px] flex-1 flex-col px-5 pt-6 pb-28">{children}</main>

@@ -208,15 +208,15 @@ export function ScanStudio() {
         </div>
         <div className="relative mx-auto mt-6 aspect-[3/4] w-[72%] max-w-[320px]">
           <svg className="absolute -inset-3 h-[calc(100%+24px)] w-[calc(100%+24px)]" viewBox="0 0 100 130" aria-hidden>
-            <ellipse cx="50" cy="65" rx="46" ry="60" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeDasharray="3 2" />
+            <ellipse cx="50" cy="65" rx="46" ry="60" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
             <ellipse
               cx="50"
               cy="65"
               rx="46"
               ry="60"
               fill="none"
-              stroke="#00A36A"
-              strokeWidth="3"
+              stroke="#ffffff"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeDasharray={`${(passed / 3) * 320} 320`}
               transform="rotate(-90 50 65)"
@@ -225,7 +225,7 @@ export function ScanStudio() {
           <video ref={videoRef} autoPlay playsInline muted className="h-full w-full rounded-[50%] object-cover [transform:scaleX(-1)]" />
         </div>
         <div className="mt-auto px-5 pb-[max(20px,env(safe-area-inset-bottom))]">
-          <div className="sheet-shadow rounded-[20px] bg-white p-4 text-[var(--ink)]">
+          <div className="rounded-[12px] bg-white p-4 text-[var(--ink)]">
             <p className="text-[17px] leading-[1.3] font-semibold">Hold still…</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <CheckChip label="Lighting" state={lighting} />
@@ -264,8 +264,7 @@ export function ScanStudio() {
       </div>
 
       <div className="relative mx-auto h-[300px] w-[240px]">
-        <div className={`aura pointer-events-none absolute -inset-10 -z-10 rounded-full ${busy ? "aura-pulse" : ""}`} aria-hidden />
-        <div className="relative h-full w-full overflow-hidden rounded-[50%] bg-[var(--surface-2)] shadow-[var(--sh-1)]">
+        <div className="relative h-full w-full overflow-hidden rounded-[50%] bg-[var(--surface-2)] ring-1 ring-[var(--ink)]">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Selected face photo" className="h-full w-full object-cover" />

@@ -34,13 +34,13 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white/92 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white">
       <div className="mx-auto flex h-14 w-full max-w-[440px] items-center gap-1 px-5">
-        <Link href="/" className="font-display text-[17px] font-bold tracking-[-0.02em] text-[var(--brand)]">
+        <Link href="/" className="font-display text-[17px] font-bold tracking-[-0.03em] text-[var(--ink)]">
           GlowCheck
         </Link>
         {mode && (
-          <span className="rounded-full bg-[var(--brand-tint)] px-2 py-0.5 text-[11px] font-semibold text-[var(--brand)]">
+          <span className="rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[11px] font-semibold tracking-[0.04em] text-[var(--ink-2)] uppercase">
             {mode === "live" ? "Live" : "Sample"}
           </span>
         )}
@@ -53,8 +53,8 @@ export function SiteHeader() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "rounded-full px-2 py-2 text-[13px] font-medium text-[var(--meta)]",
-                  active && "bg-[var(--brand-tint)] text-[var(--brand)]",
+                  "px-2 py-2 text-[13px] font-medium text-[var(--meta)]",
+                  active && "text-[var(--ink)]",
                 )}
               >
                 {link.label}
@@ -68,7 +68,7 @@ export function SiteHeader() {
           >
             <ShoppingBagIcon className="size-5" />
             {state.cart.length > 0 && (
-              <span className="num absolute mt-3 ml-3 rounded-full bg-[var(--brand)] px-1 text-[10px] leading-4 font-semibold text-white">
+              <span className="num absolute mt-3 ml-3 rounded-full bg-[var(--ink)] px-1 text-[10px] leading-4 font-semibold text-white">
                 {state.cart.length}
               </span>
             )}
