@@ -7,7 +7,7 @@ import { suitProduct } from "@/lib/suitability";
 
 describe("product catalog", () => {
   it("loads the full export and keeps body, hair, and devices off the face shelf", () => {
-    expect(listProducts()).toHaveLength(175);
+    expect(listProducts()).toHaveLength(181);
     expect(JSON.stringify(rawCatalog).toLowerCase()).not.toMatch(/cosmedoc|tildacdn|tilda\.|https?:/);
     const face = listFaceProducts();
     expect(face.length).toBeGreaterThan(100);
@@ -57,7 +57,7 @@ describe("product catalog", () => {
     expect(listProducts().find((product) => product.slug === "oilcontrolpads")?.size).toBe("60 pieces");
     expect(listProducts().find((product) => product.slug === "caviarvert")?.size).toBe("1 piece");
     for (const product of listProducts()) {
-      expect(product.tryOn.simulation).not.toHaveProperty("oiliness");
+      if (product.tryOn.simulation) expect(product.tryOn.simulation).not.toHaveProperty("oiliness");
       expect(JSON.stringify(product).toLowerCase()).not.toMatch(/cosmedoc|tilda|tildacdn/);
       expect(product.name.length).toBeGreaterThan(0);
     }
@@ -95,7 +95,7 @@ describe("product catalog", () => {
     expect(night?.officialImageUrl).toContain("v=1771596558");
     expect(night?.officialImageUrl).toContain("width=1600");
     const withPhoto = listProducts().filter((product) => product.officialImageUrl);
-    expect(withPhoto).toHaveLength(165);
+    expect(withPhoto).toHaveLength(171);
     expect(withPhoto.every((product) => isAllowedOfficialImage(product.officialImageUrl))).toBe(true);
     const shopify = withPhoto.filter((product) => product.officialImageUrl?.includes("cdn.shopify.com"));
     const zo = withPhoto.filter((product) => product.officialImageUrl?.includes("zoskinhealth.com"));

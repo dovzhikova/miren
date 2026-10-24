@@ -43,7 +43,8 @@ Never commit `.env` or `.env.local`. `.env.example` has empty placeholders.
 
 - **Scan** — camera, upload, or the built-in sample illustration.
 - **Results** — per-concern UI score, plain explanation, raw score kept for later. Moles and eyelid shape are filtered out.
-- **Shelf** — default is a short For you routine (at most eight products, mixed steps, suits ahead of patch-test). Browse all opens the face catalog. Body, hair, and devices stay off that list. Names stay as the brand wrote them. Prices show as ₪. Keyword warnings are a low-confidence note, not a Skip by themselves.
+- **Shelf** — default is a short For you routine (at most eight skincare products, mixed steps, suits ahead of patch-test) plus a short Makeup for you list. Browse all opens the face catalog and the colour products. Body, hair, and devices stay off the face list. Names stay as the brand wrote them. Prices show as ₪. Keyword warnings are a low-confidence note, not a Skip by themselves.
+- **Habits** — three scan-matched suggestions on results. The Habits page is where you start, stop, and check in for the week. Not medical advice.
 - **Product** — “Does this suit me?”, a brand-site photo when one is mapped, otherwise a neutral placeholder, then a skin-simulation preview. Search this product looks up the brand and name. There is no shop link.
 - **Cart** — blocks a casual checkout when a line is a skip.
 - **Routine** — baseline versus latest, per-concern deltas, keep / patch-test / switch. “Load sample follow-up” is a labeled demo second scan.

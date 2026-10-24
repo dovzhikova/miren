@@ -364,6 +364,81 @@ export function rankHabits(scan: Scan): RankedHabit[] {
 }
 
 /** Highest-scoring habits, spread across categories when the scores are close. */
+const HABIT_ACTION: Record<string, string> = {
+  spf: "Apply SPF 30 every morning, and again if you stay outside.",
+  smoking: "If you smoke, stopping is the step. If you do not, skip this.",
+  stress: "In a hard week, sleep and a shorter routine before new products.",
+  "face-contact": "Keep hands and hair off the face, and change the pillowcase.",
+  exercise: "Rinse with a gentle cleanser after you sweat.",
+  "low-glycemic": "For a few weeks, swap sugary drinks for lower-sugar meals.",
+  dairy: "If breakouts lead, try a few weeks with less milk.",
+  "omega-food": "Eat oily fish a couple of times a week if you like it.",
+  water: "Drink when you are thirsty, and moisturise damp skin.",
+  "antioxidant-foods": "Keep fruit, vegetables, and regular meals in the week.",
+  zinc: "Do not start zinc from this photo. Ask a clinician first.",
+  "omega-supplement": "Food first. A capsule only if a clinician agrees.",
+  collagen: "If you try it, give it 8 to 12 weeks and expect a small change.",
+  "sleep-duration": "Keep a regular 7 to 9 hours.",
+  "sleep-position": "Sleep more on your back, or switch sides, so one cheek is not creased all night.",
+  "sleep-timing": "Keep the same bedtime window.",
+  "gentle-cleanse": "Wash with a mild cleanser, morning and night, and stop there.",
+  "not-over-exfoliating": "Exfoliate mildly, not every day, and stop if skin stings.",
+  alcohol: "If a drink brings a flush, skip it the next time.",
+  "dry-moisturise": "Put moisturiser on while skin is still damp.",
+  "oily-gentle": "Use a gentle cleanser and a light moisturiser. Do not strip the skin.",
+  "combination-zones": "Moisturise the dry parts. Keep the T-zone lighter.",
+  "sensitive-short": "One new product at a time, on a small patch first.",
+};
+
+export function habitAction(habit: Habit): string {
+  return HABIT_ACTION[habit.id] ?? habit.title;
+}
+
+/** Local calendar day, YYYY-MM-DD. Check-ins use this, not UTC midnight. */
+export function localDateISO(date = new Date()): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function shiftISO(day: string, delta: number): string {
+  const [year, month, date] = day.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, date + delta));
+  return next.toISOString().slice(0, 10);
+}
+
+/** Monday-first week that contains `anchor` (YYYY-MM-DD). */
+export function weekDates(anchor: string): string[] {
+  const [year, month, date] = anchor.split("-").map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, date));
+  const weekday = utc.getUTCDay();
+  const mondayOffset = weekday === 0 ? -6 : 1 - weekday;
+  return Array.from({ length: 7 }, (_, index) => shiftISO(anchor, mondayOffset + index));
+}
+
+/** Consecutive check-in days ending today, or yesterday if today is still open. */
+export function habitStreak(days: string[], today: string): number {
+  const have = new Set(days);
+  let cursor = have.has(today) ? today : shiftISO(today, -1);
+  if (!have.has(cursor)) return 0;
+  let count = 0;
+  while (have.has(cursor)) {
+    count += 1;
+    cursor = shiftISO(cursor, -1);
+  }
+  return count;
+}
+
+export function habitBecause(habit: Habit, scan: Scan): string {
+  const matched = matchedConcerns(habit, scan);
+  if (!matched.length) {
+    if (habit.id === "spf") return "SPF stays on the list even when this photo looks calm.";
+    return "Matched to this scan.";
+  }
+  const lead = [...matched].sort((left, right) => left.uiScore - right.uiScore)[0];
+  return `${lead.label} scored ${lead.uiScore}. Higher means healthier-looking.`;
+}
+
 export function topHabits(scan: Scan, count = 3): RankedHabit[] {
   const ranked = rankHabits(scan);
   const picked: RankedHabit[] = [];

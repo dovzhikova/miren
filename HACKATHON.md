@@ -33,7 +33,7 @@ Scores shown to the shopper are `ui_score`. Deltas in the routine use `raw_score
 
 ### 2. AI Makeup Virtual Try-On — color products
 
-The route still accepts a makeup payload: `POST /s2s/v2.0/task/makeup-vto` with `version: "1.0"` and an `effects` array, then `GET` until the result URL is ready. None of the products in this catalog are tints, so the shelf does not call it. The client keeps the path for a product whose try-on kind is makeup.
+Makeup try-on is `POST /s2s/v2.0/task/makeup-vto` with `version: "1.0"` and an `effects` array (lip colour, blush, foundation, or concealer, plus skin smooth set to 0), then `GET` until the result URL is ready. Six colour products from Rare Beauty, ILIA, Tower 28, and Kosas use that payload. Skincare products still use skin simulation. Sample mode returns the payload and the saved photo, with a makeup wash on the after side.
 
 ### 3. AI Skin Simulation — treatment previews
 

@@ -92,8 +92,10 @@ export type AppState = {
   baselineId: string | null;
   cart: CartLine[];
   routine: RoutineItem[];
-  /** Habit ids the shopper checked on the follow-up. A log, not a cause. */
+  /** Habit ids the shopper has started. A log, not a cause. */
   habitIds: string[];
+  /** YYYY-MM-DD check-ins per habit. This week only, not a cause of a score change. */
+  habitChecks: Record<string, string[]>;
 };
 
 export type TryOnKind = "makeup" | "simulation";
@@ -121,7 +123,9 @@ export type Product = {
   warnings: string[];
   category: string;
   /** Step in a short routine. Used to keep a shortlist from being eight serums. */
-  routineRole: "cleanser" | "treatment" | "moisturizer" | "eye" | "spf" | "other";
+  routineRole: "cleanser" | "treatment" | "moisturizer" | "eye" | "spf" | "makeup" | "other";
+  /** Colour finish for makeup. Skincare leaves this unset. */
+  finish?: "matte" | "satin" | "cream" | "sheer";
   /** HTTPS image on the brand's own site. Absent until an official photo is mapped. */
   officialImageUrl?: string;
   inStock: boolean;

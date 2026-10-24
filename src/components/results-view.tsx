@@ -6,7 +6,7 @@ import { HabitsSection } from "@/components/habits-panel";
 import { WhySheet } from "@/components/why-sheet";
 import { cn } from "@/lib/utils";
 import { formatPrice, routineRoleLabel } from "@/lib/catalog";
-import { forYouProducts } from "@/lib/recommend";
+import { forYouProducts, makeupForYou } from "@/lib/recommend";
 import { suitProduct } from "@/lib/suitability";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
@@ -56,6 +56,7 @@ export function ResultsView() {
   const focusIds = new Set((focus.length ? focus : scan.concerns.slice(0, 3)).map((item) => item.id));
   const isBaseline = state.baselineId === scan.id;
   const forYou = forYouProducts(scan);
+  const makeup = makeupForYou(scan);
 
   return (
     <div className="flex flex-col gap-8">
@@ -175,6 +176,36 @@ export function ResultsView() {
           );
         })}
       </section>
+
+      {makeup.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <p className="micro">Makeup for you</p>
+            <h2 className="mt-1 font-display text-[22px] leading-[1.2] font-bold">Colour that fits</h2>
+            <p className="mt-2 text-[13px] leading-[1.4] text-[var(--ink-2)]">
+              {makeup.length} shades for the low scores. One of each step. Try-on is on the product.
+            </p>
+          </div>
+          {makeup.map((product) => {
+            const suit = suitProduct(product, scan);
+            return (
+              <Link key={product.slug} href={`/shop/${product.slug}#try-on`} className="flex gap-3 border-b border-[var(--line)] pb-3">
+                <span className="grid h-[112px] w-[112px] shrink-0 place-items-center overflow-hidden rounded-[8px] bg-[var(--stage)]">
+                  <ProductPhoto product={product} className="h-full w-full object-contain" />
+                </span>
+                <span className="min-w-0">
+                  <VerdictBadge verdict={suit.verdict} />
+                  <span className="mt-1 block text-[15px] leading-snug font-semibold">{product.name}</span>
+                  <span className="block text-[12px] text-[var(--meta)]">
+                    {product.brand} · {product.category} · {formatPrice(product.price)}
+                  </span>
+                  <span className="mt-1 block text-[13px] font-semibold text-[var(--ink)]">Try this on</span>
+                </span>
+              </Link>
+            );
+          })}
+        </section>
+      )}
 
       <HabitsSection scan={scan} />
 

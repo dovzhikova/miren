@@ -6,7 +6,89 @@ function warningNote(product: Product): string | undefined {
   return `Low-confidence note from the product text: ${product.warnings.join(", ")}. Keyword flags are noisy, so this is not a skip.`;
 }
 
+function scoreOf(scan: Scan, id: Product["concerns"][number]): number {
+  return scan.concerns.find((item) => item.id === id)?.uiScore ?? 100;
+}
+
+/** Colour matches the low scores. A matte finish yields when hydration is the problem. */
+function suitMakeup(product: Product, scan: Scan | null): Suitability {
+  if (!scan) {
+    return {
+      verdict: "patch-test",
+      title: "Scan first",
+      reasons: ["A colour guess is not a check. Scan once, then preview it."],
+    };
+  }
+
+  const moisture = scoreOf(scan, "moisture");
+  const oil = scoreOf(scan, "oiliness");
+  const redness = scoreOf(scan, "redness");
+  const texture = scoreOf(scan, "texture");
+  const acne = scoreOf(scan, "acne");
+  const radiance = scoreOf(scan, "radiance");
+  const underEye = Math.min(scoreOf(scan, "dark_circle"), scoreOf(scan, "tear_trough"));
+  const finish = product.finish ?? "satin";
+
+  if (product.category === "Tint" && (redness < 60 || acne < 60)) {
+    return {
+      verdict: "patch-test",
+      title: "Patch-test a tint",
+      reasons: ["Redness or breakouts are loud on this photo. Keep coverage light until a clinician has seen the skin."],
+    };
+  }
+  if (product.category === "Lip" && finish === "matte" && moisture < 75) {
+    return {
+      verdict: "patch-test",
+      title: "Patch-test this matte",
+      reasons: [`Hydration scored ${moisture}. A matte lip can feel tight there. A cream or satin colour is the kinder match.`],
+    };
+  }
+  if (product.category === "Lip" && finish !== "matte" && moisture < 75) {
+    return {
+      verdict: "suits",
+      title: "This suits your scan",
+      reasons: [`Hydration scored ${moisture}. A cream or satin lip adds colour without a dry finish.`],
+    };
+  }
+  if (product.category === "Lip" && finish === "matte" && oil < 75) {
+    return {
+      verdict: "suits",
+      title: "This suits your scan",
+      reasons: [`Oil balance scored ${oil}. A matte lip stays put when shine is the low score.`],
+    };
+  }
+  if (product.category === "Blush" && (moisture < 75 || radiance < 75)) {
+    const lead = moisture <= radiance ? `Hydration scored ${moisture}` : `Radiance scored ${radiance}`;
+    return {
+      verdict: "suits",
+      title: "This suits your scan",
+      reasons: [`${lead}. A cream blush adds colour without a full face of base.`],
+    };
+  }
+  if (product.category === "Tint" && (moisture < 75 || radiance < 75 || texture < 75)) {
+    return {
+      verdict: "suits",
+      title: "This suits your scan",
+      reasons: [`A sheer tint is the base step. Hydration ${moisture}, radiance ${radiance}. Coverage stays light.`],
+    };
+  }
+  if (product.category === "Concealer" && (underEye < 80 || scoreOf(scan, "age_spot") < 80)) {
+    return {
+      verdict: "suits",
+      title: "This suits your scan",
+      reasons: [`Under-eye scores sit at ${underEye}. A light concealer is the spot step, not a full foundation.`],
+    };
+  }
+  return {
+    verdict: "patch-test",
+    title: "Patch-test before you commit",
+    reasons: ["The colour is optional on these scores. Try a small area before you buy the full size."],
+  };
+}
+
 export function suitProduct(product: Product, scan: Scan | null): Suitability {
+  if (product.routineRole === "makeup") return suitMakeup(product, scan);
+
   const note = warningNote(product);
 
   if (!product.tracksSkin || !product.forFace) {

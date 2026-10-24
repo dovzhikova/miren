@@ -10,6 +10,7 @@ import { useGlow } from "@/lib/store";
 const links = [
   { href: "/scan", label: "Scan" },
   { href: "/shop", label: "Shelf" },
+  { href: "/habits", label: "Habits" },
   { href: "/progress", label: "Routine" },
 ];
 
@@ -53,7 +54,7 @@ export function SiteHeader() {
                 href={link.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "px-2 py-2 text-[13px] font-medium text-[var(--meta)]",
+                  "px-1.5 py-2 text-[13px] font-medium text-[var(--meta)]",
                   active && "text-[var(--ink)]",
                 )}
               >

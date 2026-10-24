@@ -130,7 +130,7 @@ export function ProductView({ slug }: { slug: string }) {
               {busy ? "Asking YouCam…" : result ? "Refresh preview" : product.tryOn.label}
             </button>
             {result && after && (
-              <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={false} />
+              <BeforeAfter before={photo} after={after} live={Boolean(result.resultUrl)} makeup={product.tryOn.kind === "makeup"} />
             )}
           </>
         )}
@@ -223,9 +223,18 @@ function BeforeAfter({
       <img
         src={after}
         alt={live ? "YouCam try-on result" : "Sample preview"}
-        className={cn("absolute inset-0 h-full w-full object-cover", makeup && "saturate-125")}
+        className={cn("absolute inset-0 h-full w-full object-cover", makeup && !live && "saturate-125")}
         style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }}
       />
+      {makeup && !live && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            clipPath: `inset(0 ${100 - split}% 0 0)`,
+            background: "linear-gradient(to bottom, transparent 46%, rgba(166, 72, 78, 0.35) 58%, transparent 72%)",
+          }}
+        />
+      )}
       <div className="absolute inset-y-0 z-10 w-0.5 bg-white shadow-[var(--sh-2)]" style={{ left: `${split}%` }}>
         <span className="absolute top-1/2 -left-[18px] grid size-9 -translate-y-1/2 place-items-center rounded-full bg-white text-[11px] font-semibold shadow-[var(--sh-2)]">
           ||

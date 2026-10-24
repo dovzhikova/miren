@@ -1,3 +1,4 @@
+import { MAKEUP, type MakeupSource } from "@/data/makeup";
 import officialImages from "@/data/official-images.json";
 import rawCatalog from "@/data/products.json";
 import { concernLabel } from "@/lib/concerns";
@@ -195,6 +196,7 @@ const ROLE_LABEL: Record<RoutineRole, string> = {
   moisturizer: "Moisturizer",
   eye: "Eye",
   spf: "SPF",
+  makeup: "Makeup",
   other: "Care",
 };
 
@@ -296,7 +298,41 @@ function toProduct(raw: RawProduct): Product {
   };
 }
 
-const products: Product[] = (rawCatalog as RawProduct[]).map(toProduct);
+function toMakeup(raw: MakeupSource): Product {
+  const concerns = (Object.entries(raw.concerns) as Array<[ConcernId, number]>)
+    .filter(([, weight]) => weight >= CONCERN_SCORE_MIN)
+    .map(([id]) => id);
+  const image = isAllowedOfficialImage(raw.image) ? sharpenOfficialImageUrl(raw.image) : undefined;
+  return {
+    id: raw.id,
+    slug: raw.slug,
+    brand: raw.brand,
+    name: raw.name,
+    price: raw.price,
+    size: raw.size,
+    summary: raw.summary,
+    howToUse: "Colour step. Follow the directions printed on the pack.",
+    ingredients: "",
+    concerns,
+    concernScores: raw.concerns,
+    tracksSkin: true,
+    forFace: true,
+    warnings: [],
+    category: raw.category,
+    routineRole: "makeup",
+    finish: raw.finish,
+    officialImageUrl: image,
+    inStock: true,
+    skinTypes: [],
+    tryOn: {
+      kind: "makeup",
+      label: "Try this on",
+      effects: raw.effects,
+    },
+  };
+}
+
+const products: Product[] = [...(rawCatalog as RawProduct[]).map(toProduct), ...MAKEUP.map(toMakeup)];
 const bySlug = new Map(products.map((product) => [product.slug, product]));
 
 export function listProducts(): Product[] {
@@ -304,7 +340,11 @@ export function listProducts(): Product[] {
 }
 
 export function listFaceProducts(): Product[] {
-  return products.filter((product) => product.forFace);
+  return products.filter((product) => product.forFace && product.routineRole !== "makeup");
+}
+
+export function listMakeupProducts(): Product[] {
+  return products.filter((product) => product.routineRole === "makeup");
 }
 
 export function getProduct(slug: string): Product | undefined {

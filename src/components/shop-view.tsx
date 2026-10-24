@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
-import { formatPrice, listFaceProducts, matchScore, productCategory, routineRoleLabel } from "@/lib/catalog";
-import { forYouProducts } from "@/lib/recommend";
+import { formatPrice, listFaceProducts, listMakeupProducts, matchScore, productCategory, routineRoleLabel } from "@/lib/catalog";
+import { forYouProducts, makeupForYou } from "@/lib/recommend";
 import { latestScan } from "@/lib/progress";
 import { addToCart, useGlow } from "@/lib/store";
 import { suitProduct, verdictRank } from "@/lib/suitability";
@@ -26,6 +26,7 @@ export function ShopView() {
   const [browseAll, setBrowseAll] = useState(false);
   const scan = latestScan(state);
   const forYou = useMemo(() => (ready && scan ? forYouProducts(scan) : []), [ready, scan]);
+  const makeup = useMemo(() => (ready && scan ? makeupForYou(scan) : []), [ready, scan]);
 
   const rows = useMemo(() => {
     if (!ready) return [];
@@ -121,6 +122,52 @@ export function ShopView() {
         </section>
       )}
 
+      {!browseAll && scan && makeup.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <p className="micro">Makeup for you</p>
+            <h2 className="font-display text-[22px] leading-[1.2] font-bold">Colour that fits</h2>
+          </div>
+          {makeup.map((product) => {
+            const suit = suitProduct(product, scan);
+            const inCart = state.cart.some((line) => line.productId === product.slug);
+            return (
+              <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
+                <Link href={`/shop/${product.slug}`} className="grid h-[112px] w-[112px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
+                  <ProductPhoto product={product} className="h-full w-full object-contain" />
+                </Link>
+                <div className="min-w-0 flex-1">
+                  <VerdictBadge verdict={suit.verdict} />
+                  <Link href={`/shop/${product.slug}`} className="mt-1 block text-[16px] leading-snug font-semibold">
+                    {product.name}
+                  </Link>
+                  <p className="text-[13px] text-[var(--meta)]">
+                    {product.brand} · {product.category}
+                  </p>
+                  <p className="mt-1 text-[13px] text-[var(--ink-2)]">{suit.reasons[0]}</p>
+                  <div className="mt-2 flex gap-2">
+                    <Link href={`/shop/${product.slug}#try-on`} className="btn-ghost h-11 px-2">
+                      Try on
+                    </Link>
+                    <button
+                      type="button"
+                      className="btn-bag"
+                      disabled={inCart}
+                      onClick={() => {
+                        addToCart(product.slug);
+                        toast.success(`${product.name} is in the cart`);
+                      }}
+                    >
+                      {inCart ? "Added" : "Add"}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+      )}
+
       {browseAll && (
       <>
       <div className="flex gap-1 overflow-x-auto">
@@ -189,6 +236,45 @@ export function ShopView() {
           })}
         </section>
       ))}
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display text-[22px] leading-[1.2] font-bold">Makeup</h2>
+        {listMakeupProducts().map((product) => {
+          const suit = suitProduct(product, scan);
+          const inCart = state.cart.some((line) => line.productId === product.slug);
+          return (
+            <article key={product.slug} className="flex gap-3 border-b border-[var(--line)] pb-3">
+              <Link href={`/shop/${product.slug}`} className="grid h-[112px] w-[112px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-[var(--stage)]">
+                <ProductPhoto product={product} className="h-full w-full object-contain" />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <VerdictBadge verdict={suit.verdict} />
+                <Link href={`/shop/${product.slug}`} className="mt-1 block text-[16px] leading-snug font-semibold">
+                  {product.name}
+                </Link>
+                <p className="text-[13px] text-[var(--meta)]">
+                  {product.brand} · {formatPrice(product.price)}
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <Link href={`/shop/${product.slug}#try-on`} className="btn-ghost h-11 px-2">
+                    Try on
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn-bag"
+                    disabled={inCart}
+                    onClick={() => {
+                      addToCart(product.slug);
+                      toast.success(`${product.name} is in the cart`);
+                    }}
+                  >
+                    {inCart ? "Added" : "Add"}
+                  </button>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </section>
       </>
       )}
     </div>

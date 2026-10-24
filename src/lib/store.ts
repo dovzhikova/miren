@@ -11,6 +11,7 @@ export const emptyState: AppState = {
   cart: [],
   routine: [],
   habitIds: [],
+  habitChecks: {},
 };
 
 type Snapshot = {
@@ -70,10 +71,22 @@ function readStorage(): AppState {
       cart: Array.isArray(parsed.cart) ? (parsed.cart as CartLine[]) : [],
       routine: Array.isArray(parsed.routine) ? (parsed.routine as RoutineItem[]) : [],
       habitIds: Array.isArray(parsed.habitIds) ? parsed.habitIds.filter((id): id is string => typeof id === "string") : [],
+      habitChecks: readHabitChecks(parsed.habitChecks),
     };
   } catch {
     return emptyState;
   }
+}
+
+function readHabitChecks(value: unknown): Record<string, string[]> {
+  if (!value || typeof value !== "object") return {};
+  const checks: Record<string, string[]> = {};
+  for (const [id, days] of Object.entries(value)) {
+    if (!Array.isArray(days)) continue;
+    const dates = days.filter((day): day is string => typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day));
+    if (dates.length) checks[id] = [...new Set(dates)];
+  }
+  return checks;
 }
 
 function ensureClient() {
@@ -125,6 +138,26 @@ export function setQty(productId: string, qty: number) {
   });
 }
 
+export function startHabit(habitId: string) {
+  ensureClient();
+  if (snapshot.state.habitIds.includes(habitId)) return;
+  emit({ ...snapshot.state, habitIds: [...snapshot.state.habitIds, habitId] });
+}
+
+export function stopHabit(habitId: string) {
+  ensureClient();
+  emit({ ...snapshot.state, habitIds: snapshot.state.habitIds.filter((id) => id !== habitId) });
+}
+
+export function toggleHabitCheck(habitId: string, day: string) {
+  ensureClient();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return;
+  if (!snapshot.state.habitIds.includes(habitId)) return;
+  const current = snapshot.state.habitChecks[habitId] ?? [];
+  const next = current.includes(day) ? current.filter((item) => item !== day) : [...current, day];
+  emit({ ...snapshot.state, habitChecks: { ...snapshot.state.habitChecks, [habitId]: next } });
+}
+
 export function toggleHabit(habitId: string) {
   ensureClient();
   const habitIds = snapshot.state.habitIds.includes(habitId)
@@ -169,6 +202,9 @@ export function useGlow() {
     removeFromCart,
     removeFromRoutine,
     toggleHabit,
+    startHabit,
+    stopHabit,
+    toggleHabitCheck,
     checkout,
   };
 }

@@ -4,10 +4,13 @@ import { sampleBaselineScan } from "@/lib/youcam/mock";
 import {
   HABITS,
   clinicianFlags,
+  habitAction,
   habitRelevance,
+  habitStreak,
   normalizeSkinType,
   rankHabits,
   topHabits,
+  weekDates,
 } from "@/lib/habits";
 
 function scan(scores: Partial<Record<ConcernId, number>>, skinType: string | null = null): Scan {
@@ -104,7 +107,27 @@ describe("concern to habit mapping", () => {
   });
 
   it("does not make treatment or diagnosis claims in the habit copy", () => {
-    const text = HABITS.map((habit) => habit.why).join("\n");
+    const text = HABITS.map((habit) => `${habit.why} ${habitAction(habit)}`).join("\n");
     expect(text).not.toMatch(/diagnos|cure|cancer|prescription/i);
+  });
+
+  it("gives every habit a short action and a Monday week", () => {
+    for (const habit of HABITS) {
+      const action = habitAction(habit);
+      expect(action.length).toBeGreaterThan(12);
+      expect(action.length).toBeLessThan(110);
+    }
+    expect(weekDates("2026-10-24")).toEqual([
+      "2026-10-19",
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+      "2026-10-23",
+      "2026-10-24",
+      "2026-10-25",
+    ]);
+    expect(habitStreak(["2026-10-22", "2026-10-23", "2026-10-24"], "2026-10-24")).toBe(3);
+    expect(habitStreak(["2026-10-22", "2026-10-23"], "2026-10-24")).toBe(2);
+    expect(habitStreak(["2026-10-20"], "2026-10-24")).toBe(0);
   });
 });
