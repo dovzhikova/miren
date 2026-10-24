@@ -289,6 +289,31 @@
     animation: none;
   }
 }
+
+/* Sonner fades the whole toast with opacity. Axe blends the title into the page
+   and, on WebKit, reads that in-between color (about #7c7c7c on white, 4.2:1).
+   Keep the title either solid charcoal on white, or fully hidden. */
+[data-sonner-toast] {
+  background: var(--bg) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  transition-property: transform, height, box-shadow !important;
+}
+
+[data-sonner-toast] [data-title] {
+  color: var(--ink) !important;
+}
+
+[data-sonner-toast] > * {
+  transition-property: none !important;
+}
+
+[data-sonner-toast][data-removed="true"],
+[data-sonner-toast][data-visible="false"],
+[data-sonner-toast][data-expanded="false"][data-front="false"] > * {
+  visibility: hidden !important;
+}
+
 .page-content { padding-bottom: calc(150px + var(--mobile-nav-height)); }
 .mobile-nav { padding-bottom: env(safe-area-inset-bottom); }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
