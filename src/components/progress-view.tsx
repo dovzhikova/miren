@@ -55,14 +55,14 @@ export function ProgressView() {
         <h1 className="mt-1 font-display text-[28px] leading-[1.15] font-bold">Your routine over time</h1>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+        <div className="min-w-0 rounded-[12px] bg-[var(--surface-2)] px-3 py-3 sm:px-4">
           <p className="micro">Baseline</p>
-          <p className="num mt-1 text-[36px] leading-none font-semibold">{baseline.overall}</p>
+          <p className="num mt-1 text-[2rem] leading-none font-semibold tracking-[-0.03em] min-[360px]:text-[clamp(1.35rem,7vw,2.25rem)]">{baseline.overall}</p>
         </div>
-        <div className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3">
+        <div className="min-w-0 rounded-[12px] bg-[var(--surface-2)] px-3 py-3 sm:px-4">
           <p className="micro">Latest</p>
-          <p className="num mt-1 text-[36px] leading-none font-semibold">{same ? "Pending" : latest.overall}</p>
+          <p className="num mt-1 text-[2rem] leading-none font-semibold tracking-[-0.03em] break-words min-[360px]:text-[clamp(1.35rem,7vw,2.25rem)]">{same ? "Pending" : latest.overall}</p>
         </div>
       </div>
 
@@ -149,14 +149,14 @@ export function ProgressView() {
                 const rawDelta = delta.delta;
                 const tone = rawDelta > 0 ? "suits" : rawDelta < 0 ? "skip" : "neutral";
                 return (
-                  <li key={delta.id} className="flex items-center gap-3 border-b border-[var(--line)] py-3">
-                    <span className="w-[92px] text-[15px] font-semibold">{delta.label}</span>
-                    <span className="num flex-1 text-[13px] text-[var(--ink-2)]">
+                  <li key={delta.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--line)] py-3">
+                    <span className="min-w-0 flex-1 basis-[5.5rem] text-[15px] font-semibold">{delta.label}</span>
+                    <span className="num min-w-0 text-[13px] text-[var(--ink-2)]">
                       {delta.baselineRaw.toFixed(1)} to {delta.latestRaw.toFixed(1)} raw
                     </span>
                     <span
                       className={cn(
-                        "rounded-full px-2 py-1 text-[12px] font-semibold",
+                        "shrink-0 rounded-full px-2 py-1 text-[12px] font-semibold",
                         tone === "suits" && "bg-[var(--suits-bg)] text-[var(--suits)]",
                         tone === "skip" && "bg-[var(--skip-bg)] text-[var(--skip)]",
                         tone === "neutral" && "bg-[var(--surface-2)] text-[var(--meta)]",

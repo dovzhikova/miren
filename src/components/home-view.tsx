@@ -16,36 +16,36 @@ export function HomeView() {
   const when = latest?.mode === "mock" ? (latest.engine === "sample-follow-up" ? "Generated follow-up" : "Demo scan") : days === 0 ? "today" : days === 1 ? "1 day ago" : `${days} days ago`;
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="grid items-center gap-8 lg:min-h-[calc(100dvh-9rem)] lg:grid-cols-2 lg:gap-12">
-        <div className="overflow-hidden rounded-[28px] bg-[var(--pack)] lg:h-[min(760px,calc(100dvh-10rem))]">
+    <div className="flex flex-col gap-6 min-[390px]:gap-8">
+      <section className="grid items-center gap-3 min-[390px]:gap-8 lg:min-h-[calc(100dvh-9rem)] lg:grid-cols-2 lg:gap-12">
+        <div className="overflow-hidden rounded-[20px] bg-[var(--pack)] min-[390px]:rounded-[28px] lg:h-[min(760px,calc(100dvh-10rem))]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photo} alt="Sample face used for the skin scan" className="h-[220px] w-full object-cover object-[center_18%] sm:h-[280px] lg:h-full" />
+          <img src={photo} alt="Sample face used for the skin scan" className="h-[132px] w-full object-cover object-[center_18%] min-[390px]:h-[220px] sm:h-[280px] lg:h-full" />
         </div>
-        <div className="flex flex-col items-center gap-5 text-center lg:items-start lg:text-left">
-          <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-            <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--ink)]">Powered by YouCam Skin AI</span>
-            <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--ink)]">Makeup VTO</span>
+        <div className="flex flex-col items-center gap-2 text-center min-[390px]:gap-5 lg:items-start lg:text-left">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 min-[390px]:gap-2 lg:justify-start">
+            <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--ink)] min-[390px]:px-3 min-[390px]:py-1 min-[390px]:text-[12px]">Powered by YouCam Skin AI</span>
+            <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-2 py-0.5 text-[11px] font-semibold text-[var(--ink)] min-[390px]:px-3 min-[390px]:py-1 min-[390px]:text-[12px]">Makeup VTO</span>
           </div>
-          <h1 className="font-display text-[36px] leading-[1.05] font-bold text-[var(--ink)] sm:text-[52px]">
+          <h1 className="font-display text-[26px] leading-[1.08] font-bold text-[var(--ink)] min-[390px]:text-[36px] min-[390px]:leading-[1.05] sm:text-[52px]">
             Is this product working on <em className="italic">my</em> face?
           </h1>
-          <p className="max-w-[36rem] text-[17px] leading-snug text-[var(--ink-2)]">
+          <p className="max-w-[36rem] text-[14px] leading-snug text-[var(--ink-2)] min-[390px]:text-[17px]">
             YouCam Skin AI scan, then matched products, a try-on, and a re-scan tracker.
           </p>
-          <div className="flex w-full max-w-md flex-col gap-3">
-            <Link href="/scan" className="btn-primary btn-lg w-full" data-testid="start-scan">
+          <div className="flex w-full max-w-md flex-col gap-2 min-[390px]:gap-3">
+            <Link href="/scan" className="btn-primary btn-lg w-full max-[389px]:h-12 max-[389px]:text-[16px]" data-testid="start-scan">
               Take a selfie
             </Link>
             <Link href="/scan#upload" className="btn-secondary h-12 w-full">
               Upload a photo
             </Link>
           </div>
-          <ol className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+          <ol className="grid w-full max-w-md grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:max-w-none sm:flex-wrap sm:items-center sm:justify-center lg:justify-start">
             {steps.map((step, index) => (
-              <li key={step} className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
-                {index > 0 && <span aria-hidden className="text-[var(--meta)]">→</span>}
-                <span className="rounded-full bg-[var(--surface-2)] px-3 py-1">{step}</span>
+              <li key={step} className="flex items-center justify-center gap-1.5 text-[13px] font-semibold text-[var(--ink)] sm:justify-start">
+                {index > 0 && <span aria-hidden className="hidden text-[var(--meta)] sm:inline">→</span>}
+                <span className="w-full rounded-full bg-[var(--surface-2)] px-3 py-1 text-center sm:w-auto">{step}</span>
               </li>
             ))}
           </ol>

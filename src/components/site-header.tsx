@@ -49,8 +49,8 @@ export function SiteHeader() {
   return (
     <>
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:rounded focus:bg-white focus:p-3">Skip to content</a>
-      <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white">
-        <div className="mx-auto flex h-16 w-full max-w-[960px] items-center gap-4 px-5">
+      <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex h-16 w-full min-w-0 max-w-[960px] items-center gap-2 px-4 min-[390px]:gap-4 min-[390px]:px-5">
           <Link href="/" className="shrink-0 font-display text-[18px] font-bold tracking-[-0.03em]">GlowCheck</Link>
           <nav aria-label="Main" className="ml-auto hidden items-center md:flex">
             {links.map((link) => (
@@ -59,9 +59,9 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <label className="shrink-0 text-[12px] font-medium text-[var(--meta)]">
+          <label className="min-w-0 text-[12px] font-medium text-[var(--meta)] max-md:ml-auto">
             <span className="sr-only">Data mode</span>
-            <select aria-label="Data mode" value={workspace} onChange={(event) => setWorkspace(event.target.value as "mock" | "live")} className="h-9 max-w-[9.5rem] rounded-[8px] border border-[var(--line)] bg-white px-2 text-[12px] font-medium text-[var(--meta)]">
+            <select aria-label="Data mode" value={workspace} onChange={(event) => setWorkspace(event.target.value as "mock" | "live")} className="h-9 w-full max-w-[7.25rem] min-w-0 rounded-[8px] border border-[var(--line)] bg-white px-2 text-[12px] font-medium text-[var(--meta)] min-[390px]:max-w-[9.5rem]">
               <option value="mock">Demo data</option>
               <option value="live">My scans</option>
             </select>
@@ -72,7 +72,7 @@ export function SiteHeader() {
           </Link>
         </div>
         {offlineNote && (
-          <p role="status" className="border-t border-[var(--line)] bg-[var(--surface-warm)] px-5 py-2 text-center text-[13px] leading-snug text-[var(--ink)]">
+          <p role="status" className="border-t border-[var(--line)] bg-[var(--surface-warm)] px-4 py-1.5 text-center text-[12px] leading-tight text-[var(--ink)] min-[390px]:px-5 min-[390px]:py-2 min-[390px]:text-[13px] min-[390px]:leading-snug">
             {offlineNote}
           </p>
         )}

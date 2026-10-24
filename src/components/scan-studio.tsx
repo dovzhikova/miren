@@ -278,14 +278,14 @@ function ScanContent() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5 min-[390px]:gap-4 sm:gap-6">
+      <div className="flex flex-col gap-1 min-[390px]:gap-2">
         <p className="micro">YouCam Skin Analysis</p>
-        <h1 className="font-display text-[28px] leading-[1.15] font-bold">Take the photo the scores depend on</h1>
-        <p className="text-[15px] text-[var(--ink-2)]">One clear selfie. Moles and eyelid shape are dropped before anything is recommended.</p>
+        <h1 className="font-display text-[22px] leading-[1.12] font-bold min-[390px]:text-[26px] sm:text-[28px]">Take the photo the scores depend on</h1>
+        <p className="text-[13px] leading-snug text-[var(--ink-2)] min-[390px]:text-[15px]">One clear selfie. Moles and eyelid shape are dropped before anything is recommended.</p>
       </div>
 
-      <div className="rounded-[12px] bg-[var(--surface-2)] p-4 text-[13px]">
+      <div className="rounded-[12px] bg-[var(--surface-2)] p-2 text-[13px] min-[390px]:p-4">
         {workspace === "mock" || source === "sample" ? (
           <p>Demo data uses generated example scores. YouCam is not called for this photo.</p>
         ) : (
@@ -296,13 +296,13 @@ function ScanContent() {
         )}
       </div>
 
-      <div className="relative mx-auto h-[300px] w-[240px]">
+      <div className="relative mx-auto h-[104px] w-[84px] min-[390px]:h-[200px] min-[390px]:w-[160px] sm:h-[280px] sm:w-[224px]">
         <div className="relative h-full w-full overflow-hidden rounded-[50%] bg-[var(--surface-2)] ring-1 ring-[var(--ink)]">
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Selected face photo" className="h-full w-full object-cover" />
           ) : (
-            <div className="grid h-full place-items-center px-6 text-center text-[13px] text-[var(--meta)]">
+            <div className="grid h-full place-items-center px-3 text-center text-[13px] leading-tight text-[var(--meta)] max-[389px]:sr-only">
               Camera, upload, or the sample face.
             </div>
           )}
@@ -316,6 +316,11 @@ function ScanContent() {
         </p>
       ) : (
         <div className="flex flex-col gap-2" id="upload">
+          {file ? (
+            <button type="button" className="btn-primary w-full" onClick={analyze} disabled={busy} data-testid="analyze">
+              Analyze with YouCam
+            </button>
+          ) : null}
           <button type="button" className={file ? "btn-secondary w-full" : "btn-primary w-full"} onClick={startCamera}>
             <CameraIcon className="mr-2 size-4" />
             Take a selfie
@@ -334,9 +339,6 @@ function ScanContent() {
           <button type="button" className="btn-ghost h-11" onClick={useSample} disabled={busy} data-testid="sample-photo">
             <SparklesIcon className="mr-1 inline size-4" />
             Use the sample photo
-          </button>
-          <button type="button" className={file ? "btn-primary w-full" : "btn-secondary w-full"} onClick={analyze} disabled={busy || !file} data-testid="analyze">
-            {file ? "Analyze with YouCam" : "Add a photo to analyze"}
           </button>
         </div>
       )}
