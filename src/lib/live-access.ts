@@ -12,8 +12,16 @@ type Session = { purpose: "session"; id: string; expires: number };
 type Task = { purpose: "task"; sessionId: string; taskId: string; kind: TaskKind; source: Scan["source"]; profile?: Scan["profile"]; createdAt: string; expires: number };
 
 function secret() { return process.env.GLOWCHECK_SESSION_SECRET ?? ""; }
+function redisPair(url: string | undefined, token: string | undefined) {
+  return url && token && /^https:\/\//.test(url) ? { url, token } : undefined;
+}
+// Explicit Upstash names win. Vercel Marketplace injects the same REST URL and token as KV_REST_API_*.
+export function redisRestCredentials() {
+  return redisPair(process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN)
+    ?? redisPair(process.env.KV_REST_API_URL, process.env.KV_REST_API_TOKEN);
+}
 export function liveAccessConfigured(): boolean {
-  return youcamCredentials().live && secret().length >= 32 && /^https:\/\//.test(process.env.UPSTASH_REDIS_REST_URL ?? "") && Boolean(process.env.UPSTASH_REDIS_REST_TOKEN);
+  return youcamCredentials().live && secret().length >= 32 && Boolean(redisRestCredentials());
 }
 function sign(value: Session | Task): string {
   const payload = Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -66,9 +74,11 @@ async function reserve(session: Session, polling: boolean) {
     ];
   let response: Response;
   try {
-    response = await fetch(process.env.UPSTASH_REDIS_REST_URL!, {
+    const redis = redisRestCredentials();
+    if (!redis) throw new Error("Quota unavailable");
+    response = await fetch(redis.url, {
       method: "POST",
-      headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${redis.token}`, "Content-Type": "application/json" },
       body: JSON.stringify(["EVAL", LIMIT_SCRIPT, rules.length, ...rules.map((rule) => `glowcheck:v1:${rule.key}`), ...rules.flatMap((rule) => [rule.limit, rule.ttl])]),
       signal: AbortSignal.timeout(5000),
       cache: "no-store",

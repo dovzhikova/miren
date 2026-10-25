@@ -23,6 +23,8 @@ beforeEach(() => {
   vi.stubEnv("GLOWCHECK_SESSION_SECRET", "a-test-only-secret-with-more-than-32-characters");
   vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://quota.example");
   vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "quota-test-token");
+  vi.stubEnv("KV_REST_API_URL", "");
+  vi.stubEnv("KV_REST_API_TOKEN", "");
   cookie = sessionCookie(new Request(base))!.split(";")[0];
   quotaResult = 0;
   analysisRunning = previewRunning = jumpPollClock = false;
@@ -89,6 +91,16 @@ describe("paid route boundaries", () => {
     const response = await analyze(await photoRequest("/api/analyze"));
     expect(response.status).toBe(503);
     expect(network).toEqual([]);
+  });
+  it("reserves quota with Marketplace KV credentials when Upstash names are unset", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+    vi.stubEnv("KV_REST_API_URL", "https://quota.example");
+    vi.stubEnv("KV_REST_API_TOKEN", "kv-test-token");
+    const kvCookie = sessionCookie(new Request(base))!.split(";")[0];
+    const response = await analyze(await photoRequest("/api/analyze", { session: kvCookie }));
+    expect(response.status).toBe(200);
+    expect(network).toContain("https://quota.example");
   });
   it("blocks over-quota jobs before any YouCam call", async () => {
     quotaResult = 2;

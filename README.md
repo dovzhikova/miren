@@ -65,6 +65,8 @@ Privacy and data explains this storage and provides a confirmed deletion action.
 | `GLOWCHECK_SESSION_SECRET` | Random secret of at least 32 characters for session and task signatures. |
 | `UPSTASH_REDIS_REST_URL` | HTTPS endpoint for durable atomic request counters. |
 | `UPSTASH_REDIS_REST_TOKEN` | Server-side Redis REST token. |
+| `KV_REST_API_URL` | Alias for the REST URL when `UPSTASH_REDIS_REST_URL` is unset. Injected by the Vercel Marketplace Upstash integration. |
+| `KV_REST_API_TOKEN` | Alias for the REST token when `UPSTASH_REDIS_REST_TOKEN` is unset. |
 | `GLOWCHECK_TASKS_PER_HOUR` | Maximum task starts per anonymous session per hour, default 5. |
 | `GLOWCHECK_TASKS_PER_DAY` | Maximum task starts across the deployment per UTC day, default 100. |
 
