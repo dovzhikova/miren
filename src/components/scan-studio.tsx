@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { CameraIcon, CheckIcon, ImagePlusIcon, SparklesIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { WhySheet } from "@/components/why-sheet";
+import { startTenSecondDemo } from "@/lib/demo-launch";
+import { LIGHTING_TIP } from "@/lib/honesty";
 import { analyzePhoto, previewDataUrl, shrinkPhoto } from "@/lib/photos";
 import { savePhoto } from "@/lib/photo-vault";
-import { addScan, useGlow } from "@/lib/store";
+import { addScan, setWorkspace, useGlow } from "@/lib/store";
 import type { Scan } from "@/lib/types";
 
 const tips = [
@@ -20,9 +22,35 @@ const analyzingCopy = ["Mapping pores…", "Checking redness…", "Reading textu
 
 type Check = "wait" | "pass" | "warn";
 
-export function ScanStudio() {
+export function ScanStudio({ autoDemo = false, preferLive = false }: { autoDemo?: boolean; preferLive?: boolean }) {
+  const router = useRouter();
   const { workspace } = useGlow();
-  return <ScanContent key={workspace} />;
+  const started = useRef(false);
+  const [launching, setLaunching] = useState(autoDemo);
+  const [launchError, setLaunchError] = useState("");
+
+  useEffect(() => {
+    if (preferLive) setWorkspace("live");
+    if (!autoDemo || started.current) return;
+    started.current = true;
+    void startTenSecondDemo()
+      .then(() => router.replace("/results?demo=1"))
+      .catch((caught: unknown) => {
+        setLaunchError(caught instanceof Error ? caught.message : "The demo did not start.");
+        setLaunching(false);
+      });
+  }, [autoDemo, preferLive, router]);
+
+  if (launching) {
+    return <p role="status" className="text-[15px] font-semibold">Loading the sample photo and example scores. YouCam is not called.</p>;
+  }
+
+  return (
+    <>
+      {launchError ? <p role="alert" className="mb-3 text-[13px] text-[var(--skip)]">{launchError}</p> : null}
+      <ScanContent key={workspace} />
+    </>
+  );
 }
 
 function ScanContent() {
@@ -119,7 +147,8 @@ function ScanContent() {
     }
     setBusy(true);
     setError("");
-    setStatus("Sending the photo to YouCam Skin Analysis…");
+    const exampleRun = nextSource === "sample" || workspace === "mock";
+    setStatus(exampleRun ? "Building example scores on this device. YouCam is not called." : "Sending the photo to YouCam Skin Analysis…");
     const controller = new AbortController();
     requestRef.current?.abort();
     requestRef.current = controller;
@@ -216,6 +245,7 @@ function ScanContent() {
   }
 
   const passed = [lighting, centered, makeup].filter((item) => item === "pass").length;
+  const exampleScores = workspace === "mock" || source === "sample";
 
   if (cameraOn) {
     return (
@@ -310,15 +340,19 @@ function ScanContent() {
         </div>
       </div>
 
+      {workspace === "live" && (
+        <p className="rounded-[12px] bg-[var(--surface-warm)] px-3 py-2 text-[13px] leading-snug">{LIGHTING_TIP}</p>
+      )}
+
       {busy ? (
         <p className="text-center text-[17px] font-semibold" aria-live="polite">
-          {analyzingCopy[phrase]}
+          {exampleScores ? "Building example scores…" : analyzingCopy[phrase]}
         </p>
       ) : (
         <div className="flex flex-col gap-2" id="upload">
           {file ? (
             <button type="button" className="btn-primary w-full" onClick={analyze} disabled={busy} data-testid="analyze">
-              Analyze with YouCam
+              {exampleScores ? "Show example scores" : "Analyze with YouCam"}
             </button>
           ) : null}
           <button type="button" className={file ? "btn-secondary w-full" : "btn-primary w-full"} onClick={startCamera}>

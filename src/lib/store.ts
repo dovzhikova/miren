@@ -70,6 +70,28 @@ function ensureClient() {
   snapshot = { hydrated: true, state: stored.workspaces[stored.workspace], workspace: stored.workspace };
 }
 
+export function mockHasScans(): boolean {
+  ensureClient();
+  return stored.workspaces.mock.scans.length > 0;
+}
+
+/** Drop a labeled demo baseline, follow-up, and mixed routine into an empty Demo workspace. */
+export function installDemoStory(story: AppState) {
+  ensureClient();
+  stored.workspace = "mock";
+  const current = stored.workspaces.mock;
+  if (current.scans.length > 0) {
+    emit(current);
+    return;
+  }
+  emit({
+    ...current,
+    scans: story.scans,
+    baselineId: story.baselineId,
+    routine: story.routine,
+  });
+}
+
 export function setWorkspace(workspace: Workspace) {
   ensureClient();
   stored.workspace = workspace;

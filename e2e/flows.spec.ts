@@ -55,8 +55,9 @@ test("complete demo flow, preview, saved products, routine and habit persistence
   await page.getByRole("tab", { name: "For you" }).click();
   await page.getByRole("link", { name: /Nighttime Repair plus Suits/ }).click();
   await page.getByTestId("try-on").click();
-  await expect(page.getByText("Try-on did not run")).toBeVisible();
-  await expect(page.getByRole("slider")).toHaveCount(0);
+  await expect(page.getByText("Generated demo preview").first()).toBeVisible();
+  await expect(page.getByText(/YouCam was not called/).first()).toBeVisible();
+  await expect(page.getByRole("slider")).toBeVisible();
   await assertAccessible(page);
   await page.getByRole("button", { name: "Why this verdict" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
@@ -70,7 +71,7 @@ test("complete demo flow, preview, saved products, routine and habit persistence
   await page.getByRole("button", { name: "Decrease quantity" }).click();
   await page.getByRole("button", { name: "Start tracking", exact: true }).click();
   await expect(page).toHaveURL(/\/progress$/);
-  await expect(page.getByText("Baseline saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Too early to judge", { exact: true }).first()).toBeVisible();
   await page.getByTestId("sample-followup").click();
   await expect(page.getByText("Scores improved", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/does not establish what caused/)).toBeVisible();
@@ -191,7 +192,7 @@ test("live UI uploads the source portrait after reload and polls using opaque ta
   await page.getByLabel("Data mode").selectOption("mock");
   await expect(page.getByTestId("demo-story")).toBeVisible();
   await page.getByLabel("Data mode").selectOption("live");
-  await expect(page.getByText("Baseline saved", { exact: true })).toBeVisible();
+  await expect(page.getByText("Too early to judge", { exact: true }).first()).toBeVisible();
 });
 
 test("deletion clears both workspaces and the IndexedDB source photo", async ({ page }) => {
@@ -310,8 +311,8 @@ test("a failed preview can be retried without leaving a stale result", async ({ 
   await expect(page.getByRole("slider")).toHaveCount(0);
   await page.getByTestId("try-on").click();
   await expect(page.getByRole("alert").filter({ hasText: "The preview could not finish" })).toHaveCount(0);
-  await expect(page.getByText("Try-on did not run")).toBeVisible();
-  await expect(page.getByRole("slider")).toHaveCount(0);
+  await expect(page.getByText("Generated demo preview")).toBeVisible();
+  await expect(page.getByRole("slider")).toBeVisible();
 });
 
 test("deletion in another tab clears cached scores in the current tab", async ({ page, context }) => {

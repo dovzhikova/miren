@@ -4,9 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { HabitsSection } from "@/components/habits-panel";
 import { WhySheet } from "@/components/why-sheet";
+import { YoucamApis } from "@/components/youcam-apis";
 import { cn } from "@/lib/utils";
 import { formatPrice, routineRoleLabel } from "@/lib/catalog";
-import { forYouProducts, makeupForYou } from "@/lib/recommend";
+import { DEMO_SCAN_LINE } from "@/lib/honesty";
+import { demoForYouMatches, demoMakeupMatches, demoVerdictExamples, forYouProducts, makeupForYou } from "@/lib/recommend";
+import { isDemoScan } from "@/lib/scan-kind";
 import { suitProduct } from "@/lib/suitability";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
@@ -40,7 +43,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function ResultsView() {
+export function ResultsView({ preferBaseline = false }: { preferBaseline?: boolean }) {
   const { ready, state, setBaseline } = useGlow();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [concern, setConcern] = useState<ConcernScore | null>(null);
@@ -50,7 +53,8 @@ export function ResultsView() {
 
   if (!ready) return <div className="h-80 animate-pulse rounded-[20px] bg-[var(--surface-2)]" />;
 
-  const scan = state.scans.find((item) => item.id === selectedId) ?? state.scans[0];
+  const pinned = preferBaseline ? state.scans.find((item) => item.id === state.baselineId) : null;
+  const scan = state.scans.find((item) => item.id === selectedId) ?? pinned ?? state.scans[0];
   if (!scan) {
     return (
       <div className="flex flex-col gap-3 py-8">
@@ -67,16 +71,18 @@ export function ResultsView() {
   const focus = scan.concerns.filter((item) => item.uiScore < 75).slice(0, 4);
   const focusIds = new Set((focus.length ? focus : scan.concerns.slice(0, 3)).map((item) => item.id));
   const isBaseline = state.baselineId === scan.id;
-  const forYou = forYouProducts(scan);
-  const makeup = makeupForYou(scan);
+  const demo = isDemoScan(scan);
+  const forYou = demo ? demoForYouMatches(scan) : forYouProducts(scan);
+  const makeup = demo ? demoMakeupMatches(scan) : makeupForYou(scan);
+  const verdicts = demo ? demoVerdictExamples(scan) : null;
 
   return (
     <div className="flex flex-col gap-6">
+      <YoucamApis demo={demo} />
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex rounded-full border border-[var(--line)] bg-white px-3 py-1 text-[12px] font-semibold text-[var(--ink)]">
-          {scan.mode === "mock" ? "Demo scores" : "Powered by YouCam Skin AI"}
+          {demo ? "Demo scores · YouCam was not called" : "Live YouCam · AI Skin Analysis v2.1"}
         </span>
-        {scan.mode === "live" && <span className="text-[12px] font-medium text-[var(--meta)]">AI Skin Analysis v2.1</span>}
       </div>
 
       <div role="tablist" aria-label="Scan results" className="grid w-full min-w-0 grid-cols-4 gap-1 rounded-[12px] bg-[var(--surface-2)] p-1">
@@ -120,7 +126,7 @@ export function ResultsView() {
             <AnnotatedFace scan={scan} focusIds={focusIds} hotspot={hotspot} onHotspot={setHotspot} />
             <div className="flex flex-col gap-4">
               <div>
-                <p className="micro">{scan.mode === "mock" ? "Demo data · generated example scores" : "YouCam AI Skin Analysis v2.1"}</p>
+                <p className="micro">{demo ? DEMO_SCAN_LINE : "YouCam AI Skin Analysis v2.1"}</p>
                 <p className={cn("num mt-2 text-[64px] leading-none font-semibold", scoreToneClass(scan.overall))} aria-live="polite">
                   {scan.overall}
                   <span className="text-[22px] font-semibold text-[var(--meta)]">/100</span>
@@ -161,9 +167,25 @@ export function ResultsView() {
           <div>
             <h2 className="font-display text-[22px] leading-[1.2] font-bold">A short routine</h2>
             <p className="mt-2 text-[14px] leading-[1.4] text-[var(--ink-2)]">
-              {forYou.length} products for the scores under 75. One of each step, suits ahead of patch-test.
+              {demo
+                ? "Demo matches include Suits you, Patch-test, and Skip. Example scores, not a live YouCam ranking."
+                : `${forYou.length} products for the scores under 75. One of each step, suits ahead of patch-test.`}
             </p>
           </div>
+          {verdicts && (
+            <div className="grid gap-2 sm:grid-cols-3">
+              {([
+                ["Suits you", verdicts.suits],
+                ["Patch-test", verdicts.patch],
+                ["Skip", verdicts.skip],
+              ] as const).map(([label, item]) => item && (
+                <Link key={label} href={`/shop/${item.slug}`} className="rounded-[12px] border border-[var(--line)] p-3">
+                  <VerdictBadge verdict={suitProduct(item, scan).verdict} />
+                  <span className="mt-2 block text-[14px] font-semibold">{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
           {forYou.map((product) => {
             const suit = suitProduct(product, scan);
             return (
@@ -185,7 +207,7 @@ export function ResultsView() {
       {tab === "makeup" && (
         <div role="tabpanel" id="panel-makeup" aria-labelledby="tab-makeup" className="flex flex-col gap-3">
           <div>
-            <span className="inline-flex rounded-full border border-[var(--line)] px-3 py-1 text-[12px] font-semibold">Powered by YouCam Makeup VTO</span>
+            <span className="inline-flex rounded-full border border-[var(--line)] px-3 py-1 text-[12px] font-semibold">{demo ? "AI Makeup Virtual Try-On · demo, not a live call" : "AI Makeup Virtual Try-On"}</span>
             <h2 className="mt-3 font-display text-[22px] leading-[1.2] font-bold">Colour that fits</h2>
             <p className="mt-2 text-[14px] leading-[1.4] text-[var(--ink-2)]">
               {makeup.length ? `${makeup.length} shades for the low scores. Try-on uses this scan photo.` : "No makeup match for these scores."}
@@ -204,7 +226,7 @@ export function ResultsView() {
                   <span className="block text-[13px] text-[var(--ink-2)]">
                     {product.brand} · {product.category} · {formatPrice(product.price)}
                   </span>
-                  <span className="mt-2 inline-flex min-h-11 items-center self-start rounded-[8px] bg-[var(--brand)] px-3 text-[13px] font-semibold text-white">Try this on</span>
+                  <span className="mt-2 inline-flex min-h-11 items-center self-start rounded-[8px] bg-[var(--brand)] px-3 text-[13px] font-semibold text-white">{demo ? "Demo preview" : "Try this on"}</span>
                 </span>
               </Link>
             );
@@ -229,9 +251,13 @@ export function ResultsView() {
       </WhySheet>
 
       <WhySheet open={howOpen} title="How is this calculated?" onClose={() => setHowOpen(false)}>
-        <p>YouCam Skin Analysis reads the photo and returns a score per concern. Higher means healthier-looking. The large number is their adjusted UI score.</p>
-        <p>GlowCheck hides moles and eyelid shape, then matches products to the scores that are actually low. The follow-up compares the raw score, which YouCam says to keep over time.</p>
-        <p>This is a cosmetic read, not a diagnosis.</p>
+        {demo ? (
+          <p>These scores are generated examples. YouCam was not called. They are not a measurement of the person in the photo.</p>
+        ) : (
+          <p>YouCam Skin Analysis reads the photo and returns a score per concern. Higher means healthier-looking. The large number is their adjusted UI score.</p>
+        )}
+        <p>GlowCheck hides moles and eyelid shape, then matches products to the scores that are actually low. The follow-up compares the raw score. Cause is unknown.</p>
+        <p>This is a cosmetic read, not a diagnosis. A move of ±3 raw points is a demo display heuristic, not proven efficacy.</p>
       </WhySheet>
     </div>
   );

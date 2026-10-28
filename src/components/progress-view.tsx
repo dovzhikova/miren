@@ -7,8 +7,9 @@ import { HabitLog } from "@/components/habits-panel";
 import { ProductPhoto } from "@/components/product-photo";
 import { VerdictBadge } from "@/components/verdict-badge";
 import { getProduct } from "@/lib/catalog";
-import { baselineScan, buildSampleFollowUp, compareScans, comparisonIssue, demoComparisonState, latestScan, routineCalls } from "@/lib/progress";
-import { addScan, removeFromRoutine, useGlow } from "@/lib/store";
+import { baselineScan, buildSampleFollowUp, compareScans, comparisonIssue, demoComparisonState, latestScan, routineCalls, routineOutcomeLabel } from "@/lib/progress";
+import { addScan, installDemoStory, removeFromRoutine, useGlow } from "@/lib/store";
+import { suitProduct } from "@/lib/suitability";
 import { cn } from "@/lib/utils";
 
 export function ProgressView() {
@@ -46,7 +47,8 @@ export function ProgressView() {
     <div className="flex flex-col gap-6">
       <div>
         <p className="micro">Is it working?</p>
-        {workspace === "mock" && <p className="mb-2 text-[13px] font-semibold">Demo data: all changes are generated examples.</p>}
+        {workspace === "mock" && <p className="mb-2 text-[13px] font-semibold">Demo data: all changes are generated examples. YouCam was not called.</p>}
+        <p className="text-[13px] leading-snug text-[var(--ink-2)]">Cause is unknown. A score change does not establish that a product worked.</p>
         {seeded && (
           <p data-testid="demo-story" className="mt-2 text-[14px] text-[var(--ink-2)]">
             Example comparison: a baseline and a follow-up 21 days later, on the sample face. Nothing here is a live YouCam result.
@@ -78,18 +80,14 @@ export function ProgressView() {
         <div className="mt-3 flex flex-col gap-2">
           {workspace === "mock" ? (
             <>
-              <p className="text-[13px] font-semibold">Demo data only. The example below generates a follow-up dated 21 days after the baseline.</p>
+              <p className="text-[13px] font-semibold">Demo data only. The follow-up is a generated example, 21 days after the baseline. YouCam was not called.</p>
               <button
                 type="button"
                 className="btn-primary w-full"
                 data-testid="sample-followup"
                 onClick={() => {
                   if (seeded) {
-                    const story = demoComparisonState();
-                    const base = story.scans.find((scan) => scan.id === story.baselineId);
-                    const follow = story.scans.find((scan) => scan.id !== story.baselineId);
-                    if (base) addScan(base);
-                    if (follow) addScan(follow);
+                    installDemoStory(demoComparisonState());
                     return;
                   }
                   addScan(buildSampleFollowUp(baseline));
@@ -191,8 +189,12 @@ export function ProgressView() {
                     <p className="text-[16px] font-semibold">{product.name}</p>
                     <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
                     {trial && <p className="text-[12px] text-[var(--meta)]">Tracking since {formatDay(trial.startedAt)}</p>}
-                    <div className="mt-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <VerdictBadge verdict={suitProduct(product, latest).verdict} />
                       <VerdictBadge verdict={call.verdict} />
+                      {routineOutcomeLabel(call) && routineOutcomeLabel(call) !== call.title && (
+                        <span className="text-[13px] font-semibold">{routineOutcomeLabel(call)}</span>
+                      )}
                     </div>
                   </div>
                 </div>

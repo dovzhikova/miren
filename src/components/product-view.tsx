@@ -10,12 +10,15 @@ import { VerdictBadge } from "@/components/verdict-badge";
 import { WhySheet } from "@/components/why-sheet";
 import { formatPrice, getProduct, ingredientPills } from "@/lib/catalog";
 import { concernLabel } from "@/lib/concerns";
+import { DEMO_PREVIEW_CAPTION, demoFixturePath, SAMPLE_FACE } from "@/lib/honesty";
 import { dataUrlToFile, previewDataUrl, requestTryOn, type TryOnResult } from "@/lib/photos";
 import { readPhoto } from "@/lib/photo-vault";
 import { latestScan } from "@/lib/progress";
 import { addToCart, toggleSaved, useGlow } from "@/lib/store";
 import { suitProduct } from "@/lib/suitability";
 import { cn } from "@/lib/utils";
+
+type ShownPreview = TryOnResult & { generatedDemo?: boolean };
 
 export function ProductView({ slug }: { slug: string }) {
   const { ready, state, workspace } = useGlow();
@@ -24,14 +27,14 @@ export function ProductView({ slug }: { slug: string }) {
 
 function ProductContent({ slug }: { slug: string }) {
   const product = getProduct(slug);
-  const { ready, state } = useGlow();
+  const { ready, state, workspace } = useGlow();
   const requestRef = useRef<AbortController | null>(null);
   const whyTrigger = useRef<HTMLButtonElement>(null);
   const started = useRef(false);
   useEffect(() => () => requestRef.current?.abort(), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<TryOnResult | null>(null);
+  const [result, setResult] = useState<ShownPreview | null>(null);
   const [restoredPhoto, setRestoredPhoto] = useState<string>();
   const [why, setWhy] = useState(false);
 
@@ -55,7 +58,13 @@ function ProductContent({ slug }: { slug: string }) {
         controller.signal.throwIfAborted();
         setRestoredPhoto(thumbnail);
       }
-      setResult(await requestTryOn(file, product.slug, scan.mode, controller.signal));
+      const data = await requestTryOn(file, product.slug, scan.mode, controller.signal);
+      const generatedDemo = scan.mode === "mock";
+      setResult({
+        ...data,
+        resultUrl: generatedDemo && !data.resultUrl ? demoFixturePath(product.tryOn.kind) : data.resultUrl,
+        generatedDemo,
+      });
     } catch (caught) {
       if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "The preview failed.");
     } finally {
@@ -86,7 +95,14 @@ function ProductContent({ slug }: { slug: string }) {
   const makeup = product.tryOn.kind === "makeup";
   const rendered = Boolean(result?.resultUrl);
   const after = result?.resultUrl || "";
-  const tryOnLabel = busy ? (scan?.mode === "live" ? "Asking YouCam…" : "Checking…") : result ? "Refresh preview" : product.tryOn.label;
+  const demoPreview = workspace === "mock" || scan?.mode === "mock" || scan?.source === "sample";
+  const tryOnLabel = busy
+    ? (demoPreview ? "Preparing demo preview…" : "Asking YouCam…")
+    : result
+      ? "Refresh preview"
+      : makeup
+        ? (demoPreview ? "Show demo makeup preview" : "Try on with Makeup VTO")
+        : (demoPreview ? "Preview this match" : "Preview with Skin Simulation");
   const showMakeupBar = makeup && ready && Boolean(scan);
 
   return (
@@ -102,6 +118,21 @@ function ProductContent({ slug }: { slug: string }) {
       </div>
 
       <section id="try-on" className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-display text-[22px] leading-[1.2] font-bold">{makeup ? "AI Makeup Virtual Try-On" : "AI Skin Simulation"}</h2>
+          <p className="mt-1 text-[13px] leading-snug text-[var(--ink-2)]">
+            {demoPreview
+              ? "Demo preview. YouCam is not called."
+              : makeup
+                ? "Live Makeup Virtual Try-On on this photo."
+                : "Live Skin Simulation is the preview for this treatment."}
+          </p>
+        </div>
+        {ready && scan && !makeup && (
+          <button type="button" className="btn-primary btn-lg w-full" onClick={preview} disabled={busy} data-testid="try-on">
+            {tryOnLabel}
+          </button>
+        )}
         {!ready ? (
           <p className="text-[13px] text-[var(--meta)]">Loading the scan photo…</p>
         ) : !scan ? (
@@ -121,7 +152,7 @@ function ProductContent({ slug }: { slug: string }) {
         <div className="flex flex-wrap items-center gap-2">
           <VerdictBadge verdict={suit.verdict} />
           <span className="inline-flex rounded-full border border-[var(--line)] px-3 py-1 text-[12px] font-semibold">
-            {makeup ? "Powered by YouCam Makeup VTO" : "YouCam skin simulation"}
+            {demoPreview ? "Generated demo preview · not a YouCam render" : makeup ? "AI Makeup Virtual Try-On" : "AI Skin Simulation"}
           </span>
         </div>
         <p className="max-w-[40rem] text-[15px] text-[var(--ink-2)]">{product.summary}</p>
@@ -132,8 +163,21 @@ function ProductContent({ slug }: { slug: string }) {
               : "An illustrative skin simulation, not a prediction of what this product will do."}
           </p>
         )}
-        {rendered && photo && after && (
-          <BeforeAfter before={photo} after={after} makeup={makeup} />
+        {rendered && (photo || result?.generatedDemo) && after && (
+          <div className="flex flex-col gap-2">
+            {result?.generatedDemo && (
+              <p role="status" className="rounded-[12px] bg-[var(--surface-warm)] px-4 py-3 text-[13px] leading-snug font-semibold text-[var(--ink)]">
+                {DEMO_PREVIEW_CAPTION}
+                {scan?.source === "sample" ? "" : " This picture is the sample-face fixture, not a render of a different photo."}
+              </p>
+            )}
+            <BeforeAfter
+              before={result?.generatedDemo ? (scan?.source === "sample" ? (photo || SAMPLE_FACE) : SAMPLE_FACE) : (photo || SAMPLE_FACE)}
+              after={after}
+              makeup={makeup}
+              generated={Boolean(result?.generatedDemo)}
+            />
+          </div>
         )}
         {result && !rendered && (
           <p role="status" className="rounded-[12px] bg-[var(--surface-2)] px-4 py-3 text-[13px] leading-snug text-[var(--ink)]">
@@ -146,11 +190,6 @@ function ProductContent({ slug }: { slug: string }) {
             <summary className="min-h-11 cursor-pointer py-3 text-[13px] font-semibold">Request that would be sent</summary>
             <pre tabIndex={0} role="region" aria-label="Demo API request" className="overflow-x-auto rounded-[16px] bg-[var(--surface-2)] p-3 text-[11px] leading-relaxed">{JSON.stringify(result.preview, null, 2)}</pre>
           </details>
-        )}
-        {ready && scan && !makeup && (
-          <button type="button" className="btn-primary btn-lg w-full" onClick={preview} disabled={busy} data-testid="try-on">
-            {tryOnLabel}
-          </button>
         )}
         {showMakeupBar && (
           <div className="sticky-bar sticky-bar-flow">
@@ -193,13 +232,18 @@ function ProductContent({ slug }: { slug: string }) {
       <button type="button" ref={whyTrigger} className="btn-ghost h-11 w-fit" onClick={() => setWhy(true)}>
         Why this verdict
       </button>
+      {product.shopUrl ? (
+        <a href={product.shopUrl} target="_blank" rel="noreferrer" className="btn-secondary w-full">
+          Buy on brand store
+        </a>
+      ) : null}
       <a
         href={`https://www.google.com/search?q=${encodeURIComponent(`${product.brand} ${product.name}`)}`}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex h-11 items-center text-[15px] font-semibold text-[var(--brand)]"
+        className="inline-flex h-11 items-center text-[13px] text-[var(--meta)] underline"
       >
-        Search this product
+        Web search for this name
       </a>
 
       {!scan && ready && (
@@ -277,7 +321,7 @@ function ProductContent({ slug }: { slug: string }) {
   );
 }
 
-function BeforeAfter({ before, after, makeup }: { before: string; after: string; makeup: boolean }) {
+function BeforeAfter({ before, after, makeup, generated }: { before: string; after: string; makeup: boolean; generated: boolean }) {
   const [split, setSplit] = useState(56);
   return (
     <div className="flex flex-col gap-3">
@@ -289,8 +333,8 @@ function BeforeAfter({ before, after, makeup }: { before: string; after: string;
         </figure>
         <figure className="overflow-hidden rounded-[12px] bg-[var(--pack)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={after} alt="YouCam try-on result" className="aspect-[3/4] w-full object-cover" />
-          <figcaption className="px-2 py-2 text-[12px] font-semibold">{makeup ? "YouCam makeup" : "YouCam simulation"}</figcaption>
+          <img src={after} alt={generated ? "Generated demo preview" : "YouCam try-on result"} className="aspect-[3/4] w-full object-cover" />
+          <figcaption className="px-2 py-2 text-[12px] font-semibold">{generated ? "Generated demo preview" : makeup ? "YouCam makeup" : "YouCam simulation"}</figcaption>
         </figure>
       </div>
       <figure>

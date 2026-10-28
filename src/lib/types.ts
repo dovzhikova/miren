@@ -130,6 +130,8 @@ export type Product = {
   finish?: "matte" | "satin" | "cream" | "sheer";
   /** HTTPS image on the brand's own site. Absent until an official photo is mapped. */
   officialImageUrl?: string;
+  /** Official brand-site search for this name. Absent when no verified search URL exists. */
+  shopUrl?: string;
   inStock: boolean;
   skinTypes: string[];
   tryOn: {

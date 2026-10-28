@@ -291,6 +291,7 @@ function toProduct(raw: RawProduct): Product {
     officialImageUrl: officialImageFor(raw),
     inStock: raw.in_stock,
     skinTypes: skin,
+    shopUrl: shopUrlFor({ brand: raw.brand, name: raw.name }),
     tryOn: {
       kind: "simulation",
       label: "Preview this match",
@@ -325,6 +326,7 @@ function toMakeup(raw: MakeupSource): Product {
     officialImageUrl: image,
     inStock: true,
     skinTypes: [],
+    shopUrl: shopUrlFor({ brand: raw.brand, name: raw.name }),
     tryOn: {
       kind: "makeup",
       label: "Try this on",
@@ -333,8 +335,22 @@ function toMakeup(raw: MakeupSource): Product {
   };
 }
 
+/**
+ * Brand storefront search for a product name.
+ * Circadia, Biologique Recherche (en-us), and ZO Skin Health (US) expose a real HTTPS search page.
+ * Other brands are omitted rather than given an invented product handle.
+ */
+const BRAND_SEARCH: Record<string, string> = {
+  Circadia: "https://circadia.com/search?q=",
+  "Biologique Recherche": "https://www.biologique-recherche.com/en-us/search?q=",
+  "ZO Skin Health": "https://zoskinhealth.com/us/search?q=",
+};
+
 const products: Product[] = [...(rawCatalog as RawProduct[]).map(toProduct), ...MAKEUP.map(toMakeup)];
 const bySlug = new Map(products.map((product) => [product.slug, product]));
+
+/** Full shelf size, including colour SKUs. Face products are a subset. */
+export const SHELF_COUNT = products.length;
 
 export function listProducts(): Product[] {
   return products;
@@ -350,6 +366,13 @@ export function listMakeupProducts(): Product[] {
 
 export function getProduct(slug: string): Product | undefined {
   return bySlug.get(slug);
+}
+
+export function shopUrlFor(product: { brand: string; name: string }): string | undefined {
+  const base = BRAND_SEARCH[product.brand];
+  const name = product.name.trim();
+  if (!base || !name) return undefined;
+  return `${base}${encodeURIComponent(name)}`;
 }
 
 export function productsForConcern(id: ConcernId): Product[] {

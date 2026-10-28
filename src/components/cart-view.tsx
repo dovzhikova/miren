@@ -97,6 +97,11 @@ export function CartView() {
                   <p className="mt-1 text-[16px] font-semibold">{product.name}</p>
                   <p className="text-[13px] text-[var(--meta)]">{product.brand}</p>
                   <p className="num text-[13px] text-[var(--meta)]">{formatPrice(product.price)}</p>
+                  {product.shopUrl && (
+                    <a href={product.shopUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold underline">
+                      Open on brand store
+                    </a>
+                  )}
                   <div className="mt-2 flex items-center gap-2">
                     <button type="button" className="grid size-11 place-items-center rounded-[8px] bg-[var(--surface-2)] text-lg" aria-label="Decrease quantity" onClick={() => setQty(product.slug, line.qty - 1)}>
                       −

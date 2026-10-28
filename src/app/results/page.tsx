@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: "Per-concern skin scores and the products that match them.",
 };
 
-export default function ResultsPage() {
-  return <ResultsView />;
+export default async function ResultsPage({ searchParams }: { searchParams: Promise<{ demo?: string }> }) {
+  const params = await searchParams;
+  return <ResultsView preferBaseline={params.demo === "1"} />;
 }

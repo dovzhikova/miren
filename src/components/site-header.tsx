@@ -18,6 +18,7 @@ const links = [
 export function SiteHeader() {
   const pathname = usePathname();
   const { state, workspace, setWorkspace } = useGlow();
+  const [liveAvailable, setLiveAvailable] = useState(false);
   const [offlineNote, setOfflineNote] = useState<string | null>(null);
   const active = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -28,10 +29,12 @@ export function SiteHeader() {
       .then((data: { liveAvailable?: boolean; youcamConfigured?: boolean }) => {
         if (cancel) return;
         if (data.liveAvailable) {
+          setLiveAvailable(true);
           setOfflineNote(null);
           noteLiveDefault();
           return;
         }
+        setLiveAvailable(false);
         setOfflineNote(
           data.youcamConfigured
             ? "YouCam keys are present, but live scans also need the session secret and Upstash quota. Until then, nothing is sent to YouCam."
@@ -39,12 +42,21 @@ export function SiteHeader() {
         );
       })
       .catch(() => {
-        if (!cancel) setOfflineNote("YouCam is not connected. Demo mode does not send photos to YouCam.");
+        if (!cancel) {
+          setLiveAvailable(false);
+          setOfflineNote("YouCam is not connected. Demo mode does not send photos to YouCam.");
+        }
       });
     return () => {
       cancel = true;
     };
   }, []);
+
+  const modeLine = workspace === "mock"
+    ? `Demo (no API call). Example scores only. YouCam is not called.${liveAvailable ? " Live YouCam is connected — switch modes to send a photo." : ""}`
+    : liveAvailable
+      ? "Live YouCam connected."
+      : offlineNote;
 
   return (
     <>
@@ -59,23 +71,25 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <label className="min-w-0 text-[12px] font-medium text-[var(--meta)] max-md:ml-auto">
-            <span className="sr-only">Data mode</span>
-            <select aria-label="Data mode" value={workspace} onChange={(event) => setWorkspace(event.target.value as "mock" | "live")} className="h-9 w-full max-w-[7.25rem] min-w-0 rounded-[8px] border border-[var(--line)] bg-white px-2 text-[12px] font-medium text-[var(--meta)] min-[390px]:max-w-[9.5rem]">
-              <option value="mock">Demo data</option>
-              <option value="live">My scans</option>
-            </select>
-          </label>
-          <Link href="/cart" className="relative grid size-11 shrink-0 place-items-center rounded-full" aria-label={`Cart, ${state.cart.length} ${state.cart.length === 1 ? "item" : "items"}`}>
+          <Link href="/cart" className="relative ml-auto grid size-11 shrink-0 place-items-center rounded-full md:ml-0" aria-label={`Cart, ${state.cart.length} ${state.cart.length === 1 ? "item" : "items"}`}>
             <ShoppingBagIcon className="size-5" aria-hidden />
             {state.cart.length > 0 && <span className="num absolute top-0 right-0 rounded-full bg-[var(--ink)] px-1.5 text-[11px] leading-4 font-semibold text-white">{state.cart.length}</span>}
           </Link>
         </div>
-        {offlineNote && (
-          <p role="status" className="border-t border-[var(--line)] bg-[var(--surface-warm)] px-4 py-1.5 text-center text-[12px] leading-tight text-[var(--ink)] min-[390px]:px-5 min-[390px]:py-2 min-[390px]:text-[13px] min-[390px]:leading-snug">
-            {offlineNote}
-          </p>
-        )}
+        <div className="border-t border-[var(--line)] bg-[var(--surface-warm)] px-4 py-2 min-[390px]:px-5">
+          <div className="mx-auto flex w-full max-w-[960px] min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <label className="min-w-0 text-[12px] font-semibold text-[var(--ink)] sm:w-[220px]">
+              <span className="sr-only">Data mode</span>
+              <select aria-label="Data mode" value={workspace} onChange={(event) => setWorkspace(event.target.value as "mock" | "live")} className="h-9 w-full min-w-0 rounded-[8px] border border-[var(--line)] bg-white px-2 text-[12px] font-semibold text-[var(--ink)]">
+                <option value="mock">Demo (no API call)</option>
+                <option value="live">Live YouCam</option>
+              </select>
+            </label>
+            {modeLine && (
+              <p role="status" className="min-w-0 text-[12px] leading-snug text-[var(--ink)]">{modeLine}</p>
+            )}
+          </div>
+        </div>
       </header>
       <nav aria-label="Mobile" className="mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-white md:hidden">
         <div className="mx-auto grid max-w-[960px] grid-cols-5">

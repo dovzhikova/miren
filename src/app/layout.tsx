@@ -18,11 +18,17 @@ const display = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://glowcheck-beta.vercel.app"),
   title: {
     default: "GlowCheck",
     template: "%s · GlowCheck",
   },
-  description: "Check a product against your skin before you buy it, then see if it is actually working.",
+  description: "Match a product to a face photo, preview it, then compare a later scan. Demo mode uses example scores and does not call YouCam.",
+  openGraph: {
+    title: "GlowCheck",
+    description: "Match, try-on or simulate, then a re-scan verdict. Demo mode is example scores, not a live YouCam call.",
+    images: [{ url: "/demo/sample-face.jpg", alt: "Sample face used in the GlowCheck demo" }],
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

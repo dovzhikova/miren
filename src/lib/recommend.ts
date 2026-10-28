@@ -66,3 +66,42 @@ export function makeupForYou(scan: Scan | null, limit = 4): Product[] {
   if (picked.length < 3) take(2);
   return picked;
 }
+
+function firstVerdict(scan: Scan, verdict: "suits" | "patch-test" | "skip", pool: Product[]): Product | null {
+  return pool.find((product) => suitProduct(product, scan).verdict === verdict) ?? null;
+}
+
+/** One example of each shelf call for this scan, when the catalog has one. */
+export function demoVerdictExamples(scan: Scan): { suits: Product | null; patch: Product | null; skip: Product | null } {
+  const face = listFaceProducts();
+  return {
+    suits: firstVerdict(scan, "suits", face),
+    patch: firstVerdict(scan, "patch-test", face),
+    skip: firstVerdict(scan, "skip", face),
+  };
+}
+
+/**
+ * Demo For you list. The short routine still leads, then a patch-test and a skip
+ * so the demo is not a wall of "Suits you".
+ */
+export function demoForYouMatches(scan: Scan | null, limit = FOR_YOU_LIMIT): Product[] {
+  const base = forYouProducts(scan, limit);
+  if (!scan) return base;
+  const examples = demoVerdictExamples(scan);
+  const merged = [...base];
+  for (const extra of [examples.patch, examples.skip]) {
+    if (!extra || merged.some((item) => item.slug === extra.slug)) continue;
+    merged.push(extra);
+  }
+  return merged;
+}
+
+/** Colour list plus the patch-test lipstick when the short list would hide it. */
+export function demoMakeupMatches(scan: Scan | null): Product[] {
+  const base = makeupForYou(scan);
+  if (!scan) return base;
+  const patch = listMakeupProducts().find((product) => suitProduct(product, scan).verdict === "patch-test");
+  if (!patch || base.some((item) => item.slug === patch.slug)) return base;
+  return [...base, patch];
+}

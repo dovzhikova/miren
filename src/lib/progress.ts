@@ -1,12 +1,16 @@
-import { getProduct } from "@/lib/catalog";
+import { getProduct, listFaceProducts } from "@/lib/catalog";
 import { explainConcern } from "@/lib/concerns";
 import { isDemoScan } from "@/lib/scan-kind";
 import { newState } from "@/lib/state";
-import type { AppState, ConcernDelta, ConcernId, Product, ProgressCall, Scan } from "@/lib/types";
+import { suitProduct } from "@/lib/suitability";
+import type { AppState, ConcernDelta, ConcernId, Product, ProgressCall, RoutineItem, Scan } from "@/lib/types";
 import { sampleBaselineScan } from "@/lib/youcam/mock";
 
-const MOVE = 3;
+/** Display threshold for demo routine labels. Not a validated efficacy cutoff. */
+export const DEMO_RAW_MOVE = 3;
 export const OBSERVATION_DAYS = 14;
+const MOVE = DEMO_RAW_MOVE;
+const CAUSE = " Cause is unknown. Lighting, routine changes, and other factors can affect scores. This does not establish what caused the change.";
 const DAY = 86_400_000;
 
 export function latestScan(state: AppState): Scan | null {
@@ -51,17 +55,17 @@ export function productProgress(product: Product, baseline: Scan, latest: Scan, 
   if (!product.tracksSkin || product.routineRole === "makeup") {
     return result("untracked", "Colour, not a skin trial", "Choose this for its shade and finish. Skin-score changes do not measure makeup performance.");
   }
-  if (baseline.id === latest.id) return result("observe", "Baseline saved", "A second comparable scan will show changes. One photo cannot establish a trend.");
+  if (baseline.id === latest.id) return result("observe", "Too early to judge", `Too early to judge. A second comparable scan is needed before any trend. One photo cannot establish that a product worked.${CAUSE}`);
   const issue = comparisonIssue(baseline, latest);
   if (issue) return result("observe", "Comparison unavailable", issue);
   const days = (Date.parse(latest.createdAt) - Math.max(Date.parse(baseline.createdAt), Date.parse(startedAt))) / DAY;
   if (!Number.isFinite(days) || days < OBSERVATION_DAYS) {
-    return result("observe", "More observations needed", "It has been under two weeks of tracking. Keep capture conditions consistent; a short-term score change does not establish product effectiveness.");
+    return result("observe", "Too early to judge", `Too early to judge. It has been under two weeks of tracking. A short observation window is not a result.${CAUSE}`);
   }
   const deltas = compareScans(baseline, latest).filter((row) => product.concerns.includes(row.id));
   if (!deltas.length) return result("observe", "Raw scores unavailable", "These scans do not share a measured raw score for the concerns listed on this product.");
   const delta = Math.round(deltas.reduce((sum, row) => sum + row.delta, 0) / deltas.length * 10) / 10;
-  const caveat = " Lighting, routine changes, and other factors can affect scores. This does not establish what caused the change.";
+  const caveat = CAUSE;
   if (delta >= MOVE) return result("improved", "Scores improved", `Available concern scores rose by ${delta} raw points.${caveat}`, delta);
   if (delta <= -MOVE) return result("declined", "Scores declined", `Available concern scores fell by ${Math.abs(delta)} raw points.${caveat}`, delta);
   return result("observe", "No clear trend yet", `Available concern scores changed by ${delta} raw points. Three points is a demo display threshold, not a validated efficacy threshold.${caveat}`, delta);
@@ -84,16 +88,64 @@ const SAMPLE_DROP = new Set<ConcernId>(["acne"]);
 
 const SAMPLE_FACE = "/demo/sample-face.jpg";
 
+/** Keep, Switch, or Too early — the routine chip beside the score call. */
+export function routineOutcomeLabel(call: ProgressCall): "Keep" | "Switch" | "Too early to judge" | null {
+  switch (call.verdict) {
+    case "improved":
+      return "Keep";
+    case "declined":
+      return "Switch";
+    case "observe":
+      return call.title === "Too early to judge" ? "Too early to judge" : null;
+    case "untracked":
+      return null;
+    default: {
+      const exhaustive: never = call.verdict;
+      return exhaustive;
+    }
+  }
+}
+
+/** Three demo trials: a keep, a switch or skip, and a patch-test that is too early. */
+export function demoRoutineItems(baseline: Scan, follow: Scan): RoutineItem[] {
+  const face = listFaceProducts().filter((product) => product.tracksSkin);
+  const progressOf = (product: Product) => productProgress(product, baseline, follow, baseline.createdAt);
+  const suitOf = (product: Product) => suitProduct(product, baseline).verdict;
+  const preferred = getProduct("nighttimerepair");
+  const improved = preferred && progressOf(preferred).verdict === "improved"
+    ? preferred
+    : face.find((product) => progressOf(product).verdict === "improved") ?? null;
+  const declined = face.find((product) => product.slug !== improved?.slug && progressOf(product).verdict === "declined") ?? null;
+  const skip = face.find((product) => product.slug !== improved?.slug && product.slug !== declined?.slug && suitOf(product) === "skip") ?? null;
+  const used = new Set([improved?.slug, declined?.slug, skip?.slug]);
+  const patch = face.find((product) => !used.has(product.slug) && suitOf(product) === "patch-test") ?? null;
+  const items: RoutineItem[] = [];
+  if (improved) items.push({ productId: improved.slug, startedAt: baseline.createdAt, baselineScanId: baseline.id });
+  const second = declined ?? skip;
+  if (second) items.push({ productId: second.slug, startedAt: baseline.createdAt, baselineScanId: baseline.id });
+  const early = patch ?? face.find((product) => !items.some((item) => item.productId === product.slug));
+  if (early) items.push({ productId: early.slug, startedAt: follow.createdAt, baselineScanId: baseline.id });
+  return items;
+}
+
+/** Baseline plus a labeled follow-up and the mixed routine, for an analyzed demo scan. */
+export function demoStoryFromScan(baseline: Scan): AppState {
+  const stamped: Scan = { ...baseline, mode: "mock", auth: "none", previewDataUrl: baseline.previewDataUrl || SAMPLE_FACE };
+  const follow = { ...buildSampleFollowUp(stamped), previewDataUrl: stamped.previewDataUrl };
+  return {
+    ...newState(),
+    scans: [follow, stamped],
+    baselineId: stamped.id,
+    routine: demoRoutineItems(stamped, follow),
+  };
+}
+
 /** Coherent demo baseline and 21-day follow-up so Routine is not an empty Pending state. */
 export function demoComparisonState(): AppState {
   const baseline: Scan = { ...sampleBaselineScan(), previewDataUrl: SAMPLE_FACE };
-  const follow = { ...buildSampleFollowUp(baseline), id: "sample-follow-up-demo" };
-  return {
-    ...newState(),
-    scans: [follow, baseline],
-    baselineId: baseline.id,
-    routine: [{ productId: "nighttimerepair", startedAt: baseline.createdAt, baselineScanId: baseline.id }],
-  };
+  const story = demoStoryFromScan(baseline);
+  const follow = { ...story.scans[0], id: "sample-follow-up-demo" };
+  return { ...story, scans: [follow, story.scans[1]] };
 }
 
 export function buildSampleFollowUp(baseline: Scan): Scan {
