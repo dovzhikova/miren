@@ -1,4 +1,4 @@
-import { authorizeLive, issueTask } from "@/lib/live-access";
+import { issueTask, liveSession, reserveTaskStart } from "@/lib/live-access";
 import { analysisProfile } from "@/lib/youcam/image";
 import { GlowError } from "@/lib/errors";
 import { youcamCredentials } from "@/lib/youcam/auth";
@@ -59,8 +59,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const sessionId = await liveSession(request);
     const prepared = await prepareUpload(bytes);
-    const sessionId = await authorizeLive(request);
+    await reserveTaskStart(sessionId);
     const createdAt = new Date().toISOString();
     const outcome = await runSkinAnalysis(prepared, { source });
     if (outcome.status === "running") {

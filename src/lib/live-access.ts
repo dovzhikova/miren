@@ -1,17 +1,19 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { checkBotId } from "botid/server";
+import { mirenEnv } from "@/lib/env";
 import { GlowError } from "@/lib/errors";
 import { youcamCredentials } from "@/lib/youcam/auth";
 import type { TaskKind } from "@/lib/youcam/client";
 import type { Scan } from "@/lib/types";
 
-const COOKIE = "glowcheck_session";
+export const COOKIE = "miren_session";
 const HOUR = 3600;
 const DAY = 24 * HOUR;
 
 type Session = { purpose: "session"; id: string; expires: number };
 type Task = { purpose: "task"; sessionId: string; taskId: string; kind: TaskKind; source: Scan["source"]; profile?: Scan["profile"]; createdAt: string; expires: number };
 
-function secret() { return process.env.GLOWCHECK_SESSION_SECRET ?? ""; }
+function secret() { return mirenEnv("SESSION_SECRET") ?? ""; }
 function redisPair(url: string | undefined, token: string | undefined) {
   return url && token && /^https:\/\//.test(url) ? { url, token } : undefined;
 }
@@ -39,8 +41,12 @@ function verify(token: string): Session | Task | null {
     return typeof claims.expires === "number" && claims.expires > Date.now() ? claims : null;
   } catch { return null; }
 }
+// The pre-rename cookie is still read so live scans started before the rename can finish polling.
+const LEGACY_COOKIE = "glowcheck_session";
 function sessionFrom(request: Request): Session | null {
-  const raw = request.headers.get("cookie")?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1);
+  const parts = request.headers.get("cookie")?.split(";").map((part) => part.trim()) ?? [];
+  const named = (name: string) => parts.find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
+  const raw = named(COOKIE) ?? named(LEGACY_COOKIE);
   const claims = raw ? verify(raw) : null;
   return claims?.purpose === "session" && typeof claims.id === "string" ? claims : null;
 }
@@ -64,13 +70,13 @@ function positiveLimit(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
-async function reserve(session: Session, polling: boolean) {
+async function reserve(sessionId: string, polling: boolean) {
   const now = Math.floor(Date.now() / 1000);
   const rules = polling
-    ? [{ key: `poll:${session.id}:${Math.floor(now / 60)}`, limit: 60, ttl: 120 }]
+    ? [{ key: `poll:${sessionId}:${Math.floor(now / 60)}`, limit: 60, ttl: 120 }]
     : [
-      { key: `session:${session.id}:${Math.floor(now / HOUR)}`, limit: positiveLimit(process.env.GLOWCHECK_TASKS_PER_HOUR, 5), ttl: HOUR + 60 },
-      { key: `global:${Math.floor(now / DAY)}`, limit: positiveLimit(process.env.GLOWCHECK_TASKS_PER_DAY, 100), ttl: DAY + 60 },
+      { key: `session:${sessionId}:${Math.floor(now / HOUR)}`, limit: positiveLimit(mirenEnv("TASKS_PER_HOUR"), 5), ttl: HOUR + 60 },
+      { key: `global:${Math.floor(now / DAY)}`, limit: positiveLimit(mirenEnv("TASKS_PER_DAY"), 100), ttl: DAY + 60 },
     ];
   let response: Response;
   try {
@@ -79,7 +85,7 @@ async function reserve(session: Session, polling: boolean) {
     response = await fetch(redis.url, {
       method: "POST",
       headers: { Authorization: `Bearer ${redis.token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(["EVAL", LIMIT_SCRIPT, rules.length, ...rules.map((rule) => `glowcheck:v1:${rule.key}`), ...rules.flatMap((rule) => [rule.limit, rule.ttl])]),
+      body: JSON.stringify(["EVAL", LIMIT_SCRIPT, rules.length, ...rules.map((rule) => `miren:v1:${rule.key}`), ...rules.flatMap((rule) => [rule.limit, rule.ttl])]),
       signal: AbortSignal.timeout(5000),
       cache: "no-store",
     });
@@ -91,14 +97,36 @@ async function reserve(session: Session, polling: boolean) {
     throw new GlowError("Personal scans are temporarily unavailable. Please try later.", 503, "quota-unavailable");
   }
 }
-export async function authorizeLive(request: Request, polling = false): Promise<string> {
+// BotID needs Vercel's OIDC token, so it runs only on Vercel deployments. Elsewhere the session and quota checks still apply.
+async function rejectBots() {
+  if (process.env.VERCEL !== "1") return;
+  let verdict: Awaited<ReturnType<typeof checkBotId>>;
+  try {
+    verdict = await checkBotId();
+  } catch {
+    throw new GlowError("Personal scans are temporarily unavailable. Please try later.", 503, "bot-check-unavailable");
+  }
+  if (verdict.isBot) throw new GlowError("Open Miren in a browser to use personal scans.", 403, "bot");
+}
+/** Cheap checks for a paid task start: configuration, origin, session, and bot detection. No quota is spent. */
+export async function liveSession(request: Request): Promise<string> {
   if (!liveAccessConfigured()) throw new GlowError("Personal scans are unavailable right now. Switch to Demo data to explore the app.", 503, "live-unavailable");
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) throw new GlowError("Open Miren directly to use personal scans.", 403);
+  // Browsers send Origin on every POST, so a task start without one did not come from this page.
+  if ((request.method === "POST" && !origin) || (origin && origin !== new URL(request.url).origin)) throw new GlowError("Open Miren directly to use personal scans.", 403);
   const session = sessionFrom(request);
   if (!session) throw new GlowError("Reload this page before starting a personal scan.", 403);
-  await reserve(session, polling);
+  if (request.method === "POST") await rejectBots();
   return session.id;
+}
+/** Spends one task start from the session and deployment quotas. Call after the photo is known to be usable. */
+export async function reserveTaskStart(sessionId: string) {
+  await reserve(sessionId, false);
+}
+export async function authorizeLive(request: Request, polling = false): Promise<string> {
+  const sessionId = await liveSession(request);
+  await reserve(sessionId, polling);
+  return sessionId;
 }
 export function issueTask(task: Omit<Task, "purpose" | "expires">): string {
   return sign({ ...task, purpose: "task", expires: Date.now() + 20 * 60_000 });

@@ -112,7 +112,7 @@ test("live UI uploads the source portrait after reload and polls using opaque ta
   let previewPolls = 0;
   await page.addInitScript(() => {
     const observed: { path: string; size: number; width: number; height: number }[] = [];
-    Object.assign(window, { glowcheckTestUploads: observed });
+    Object.assign(window, { mirenTestUploads: observed });
     const original = window.fetch;
     window.fetch = async (input, init) => {
       if (init?.body instanceof FormData && (String(input) === "/api/analyze" || String(input) === "/api/try-on")) {
@@ -165,7 +165,7 @@ test("live UI uploads the source portrait after reload and polls using opaque ta
   await page.getByTestId("photo-input").setInputFiles({ name: "portrait.jpg", mimeType: "image/jpeg", buffer: portrait });
   await page.getByTestId("analyze").click();
   await expect(page).toHaveURL(/\/results$/);
-  const uploads = await page.evaluate(() => (window as unknown as { glowcheckTestUploads: { path: string; size: number; width: number; height: number }[] }).glowcheckTestUploads);
+  const uploads = await page.evaluate(() => (window as unknown as { mirenTestUploads: { path: string; size: number; width: number; height: number }[] }).mirenTestUploads);
   expect(uploads[0].size).toBeGreaterThan(0);
   expect(Math.min(uploads[0].width, uploads[0].height)).toBeGreaterThanOrEqual(1080);
   expect(analyzed).toBe(true);
@@ -180,7 +180,7 @@ test("live UI uploads the source portrait after reload and polls using opaque ta
   await page.reload();
   await page.getByTestId("try-on").click();
   await expect(page.getByAltText("YouCam try-on result")).toBeVisible();
-  const previewUploads = await page.evaluate(() => (window as unknown as { glowcheckTestUploads: { path: string; size: number; width: number; height: number }[] }).glowcheckTestUploads);
+  const previewUploads = await page.evaluate(() => (window as unknown as { mirenTestUploads: { path: string; size: number; width: number; height: number }[] }).mirenTestUploads);
   expect(previewUploads[0].path).toBe("/api/try-on");
   expect(Math.min(previewUploads[0].width, previewUploads[0].height)).toBeGreaterThanOrEqual(1080);
   expect(previewed).toBe(true);

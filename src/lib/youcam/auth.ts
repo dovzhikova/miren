@@ -1,4 +1,5 @@
 import { constants, publicEncrypt } from "node:crypto";
+import { mirenEnv } from "@/lib/env";
 import { GlowError } from "@/lib/errors";
 
 const TOKEN_TTL_MS = 15 * 60 * 1000;
@@ -12,7 +13,7 @@ export function youcamBase(): string {
 export function youcamCredentials() {
   const apiKey = process.env.YOUCAM_API_KEY?.trim() ?? "";
   const publicKey = process.env.YOUCAM_PUBLIC_KEY?.trim() ?? "";
-  const forceMock = process.env.GLOWCHECK_FORCE_MOCK === "1";
+  const forceMock = mirenEnv("FORCE_MOCK") === "1";
   return {
     apiKey,
     publicKey,

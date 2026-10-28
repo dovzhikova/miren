@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { liveAccessConfigured, sessionCookie } from "@/lib/live-access";
+import { COOKIE, liveAccessConfigured, sessionCookie } from "@/lib/live-access";
 import { youcamCredentials } from "@/lib/youcam/auth";
 
 export async function GET(request: Request) {
@@ -15,5 +15,8 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE() {
-  return Response.json({ deleted: true }, { headers: { "Cache-Control": "no-store", "Set-Cookie": "glowcheck_session=; Path=/api; HttpOnly; SameSite=Strict; Max-Age=0" } });
+  const headers = new Headers({ "Cache-Control": "no-store" });
+  // Also clear the cookie name used before the Miren rename.
+  for (const name of [COOKIE, "glowcheck_session"]) headers.append("Set-Cookie", `${name}=; Path=/api; HttpOnly; SameSite=Strict; Max-Age=0`);
+  return Response.json({ deleted: true }, { headers });
 }

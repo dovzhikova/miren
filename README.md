@@ -65,20 +65,22 @@ Privacy and data explains this storage and provides a confirmed deletion action.
 | `YOUCAM_API_KEY` | Server-side YouCam bearer credential. |
 | `YOUCAM_PUBLIC_KEY` | Optional RSA public key for the v1 handshake. |
 | `YOUCAM_API_BASE` | Optional provider URL; defaults to `https://yce-api-01.makeupar.com`. |
-| `GLOWCHECK_FORCE_MOCK` | `1` disables live processing. |
-| `GLOWCHECK_SESSION_SECRET` | Random secret of at least 32 characters for session and task signatures. |
+| `MIREN_FORCE_MOCK` | `1` disables live processing. |
+| `MIREN_SESSION_SECRET` | Random secret of at least 32 characters for session and task signatures. |
 | `UPSTASH_REDIS_REST_URL` | HTTPS endpoint for durable atomic request counters. |
 | `UPSTASH_REDIS_REST_TOKEN` | Server-side Redis REST token. |
 | `KV_REST_API_URL` | Alias for the REST URL when `UPSTASH_REDIS_REST_URL` is unset. Injected by the Vercel Marketplace Upstash integration. |
 | `KV_REST_API_TOKEN` | Alias for the REST token when `UPSTASH_REDIS_REST_TOKEN` is unset. |
-| `GLOWCHECK_TASKS_PER_HOUR` | Maximum task starts per anonymous session per hour, default 5. |
-| `GLOWCHECK_TASKS_PER_DAY` | Maximum task starts across the deployment per UTC day, default 100. |
+| `MIREN_TASKS_PER_HOUR` | Maximum task starts per anonymous session per hour, default 5. |
+| `MIREN_TASKS_PER_DAY` | Maximum task starts across the deployment per UTC day, default 100. |
 
-Live routes fail closed if the session secret or quota service is missing or unavailable. Task starts reserve quota before any paid provider call. Retries consume task-start quota too. These caps count tasks, not YouCam units or money. Choose caps to fit the provider account's allowance.
+The `MIREN_` variables were named `GLOWCHECK_` before the rename; the old names are still read when the new ones are unset.
+
+Live routes fail closed if the session secret or quota service is missing or unavailable. A task start must come from this page (same-origin POST with an `Origin` header) and a valid session before the photo is decoded. Quota is reserved only after the photo is known to be usable, and before any paid provider call. Retries consume task-start quota too. These caps count tasks, not YouCam units or money. Choose caps to fit the provider account's allowance.
 
 `GET /api/config` creates a signed HttpOnly, SameSite=Strict session cookie when live processing is configured. Cookies last 24 hours. Delayed jobs return signed task tokens bound to that session, action, source, capture date, and analysis profile. Poll tokens expire after 20 minutes. Polling accepts no arbitrary provider task ID and is limited to 60 requests per session per minute.
 
-The counters use the [Upstash Redis REST API](https://upstash.com/docs/redis/features/restapi) with an atomic Lua command. Store only anonymous session IDs and counters, never photos or provider credentials, in the quota database. Repeatedly minting sessions can bypass a session cap, so the deployment-wide cap remains mandatory; add deployment-level bot protection for a public launch.
+The counters use the [Upstash Redis REST API](https://upstash.com/docs/redis/features/restapi) with an atomic Lua command. Store only anonymous session IDs and counters, never photos or provider credentials, in the quota database. Repeatedly minting sessions can bypass a session cap, so the deployment-wide cap remains mandatory. On Vercel, task starts also pass a [Vercel BotID](https://vercel.com/docs/botid) check; if that check is unavailable, the route fails closed. BotID runs only on Vercel deployments.
 
 Never commit real credentials. `.env.example` contains placeholders only. A deployment without the required live configuration remains a usable demo.
 
@@ -110,7 +112,7 @@ npx playwright install chromium webkit
 npm run test:e2e
 ```
 
-`test:e2e` creates a production build and runs the browser suite. `test:e2e:run` reuses an existing production build. Screenshots and traces go to the operating system's temporary directory, overridable with `GLOWCHECK_TEST_OUTPUT`.
+`test:e2e` creates a production build and runs the browser suite. `test:e2e:run` reuses an existing production build. Screenshots and traces go to the operating system's temporary directory, overridable with `MIREN_TEST_OUTPUT`.
 
 The browser suite covers Chromium at 320px, 390px, and 1440px, plus mobile WebKit. It exercises demo scanning, source-photo persistence, preview polling, saving, cart quantities, routines, follow-ups, mode isolation, deletion, malformed storage, unavailable live processing, keyboard controls, and automated accessibility checks. Camera capture uses Chromium's simulated device; physical camera and real YouCam acceptance remain separate checks.
 

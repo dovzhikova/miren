@@ -1,4 +1,5 @@
 // API-quality source images live in IndexedDB, separate from display thumbnails.
+// Pre-rename name, kept so photos saved before the Miren rename stay readable.
 const DATABASE = "glowcheck.photos";
 const memory = new Map<string, Blob>();
 let epoch = 0;
@@ -46,12 +47,12 @@ export async function savePhoto(id: string, photo: Blob): Promise<boolean> {
 
 export async function readPhoto(id: string): Promise<File | null> {
   const cached = memory.get(id);
-  if (cached) return new File([cached], "glowcheck-selfie.jpg", { type: cached.type || "image/jpeg" });
+  if (cached) return new File([cached], "miren-selfie.jpg", { type: cached.type || "image/jpeg" });
   try {
     const record = await transaction<unknown>("readonly", (store) => store.get(id));
-    if (record instanceof Blob) return new File([record], "glowcheck-selfie.jpg", { type: record.type || "image/jpeg" });
+    if (record instanceof Blob) return new File([record], "miren-selfie.jpg", { type: record.type || "image/jpeg" });
     if (record && typeof record === "object" && "bytes" in record && record.bytes instanceof ArrayBuffer && "type" in record && typeof record.type === "string") {
-      return new File([record.bytes], "glowcheck-selfie.jpg", { type: record.type });
+      return new File([record.bytes], "miren-selfie.jpg", { type: record.type });
     }
   } catch { /* A missing source is shown as a recoverable preview error. */ }
   return null;

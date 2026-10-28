@@ -140,7 +140,9 @@ async function youcamFetch(auth: AuthState, path: string, init?: RequestInit): P
   }
   if (!result.response.ok) {
     const code = errorCode(result.body);
-    throw new GlowError(youcamErrorMessage(code, errorText(result.body)), result.response.status || 502, code);
+    // Photo problems stay a client error. Provider auth, credit, and server failures are a bad gateway, not the caller's 401 or 403.
+    const status = result.response.status === 400 || result.response.status === 422 ? 422 : 502;
+    throw new GlowError(youcamErrorMessage(code, errorText(result.body)), status, code);
   }
   return { ...result, auth };
 }
@@ -196,11 +198,17 @@ export function skinTaskBody(fileId: string, profile: "hd" | "sd") {
   };
 }
 
+const MAX_ARCHIVE_BYTES = 50_000_000;
+const MAX_SCORE_BYTES = 2_000_000;
+
 async function scoreInfoFromZip(url: string): Promise<unknown> {
   const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
   if (!response.ok) throw new GlowError("YouCam finished, but the result archive would not download.", 502);
+  if (Number(response.headers.get("content-length")) > MAX_ARCHIVE_BYTES) throw new GlowError("YouCam's result archive was too large to read.", 502);
   const bytes = new Uint8Array(await response.arrayBuffer());
-  const files = unzipSync(bytes);
+  if (bytes.length > MAX_ARCHIVE_BYTES) throw new GlowError("YouCam's result archive was too large to read.", 502);
+  // Inflate only the score file, and only when its declared size is small, so a bloated archive cannot exhaust memory.
+  const files = unzipSync(bytes, { filter: (file) => file.name.endsWith("score_info.json") && file.originalSize <= MAX_SCORE_BYTES });
   const entry = Object.keys(files).find((name) => name.endsWith("score_info.json"));
   if (!entry) throw new GlowError("YouCam's result archive had no score file.", 502);
   return JSON.parse(new TextDecoder().decode(files[entry]));

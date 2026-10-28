@@ -1,7 +1,8 @@
 import sharp from "sharp";
+import { zipSync } from "fflate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { __resetYoucamAuthForTests } from "@/lib/youcam/auth";
-import { runSkinAnalysis, skinTaskBody } from "@/lib/youcam/client";
+import { fetchTask, runSkinAnalysis, scanFromTaskBody, skinTaskBody } from "@/lib/youcam/client";
 import { analysisProfile } from "@/lib/youcam/image";
 import { POST } from "@/app/api/analyze/route";
 
@@ -25,7 +26,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   delete process.env.YOUCAM_API_KEY;
   delete process.env.YOUCAM_PUBLIC_KEY;
-  delete process.env.GLOWCHECK_FORCE_MOCK;
+  delete process.env.MIREN_FORCE_MOCK;
 });
 
 describe("live YouCam client", () => {
@@ -64,7 +65,7 @@ describe("live YouCam client", () => {
       contentType: "image/jpeg",
       width: 1200,
       height: 1600,
-      filename: "glowcheck-selfie.jpg",
+      filename: "miren-selfie.jpg",
     });
 
     expect(outcome.status).toBe("success");
@@ -91,7 +92,7 @@ describe("live YouCam client", () => {
 
 describe("mock analyze route", () => {
   it("returns a full scan without credentials", async () => {
-    process.env.GLOWCHECK_FORCE_MOCK = "1";
+    process.env.MIREN_FORCE_MOCK = "1";
     process.env.YOUCAM_API_KEY = "should-not-be-used";
     const jpeg = await sharp({
       create: { width: 8, height: 8, channels: 3, background: "#d7b09a" },
@@ -114,5 +115,30 @@ describe("mock analyze route", () => {
   it("rejects a missing photo", async () => {
     const response = await POST(new Request("http://localhost/api/analyze", { method: "POST", body: new FormData() }));
     expect(response.status).toBe(400);
+  });
+});
+
+describe("provider responses", () => {
+  const archived = { data: { task_status: "success", results: { url: "https://result.example/out.zip" } } };
+  const serveZip = (files: Record<string, Uint8Array>) => vi.stubGlobal("fetch", vi.fn(async () => new Response(zipSync(files))));
+  const json = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+
+  it("reads scores from the result archive", async () => {
+    serveZip({ "out/score_info.json": json(successOutput), "out/mask.png": new Uint8Array(10) });
+    const scan = await scanFromTaskBody(archived, { source: "upload", auth: "v2-api-key" });
+    expect(scan.concerns.map((item) => item.id)).toContain("acne");
+  });
+
+  it("refuses an archive whose score file is implausibly large", async () => {
+    serveZip({ "score_info.json": new Uint8Array(2_000_001) });
+    await expect(scanFromTaskBody(archived, { source: "upload", auth: "v2-api-key" })).rejects.toThrow("no score file");
+  });
+
+  it("reports provider credential failures as a bad gateway, and photo problems as unprocessable", async () => {
+    process.env.YOUCAM_API_KEY = "test-key";
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error_code: "InvalidApiKey" }, { status: 401 })));
+    await expect(fetchTask("skin-analysis", "task-1")).rejects.toMatchObject({ status: 502 });
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ error_code: "error_no_face" }, { status: 400 })));
+    await expect(fetchTask("skin-analysis", "task-1")).rejects.toMatchObject({ status: 422, code: "error_no_face" });
   });
 });

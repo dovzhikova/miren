@@ -22,7 +22,7 @@ export async function shrinkPhoto(file: File): Promise<File> {
   try {
     const drawn = await drawFile(file, 1600, 0.9);
     if (!drawn) return file;
-    return new File([drawn.blob], "glowcheck.jpg", { type: "image/jpeg" });
+    return new File([drawn.blob], "miren.jpg", { type: "image/jpeg" });
   } catch {
     return file;
   }

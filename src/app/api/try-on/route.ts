@@ -1,4 +1,4 @@
-import { authorizeLive, issueTask } from "@/lib/live-access";
+import { issueTask, liveSession, reserveTaskStart } from "@/lib/live-access";
 import { getProduct } from "@/lib/catalog";
 import { GlowError } from "@/lib/errors";
 import { youcamCredentials } from "@/lib/youcam/auth";
@@ -50,8 +50,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const sessionId = await liveSession(request);
     const prepared = await prepareUpload(Buffer.from(await image.arrayBuffer()));
-    const sessionId = await authorizeLive(request);
+    await reserveTaskStart(sessionId);
     const payload =
       product.tryOn.kind === "makeup"
         ? { version: "1.0", effects: product.tryOn.effects }

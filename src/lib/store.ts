@@ -6,6 +6,7 @@ import { scanWorkspace, type Workspace } from "@/lib/scan-kind";
 import { newState, newStoredState, restoreState, retainScans } from "@/lib/state";
 import type { AppState, Scan } from "@/lib/types";
 
+// Pre-rename keys, kept so scans saved before the Miren rename survive.
 const STORAGE_KEY = "glowcheck.v2";
 const LEGACY_KEY = "glowcheck.v1";
 export const emptyState = newState();
