@@ -6,8 +6,6 @@ const nextConfig: NextConfig = {
   images: {
     qualities: [75, 90],
     remotePatterns: [
-      { protocol: "https", hostname: "zoskinhealth.com" },
-      { protocol: "https", hostname: "**.zoskinhealth.com" },
       { protocol: "https", hostname: "biologique-recherche.com" },
       { protocol: "https", hostname: "**.biologique-recherche.com" },
       { protocol: "https", hostname: "circadia.com" },
