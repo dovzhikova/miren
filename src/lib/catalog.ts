@@ -380,7 +380,7 @@ export function matchScore(product: Product, scan: Scan | null): number {
 
 export function formatPrice(price: number): string {
   const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(price);
-  return `₪${amount}`;
+  return `$${amount}`;
 }
 
 export function ingredientPills(product: Product): string[] {

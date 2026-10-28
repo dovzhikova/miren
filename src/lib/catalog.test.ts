@@ -50,8 +50,10 @@ describe("product catalog", () => {
     expect(ranked[0].concernScores.wrinkle ?? 0).toBeGreaterThan(0.5);
   });
 
-  it("prices in shekels and never sends oiliness to skin simulation", () => {
-    expect(formatPrice(920)).toBe("₪920");
+  it("prices in US dollars and never sends oiliness to skin simulation", () => {
+    expect(formatPrice(920)).toBe("$920");
+    expect(formatPrice(1250)).toBe("$1,250");
+    expect(listProducts().every((product) => Number.isSafeInteger(product.price) && product.price > 0)).toBe(true);
     expect(listProducts().every((product) => !/[\u0400-\u04FF]/.test(product.size))).toBe(true);
     expect(englishSize("150 г")).toBe("150 g");
     expect(englishSize("60 шт")).toBe("60 pieces");
