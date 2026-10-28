@@ -41,8 +41,12 @@ function verify(token: string): Session | Task | null {
     return typeof claims.expires === "number" && claims.expires > Date.now() ? claims : null;
   } catch { return null; }
 }
+// The pre-rename cookie is still read so live scans started before the rename can finish polling.
+const LEGACY_COOKIE = "glowcheck_session";
 function sessionFrom(request: Request): Session | null {
-  const raw = request.headers.get("cookie")?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1);
+  const parts = request.headers.get("cookie")?.split(";").map((part) => part.trim()) ?? [];
+  const named = (name: string) => parts.find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
+  const raw = named(COOKIE) ?? named(LEGACY_COOKIE);
   const claims = raw ? verify(raw) : null;
   return claims?.purpose === "session" && typeof claims.id === "string" ? claims : null;
 }

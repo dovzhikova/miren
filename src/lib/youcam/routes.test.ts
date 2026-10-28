@@ -173,6 +173,12 @@ describe("paid route boundaries", () => {
     vi.advanceTimersByTime(21 * 60_000);
     expect(() => readTask(new Request(`${base}/api/task?token=${token}`, { headers: { cookie } }))).toThrow();
   });
+  it("keeps polling tasks started under the pre-rename cookie", async () => {
+    const legacy = cookie.replace(/^miren_session=/, "glowcheck_session=");
+    const sessionId = await authorizeLive(new Request(base, { headers: { cookie: legacy } }));
+    const token = issueTask({ sessionId, taskId: "task-1", kind: "skin-analysis", source: "camera", profile: "hd", createdAt: new Date().toISOString() });
+    expect((await task(new Request(`${base}/api/task?token=${encodeURIComponent(token)}`, { headers: { cookie: legacy } }))).status).toBe(200);
+  });
   it("resumes delayed live scans using the original timestamp and profile", async () => {
     analysisRunning = true;
     const request = await photoRequest("/api/analyze");
