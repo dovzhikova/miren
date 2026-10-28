@@ -1,8 +1,10 @@
-# GlowCheck
+# Miren
 
-A shopper can read a product page and still not know whether it is doing anything on their own face. GlowCheck answers “is this product working on *my* face?” with one flow: a YouCam Skin AI scan, catalog matches for the low scores, makeup virtual try-on on that same photo, and a later scan compared on measured raw scores. Scores are a cosmetic read, not a diagnosis, and a photo comparison cannot prove that a product caused a change.
+A shopper can read a product page and still not know whether it is doing anything on their own face. Miren answers “is this product working on *my* face?” with one flow: a YouCam Skin AI scan, catalog matches for the low scores, makeup virtual try-on on that same photo, and a later scan compared on measured raw scores. Scores are a cosmetic read, not a diagnosis, and a photo comparison cannot prove that a product caused a change.
 
 Demo: [https://glowcheck-beta.vercel.app](https://glowcheck-beta.vercel.app)
+
+Previously named GlowCheck; not affiliated with the App Store app GlowCheck AI. The repository slug and this demo host are unchanged.
 
 This repository is private. To share it with the YouCam hackathon, invite `contact_event@PerfectCorp.com` (GitHub: Settings → Collaborators → Add people).
 
@@ -48,7 +50,7 @@ Existing `glowcheck.v1` browser data is migrated to `glowcheck.v2`. Legacy gener
 
 ## Photos and privacy
 
-Before a personal scan, the user agrees to photo processing. Photos pass through the route handler to YouCam; GlowCheck has no server photo archive.
+Before a personal scan, the user agrees to photo processing. Photos pass through the route handler to YouCam; Miren has no server photo archive.
 
 The browser keeps a small display thumbnail in localStorage and a separate API-quality image in IndexedDB. Previews read the source image, never the portrait thumbnail. If source storage is unavailable, an in-memory fallback works for that visit. After a reload, an unavailable original prompts a new scan.
 

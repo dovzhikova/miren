@@ -94,7 +94,7 @@ async function reserve(session: Session, polling: boolean) {
 export async function authorizeLive(request: Request, polling = false): Promise<string> {
   if (!liveAccessConfigured()) throw new GlowError("Personal scans are unavailable right now. Switch to Demo data to explore the app.", 503, "live-unavailable");
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) throw new GlowError("Open GlowCheck directly to use personal scans.", 403);
+  if (origin && origin !== new URL(request.url).origin) throw new GlowError("Open Miren directly to use personal scans.", 403);
   const session = sessionFrom(request);
   if (!session) throw new GlowError("Reload this page before starting a personal scan.", 403);
   await reserve(session, polling);

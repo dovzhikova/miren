@@ -1,8 +1,8 @@
-# GlowCheck: YouCam cosmetic analysis and product matching
+# Miren: YouCam cosmetic analysis and product matching
 
 ## Product
 
-The shopper’s question is whether a product is working on their own face. GlowCheck runs a YouCam Skin AI scan, matches the low scores to products, tries makeup on that photo, and compares a later scan. It also keeps saved products and habit check-ins.
+The shopper’s question is whether a product is working on their own face. Miren runs a YouCam Skin AI scan, matches the low scores to products, tries makeup on that photo, and compares a later scan. It also keeps saved products and habit check-ins. Look again after you start using something, and see if it shows up on your face.
 
 A scan does not diagnose a condition or establish that a product caused a change. Catalog concern weights and matching thresholds are prototype heuristics. Skin simulation is an illustrative preview, not a product-outcome forecast.
 

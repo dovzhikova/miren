@@ -24,7 +24,8 @@ async function multipart(request: PlaywrightRequest) {
 
 test("navigation fits the viewport and all primary destinations remain reachable", async ({ page }, info) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("GlowCheck");
+  await expect(page).toHaveTitle("Miren");
+  await expect(page.getByRole("link", { name: "Miren", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await noHorizontalOverflow(page);
   await page.screenshot({ path: info.outputPath("home.png") });
