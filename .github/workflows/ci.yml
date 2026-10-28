@@ -25,4 +25,4 @@ jobs:
         if: failure()
         with:
           name: browser-failures
-          path: /tmp/glowcheck-e2e-results
+          path: /tmp/miren-e2e-results

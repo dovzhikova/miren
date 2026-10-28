@@ -6,8 +6,8 @@ const SECRET = "a-test-only-secret-with-more-than-32-characters";
 function liveEnv() {
   vi.stubEnv("YOUCAM_API_KEY", "test-only-key");
   vi.stubEnv("YOUCAM_PUBLIC_KEY", "");
-  vi.stubEnv("GLOWCHECK_FORCE_MOCK", "0");
-  vi.stubEnv("GLOWCHECK_SESSION_SECRET", SECRET);
+  vi.stubEnv("MIREN_FORCE_MOCK", "0");
+  vi.stubEnv("MIREN_SESSION_SECRET", SECRET);
   vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
   vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
   vi.stubEnv("KV_REST_API_URL", "");
@@ -48,8 +48,17 @@ describe("redisRestCredentials", () => {
     vi.stubEnv("YOUCAM_API_KEY", "");
     expect(liveAccessConfigured()).toBe(false);
     vi.stubEnv("YOUCAM_API_KEY", "test-only-key");
-    vi.stubEnv("GLOWCHECK_SESSION_SECRET", "too-short");
+    vi.stubEnv("MIREN_SESSION_SECRET", "too-short");
     expect(liveAccessConfigured()).toBe(false);
+  });
+
+  it("still reads the pre-rename GLOWCHECK_ variables", () => {
+    liveEnv();
+    vi.stubEnv("KV_REST_API_URL", "https://kv.example");
+    vi.stubEnv("KV_REST_API_TOKEN", "kv-token");
+    vi.stubEnv("MIREN_SESSION_SECRET", "");
+    vi.stubEnv("GLOWCHECK_SESSION_SECRET", SECRET);
+    expect(liveAccessConfigured()).toBe(true);
   });
 
   it("prefers Upstash names when both pairs are present", () => {

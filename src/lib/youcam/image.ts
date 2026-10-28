@@ -45,6 +45,6 @@ export async function prepareUpload(input: Buffer): Promise<PreparedImage> {
     contentType: "image/jpeg",
     width: info.width,
     height: info.height,
-    filename: "glowcheck-selfie.jpg",
+    filename: "miren-selfie.jpg",
   };
 }

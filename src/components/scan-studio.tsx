@@ -318,7 +318,7 @@ function ScanContent() {
         <div className="flex flex-col gap-2" id="upload">
           {file ? (
             <button type="button" className="btn-primary w-full" onClick={analyze} disabled={busy} data-testid="analyze">
-              Analyze with YouCam
+              {workspace === "mock" || source === "sample" ? "Generate demo scores" : "Analyze with YouCam"}
             </button>
           ) : null}
           <button type="button" className={file ? "btn-secondary w-full" : "btn-primary w-full"} onClick={startCamera}>

@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 export default defineConfig({
   testDir: "./e2e",
-  outputDir: process.env.GLOWCHECK_TEST_OUTPUT ?? join(tmpdir(), "glowcheck-e2e-results"),
+  outputDir: process.env.MIREN_TEST_OUTPUT ?? join(tmpdir(), "miren-e2e-results"),
   fullyParallel: false,
   workers: 2,
   timeout: 45_000,
@@ -22,7 +22,7 @@ export default defineConfig({
     command: "npm run start -- --port 3147 --hostname 127.0.0.1",
     url: "http://127.0.0.1:3147",
     reuseExistingServer: !process.env.CI,
-    env: { YOUCAM_API_KEY: "", YOUCAM_PUBLIC_KEY: "", GLOWCHECK_FORCE_MOCK: "1" },
+    env: { YOUCAM_API_KEY: "", YOUCAM_PUBLIC_KEY: "", MIREN_FORCE_MOCK: "1" },
     timeout: 60_000,
   },
 });

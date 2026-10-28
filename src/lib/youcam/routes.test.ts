@@ -7,6 +7,14 @@ import { issueTask, sessionCookie, authorizeLive, readTask } from "@/lib/live-ac
 import { scanFromTaskBody } from "@/lib/youcam/client";
 import { __resetYoucamAuthForTests } from "@/lib/youcam/auth";
 
+const botCheck = vi.hoisted(() => ({ verdict: { isBot: false } as { isBot: boolean } | Error }));
+vi.mock("botid/server", () => ({
+  checkBotId: async () => {
+    if (botCheck.verdict instanceof Error) throw botCheck.verdict;
+    return botCheck.verdict;
+  },
+}));
+
 const base = "http://localhost";
 let cookie: string;
 let quotaResult: number;
@@ -19,14 +27,15 @@ const scores = { data: { task_status: "success", results: { output: [{ type: "hd
 beforeEach(() => {
   vi.stubEnv("YOUCAM_API_KEY", "test-only-key");
   vi.stubEnv("YOUCAM_PUBLIC_KEY", "");
-  vi.stubEnv("GLOWCHECK_FORCE_MOCK", "0");
-  vi.stubEnv("GLOWCHECK_SESSION_SECRET", "a-test-only-secret-with-more-than-32-characters");
+  vi.stubEnv("MIREN_FORCE_MOCK", "0");
+  vi.stubEnv("MIREN_SESSION_SECRET", "a-test-only-secret-with-more-than-32-characters");
   vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://quota.example");
   vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "quota-test-token");
   vi.stubEnv("KV_REST_API_URL", "");
   vi.stubEnv("KV_REST_API_TOKEN", "");
   cookie = sessionCookie(new Request(base))!.split(";")[0];
   quotaResult = 0;
+  botCheck.verdict = { isBot: false };
   analysisRunning = previewRunning = jumpPollClock = false;
   network = [];
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
@@ -118,6 +127,37 @@ describe("paid route boundaries", () => {
     expect((await analyze(request)).status).toBe(403);
     expect((await analyze(await photoRequest("/api/analyze", { session: "invalid" }))).status).toBe(403);
     expect(network).toEqual([]);
+  });
+  it("rejects task starts without an Origin header", async () => {
+    const request = await photoRequest("/api/try-on", { product: "nighttimerepair" });
+    request.headers.delete("origin");
+    expect((await tryOn(request)).status).toBe(403);
+    expect(network).toEqual([]);
+  });
+  it("checks the session before reading the image", async () => {
+    const form = new FormData();
+    form.set("image", new File([new Uint8Array([1, 2, 3])], "not-a-photo.jpg", { type: "image/jpeg" }));
+    form.set("mode", "live");
+    const response = await analyze(new Request(base + "/api/analyze", { method: "POST", body: form, headers: { origin: base } }));
+    expect(response.status).toBe(403);
+  });
+  it("spends no quota on an unreadable photo from a valid session", async () => {
+    const form = new FormData();
+    form.set("image", new File([new Uint8Array([1, 2, 3])], "not-a-photo.jpg", { type: "image/jpeg" }));
+    form.set("mode", "live");
+    const response = await analyze(new Request(base + "/api/analyze", { method: "POST", body: form, headers: { cookie, origin: base } }));
+    expect(response.status).toBe(400);
+    expect(network).toEqual([]);
+  });
+  it("blocks bots on Vercel before quota or YouCam", async () => {
+    vi.stubEnv("VERCEL", "1");
+    botCheck.verdict = { isBot: true };
+    expect((await analyze(await photoRequest("/api/analyze"))).status).toBe(403);
+    botCheck.verdict = new Error("OIDC token missing");
+    expect((await tryOn(await photoRequest("/api/try-on", { product: "nighttimerepair" }))).status).toBe(503);
+    expect(network).toEqual([]);
+    botCheck.verdict = { isBot: false };
+    expect((await analyze(await photoRequest("/api/analyze"))).status).toBe(200);
   });
   it("binds task polling to the signed session and rejects tampering", async () => {
     const owner = new Request(base, { headers: { cookie } });
