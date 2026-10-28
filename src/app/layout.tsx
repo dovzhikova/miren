@@ -28,22 +28,12 @@ export const metadata: Metadata = {
   },
   description,
   openGraph: {
-    title: {
-      default: "Miren",
-      template: "%s · Miren",
-    },
-    description,
     siteName: "Miren",
     type: "website",
     url: "/",
   },
   twitter: {
     card: "summary",
-    title: {
-      default: "Miren",
-      template: "%s · Miren",
-    },
-    description,
   },
 };
 
