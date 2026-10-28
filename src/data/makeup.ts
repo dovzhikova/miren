@@ -2,7 +2,7 @@ import type { ConcernId, MakeupEffect, Product } from "@/lib/types";
 
 /**
  * Small colour shelf. Photos are the shade image from each brand's Shopify catalog.
- * Prices are the published US dollar price × 3.7, rounded to shekels.
+ * Prices are the published US dollar list price.
  * Hex colours are try-on swatches for the named shade, not a lab reading of the formula.
  * Skin smooth is set to 0 so the engine does not add its default blur.
  */
@@ -29,7 +29,7 @@ export const MAKEUP: MakeupSource[] = [
     slug: "kind-words-talented",
     brand: "Rare Beauty",
     name: "Kind Words Matte Lipstick in Talented",
-    price: 74,
+    price: 20,
     size: "3.5 g",
     summary: "Matte lipstick. Suits a face whose low score is oil, and asks for a patch-test when hydration is the low score.",
     category: "Lip",
@@ -51,7 +51,7 @@ export const MAKEUP: MakeupSource[] = [
     slug: "color-block-cinnabar",
     brand: "ILIA",
     name: "Color Block Lipstick in Cinnabar",
-    price: 107,
+    price: 29,
     size: "4 g",
     summary: "Satin lipstick. The cream finish is the match when hydration is the low score.",
     category: "Lip",
@@ -73,7 +73,7 @@ export const MAKEUP: MakeupSource[] = [
     slug: "soft-pinch-hope",
     brand: "Rare Beauty",
     name: "Soft Pinch Liquid Blush in Hope",
-    price: 93,
+    price: 25,
     size: "7.5 ml",
     summary: "Liquid blush. A little colour for a face that looks dry or dull, without a full base.",
     category: "Blush",
@@ -94,7 +94,7 @@ export const MAKEUP: MakeupSource[] = [
     slug: "beachplease-magic-hour",
     brand: "Tower 28",
     name: "BeachPlease Cream Blush in Magic Hour",
-    price: 74,
+    price: 20,
     size: "5 g",
     summary: "Cream blush. Colour that sits with a low hydration score instead of a powder that can cling.",
     category: "Blush",
@@ -115,7 +115,7 @@ export const MAKEUP: MakeupSource[] = [
     slug: "super-serum-skye",
     brand: "ILIA",
     name: "Super Serum Skin Tint SPF 40 in Skye",
-    price: 178,
+    price: 48,
     size: "30 ml",
     summary: "Sheer skin tint with SPF 40. Light coverage for dull or dry-looking skin. Not a full-coverage base.",
     category: "Tint",
@@ -135,7 +135,7 @@ export const MAKEUP: MakeupSource[] = [
     slug: "revealer-concealer-05",
     brand: "Kosas",
     name: "Revealer Concealer in Tone 0.5 N",
-    price: 118,
+    price: 32,
     size: "5.4 ml",
     summary: "Light concealer for under-eye shadow and small spots. It is a spot step, not a full face of base.",
     category: "Concealer",

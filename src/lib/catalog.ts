@@ -6,8 +6,8 @@ import type { ConcernId, Product, Scan } from "@/lib/types";
 
 export type RoutineRole = Product["routineRole"];
 
-const BRAND_HOST = /(^|\.)((zoskinhealth\.com)|(biologique-recherche\.com)|(circadia\.com))$/i;
-/** Shopify CDN used by the Biologique Recherche and Circadia stores. Not a wildcard of shopify.com. */
+const BRAND_HOST = /(^|\.)((medik8\.com)|(biologique-recherche\.com)|(circadia\.com))$/i;
+/** Shopify CDN used by the Biologique Recherche, Circadia, and Medik8 stores. Not a wildcard of shopify.com. */
 const SHOPIFY_CDN = "cdn.shopify.com";
 const BLOCKED_HOST = /cosmedoc\.net|tildacdn|tilda\./i;
 
@@ -26,8 +26,7 @@ export function isAllowedOfficialImage(url: unknown): url is string {
 /**
  * Shopify file URLs omit a size, so the CDN may hand back a soft default.
  * `width=1600` asks for a crisp master and keeps `v=`.
- * ZO Demandware assets are already full-size (about 2200×3000), including
- * files whose names say "plp", so those URLs are left alone.
+ * Brand-site URLs are left alone.
  */
 export function sharpenOfficialImageUrl(url: string): string {
   const parsed = new URL(url);
@@ -217,7 +216,7 @@ function categoryFor(slugs: string[]): string {
   return match ? (CATEGORY_LABEL[match] ?? "Face") : "Face";
 }
 
-function englishSize(size: string | null): string {
+export function englishSize(size: string | null): string {
   if (!size) return "";
   return size
     .replace(/(\d+)\s*шт/gi, (_, count: string) => `${count} ${count === "1" ? "piece" : "pieces"}`)
@@ -381,7 +380,7 @@ export function matchScore(product: Product, scan: Scan | null): number {
 
 export function formatPrice(price: number): string {
   const amount = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(price);
-  return `₪${amount}`;
+  return `$${amount}`;
 }
 
 export function ingredientPills(product: Product): string[] {

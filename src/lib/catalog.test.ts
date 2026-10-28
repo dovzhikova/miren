@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 import rawCatalog from "@/data/products.json";
-import { CONCERN_SCORE_MIN, concernScoresFromRaw, formatPrice, isAllowedOfficialImage, listFaceProducts, listProducts, matchScore, sharpenOfficialImageUrl } from "@/lib/catalog";
+import { CONCERN_SCORE_MIN, concernScoresFromRaw, englishSize, formatPrice, isAllowedOfficialImage, listFaceProducts, listProducts, matchScore, sharpenOfficialImageUrl } from "@/lib/catalog";
 import { FOR_YOU_LIMIT, forYouProducts } from "@/lib/recommend";
 import { sampleBaselineScan } from "@/lib/youcam/mock";
 import { suitProduct } from "@/lib/suitability";
 
 describe("product catalog", () => {
   it("loads the full export and keeps body, hair, and devices off the face shelf", () => {
-    expect(listProducts()).toHaveLength(181);
+    expect(listProducts()).toHaveLength(186);
     expect(JSON.stringify(rawCatalog).toLowerCase()).not.toMatch(/cosmedoc|tildacdn|tilda\.|https?:/);
     const face = listFaceProducts();
     expect(face.length).toBeGreaterThan(100);
     expect(face.length).toBeLessThan(listProducts().length);
     expect(face.every((product) => product.forFace && product.concerns.length > 0)).toBe(true);
     expect(face.some((product) => product.category === "Body" || product.category === "Hair" || product.category === "Devices")).toBe(false);
-    expect(new Set(face.map((product) => product.brand))).toEqual(new Set(["Biologique Recherche", "ZO Skin Health", "Circadia"]));
+    expect(new Set(face.map((product) => product.brand))).toEqual(new Set(["Biologique Recherche", "Medik8", "Circadia"]));
   });
 
   it("maps raw 0–1 scores onto YouCam concerns and ranks by them", () => {
@@ -50,11 +50,14 @@ describe("product catalog", () => {
     expect(ranked[0].concernScores.wrinkle ?? 0).toBeGreaterThan(0.5);
   });
 
-  it("prices in shekels and never sends oiliness to skin simulation", () => {
-    expect(formatPrice(920)).toBe("₪920");
+  it("prices in US dollars and never sends oiliness to skin simulation", () => {
+    expect(formatPrice(920)).toBe("$920");
+    expect(formatPrice(1250)).toBe("$1,250");
+    expect(listProducts().every((product) => Number.isSafeInteger(product.price) && product.price > 0)).toBe(true);
     expect(listProducts().every((product) => !/[\u0400-\u04FF]/.test(product.size))).toBe(true);
-    expect(listProducts().find((product) => product.slug === "bodysmoothing")?.size).toBe("150 g");
-    expect(listProducts().find((product) => product.slug === "oilcontrolpads")?.size).toBe("60 pieces");
+    expect(englishSize("150 г")).toBe("150 g");
+    expect(englishSize("60 шт")).toBe("60 pieces");
+    expect(listProducts().find((product) => product.slug === "medik8-crystal-retinal")?.name).toBe("Crystal Retinal 1");
     expect(listProducts().find((product) => product.slug === "caviarvert")?.size).toBe("1 piece");
     for (const product of listProducts()) {
       if (product.tryOn.simulation) expect(product.tryOn.simulation).not.toHaveProperty("oiliness");
@@ -96,22 +99,24 @@ describe("product catalog", () => {
     expect(night?.officialImageUrl).toContain("width=1600");
     const withPhoto = listProducts().filter((product) => product.officialImageUrl);
     expect(withPhoto.length).toBeGreaterThan(100);
-    expect(listProducts().find((product) => product.id === "ZO_024")?.officialImageUrl).toContain("zoskinhealth.com");
-    expect(listProducts().find((product) => product.id === "ZO_031")?.officialImageUrl).toContain("zoskinhealth.com");
+    const medik8 = listProducts().filter((product) => product.brand === "Medik8");
+    expect(medik8).toHaveLength(51);
+    expect(medik8.every((product) => product.officialImageUrl?.startsWith("https://cdn.shopify.com/s/files/1/0486/3036/6360/"))).toBe(true);
+    // The packshot is the priced strength, an eye cream with SPF stays the eye step, and cleansers carry no SPF note.
+    expect(medik8.find((product) => product.slug === "medik8-crystal-retinal")?.officialImageUrl).toContain("Crystal_Retinal_1_");
+    expect(medik8.find((product) => product.slug === "medik8-advanced-day-eye-protect")?.routineRole).toBe("eye");
+    expect(medik8.filter((product) => product.routineRole === "cleanser").some((product) => product.warnings.includes("use SPF / sun protection"))).toBe(false);
     expect(withPhoto.every((product) => isAllowedOfficialImage(product.officialImageUrl))).toBe(true);
     const shopify = withPhoto.filter((product) => product.officialImageUrl?.includes("cdn.shopify.com"));
-    const zo = withPhoto.filter((product) => product.officialImageUrl?.includes("zoskinhealth.com"));
     expect(shopify.length).toBeGreaterThan(0);
-    expect(zo.length).toBeGreaterThan(0);
     expect(shopify.every((product) => product.officialImageUrl?.includes("width=1600"))).toBe(true);
-    expect(zo.every((product) => !product.officialImageUrl?.includes("width="))).toBe(true);
     expect(sharpenOfficialImageUrl("https://cdn.shopify.com/s/files/1/1/files/cream.png?v=9")).toBe(
       "https://cdn.shopify.com/s/files/1/1/files/cream.png?v=9&width=1600",
     );
-    expect(sharpenOfficialImageUrl("https://zoskinhealth.com/on/demandware.static/cream.full.plp.gbl.png")).toBe(
-      "https://zoskinhealth.com/on/demandware.static/cream.full.plp.gbl.png",
+    expect(sharpenOfficialImageUrl("https://www.biologique-recherche.com/media/cream.png")).toBe(
+      "https://www.biologique-recherche.com/media/cream.png",
     );
-    for (const id of ["BR_105", "BR_091", "BR_025", "BR_018", "ZO_058"]) {
+    for (const id of ["BR_105", "BR_091", "BR_025", "BR_018"]) {
       expect(listProducts().find((product) => product.id === id)?.officialImageUrl).toBeUndefined();
     }
     expect(Math.max(...counts.values())).toBeLessThanOrEqual(2);
@@ -121,14 +126,14 @@ describe("product catalog", () => {
     const lastSuit = verdicts.lastIndexOf("suits");
     if (firstPatch !== -1 && lastSuit !== -1) expect(lastSuit).toBeLessThan(firstPatch);
 
-    expect(isAllowedOfficialImage("https://www.zoskinhealth.com/cdn/shop/files/cream.jpg")).toBe(true);
+    expect(isAllowedOfficialImage("https://www.medik8.com/cdn/shop/files/cream.jpg")).toBe(true);
     expect(isAllowedOfficialImage("https://www.biologique-recherche.com/media/cream.jpg")).toBe(true);
     expect(isAllowedOfficialImage("https://circadia.com/images/cream.jpg")).toBe(true);
     expect(isAllowedOfficialImage("https://cdn.shopify.com/s/files/1/0820/7771/2682/files/cream.png")).toBe(true);
     expect(isAllowedOfficialImage("https://cdn.shopify.com/s/files/1/0973/8466/1323/files/cream.webp")).toBe(true);
     expect(isAllowedOfficialImage("https://evil.shopify.com/cream.jpg")).toBe(false);
     expect(isAllowedOfficialImage("https://cdn.example.com/cream.jpg")).toBe(false);
-    expect(isAllowedOfficialImage("http://www.zoskinhealth.com/cream.jpg")).toBe(false);
+    expect(isAllowedOfficialImage("http://www.medik8.com/cream.jpg")).toBe(false);
     expect(isAllowedOfficialImage("https://static.tildacdn.one/cream.png")).toBe(false);
     expect(isAllowedOfficialImage("https://cosmedoc.net/assets/products/catalog/cream.webp")).toBe(false);
   });

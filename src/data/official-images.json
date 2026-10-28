@@ -360,140 +360,209 @@
     "CIR_042": {
       "image_url": "https://cdn.shopify.com/s/files/1/0820/7771/2682/files/caviar-lime-and-passionfruit-mask-circadia-1.jpg?v=1709269339"
     },
-    "ZO_004": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwfe440920/images/Balancing%20Cleansing%20Emulsion/bce.full.plp.gbl.png"
+    "MK_001": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-AdvancedDayEyeProtect-Packshot-ROW.jpg?v=1703760722",
+      "source_url": "https://www.medik8.com/products/advanced-day-eye-protect"
     },
-    "ZO_008": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwf3042a29/images/OIL%20CONTROL%20PADS/oil.con.mob.pdp.newpads.png"
+    "MK_002": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-AdvancedDayTotalProtect-Packshot-ROW.jpg?v=1703760527",
+      "source_url": "https://www.medik8.com/products/advanced-day-total-protect"
     },
-    "ZO_011": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwb7bbc2e6/images/ILLUMINATING%20AOX/iaoxs.full.plp.gbl.png"
+    "MK_003": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20250430-PDPAsset1-AdvancedDayUltimateProtect-Packshot-ROW.jpg?v=1749813241",
+      "source_url": "https://www.medik8.com/products/advanced-day-ultimate-protect"
     },
-    "ZO_012": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwf3f14305/images/GROWTH%20FACTOR%20SERUM/2026/GFS_Hero_PDP_2201x3000.png"
+    "MK_004": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20231114-PDPAsset1-AdvancedNightEye-Packshot-ROW.jpg?v=1704146985",
+      "source_url": "https://www.medik8.com/products/advanced-night-eye"
     },
-    "ZO_013": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw31516750/images/FIRMING%20SERUM/firmser.full.plp.gbl.png"
+    "MK_005": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20231114-PDPAsset1-AdvancedNightRestore-Packshot-ROW_1.jpg?v=1704371793",
+      "source_url": "https://www.medik8.com/products/advanced-night-restore"
     },
-    "ZO_015": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw41c6502a/images/Radical%20Night%20Retinol/2026%20WEB%20-%20Radical%20Night%20Retinol%20PDP%20Images_2201x3000.png"
+    "MK_006": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20250611_-_Advanced_Pro-Collagen_-_PDP_-_Asset_1_-_Packshot_-_ROW.jpg?v=1790344282",
+      "source_url": "https://www.medik8.com/products/advanced-pro-collagen-peptide-cream"
     },
-    "ZO_018": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw2a4844a9/images/ENZYMATIC%20PEEL/enzpeel.full.plp.gbl.new.png"
+    "MK_007": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-BakuchoilPeptides-Packshot-ROW.jpg?v=1740588027",
+      "source_url": "https://www.medik8.com/products/bakuchiol-peptides"
     },
-    "ZO_019": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw733fc664/images/INSTANT%20PORE%20REFINER/ipr.full.plp.gbl.png"
+    "MK_008": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/Copy_of_20260316_-_PDP_Asset_1_-_Balance_Moisturiser_-_Packshot_-_ROW.jpg?v=1784105954",
+      "source_url": "https://www.medik8.com/products/balance-moisturiser"
     },
-    "ZO_024": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw486d28cd/images/DAILY%20SHEER/US_NEW/Daily%20Sheer%20PLP.png"
+    "MK_009": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-BlemishControlPads-Packshot-ROW.jpg?v=1707756257",
+      "source_url": "https://www.medik8.com/products/blemish-control-pads"
     },
-    "ZO_025": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw22702958/images/SMART%20TONE/US_NEW/Smart%20Tone%20PLP.png"
+    "MK_010": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-BlemishSOS-Packshot-ROW.jpg?v=1707992008",
+      "source_url": "https://www.medik8.com/products/blemish-sos"
     },
-    "ZO_026": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw4ca441b1/images/SHEER%20FLUID/sf.full.plp.us.png"
+    "MK_011": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/Copy_of_20251119_-_PDP_Asset_1_-_C-Tetra_-_Packshot_-_ROW.jpg?v=1773743156",
+      "source_url": "https://www.medik8.com/products/c-tetra"
     },
-    "ZO_027": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw71a07961/images/RENEWAL%20CREME/renewalcr.full.plp.gbl.png"
+    "MK_012": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20251128_-_C-Tetra_Advanced_-_PDP_Get_The_Gloss_Award_-_Carousel_-_Asset_1_-_ROW_1.jpg?v=1764341186",
+      "source_url": "https://www.medik8.com/products/c-tetra-advanced"
     },
-    "ZO_028": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw60f6a310/images/RECOVERY%20CREME/recreme.full.plp.gbl.png"
+    "MK_013": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-C-TetraCream-Packshot-ROW.jpg?v=1703849428",
+      "source_url": "https://www.medik8.com/products/c-tetra-cream"
     },
-    "ZO_030": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw19cf173a/images/INTENSE%20EYE%20CREME/inteye.full.plp.gbl.png"
+    "MK_014": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/Copy_of_20251119_-_PDP_Asset_1_-_C-Tetra_Luxe_-_Packshot_-_ROW.jpg?v=1773744682",
+      "source_url": "https://www.medik8.com/products/c-tetra-luxe"
     },
-    "ZO_031": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwba115004/images/EYE%20BRIGHTENING%20CREME/eyebright.full.plp.gbl.png"
+    "MK_015": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-CalmwiseColourCorrect-Packshot-ROW.jpg?v=1708528155",
+      "source_url": "https://www.medik8.com/products/calmwise-colour-correct"
     },
-    "ZO_032": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw53e15eca/images/GROWTH%20FACTOR%20EYE%20SERUM/gfes.full.plp.gbl.png"
+    "MK_016": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-CalmwiseSerum-Packshot-ROW.jpg?v=1708528745",
+      "source_url": "https://www.medik8.com/products/calmwise-serum"
     },
-    "ZO_033": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw58e872b7/images/BODY%20SMOOTHING%20CREME/bsc.full.plp.gbl.png"
+    "MK_017": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-CalmwiseSoothingCleanser-Packshot-ROW.jpg?v=1707756668",
+      "source_url": "https://www.medik8.com/products/calmwise-soothing-cleanser"
     },
-    "ZO_034": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwf6277c91/images/BODY%20EMULSION/bodyem.full.plp.gbl.png"
+    "MK_018": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-ClarifyingFoam-Packshot-ROW.jpg?v=1704146790",
+      "source_url": "https://www.medik8.com/products/clarifying-foam"
     },
-    "ZO_035": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwfe84f590/images/DAILY%20SKINCARE%20PROGRAM/2026/Daily%20GSR%20Kit-1.png"
+    "MK_019": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20260813_-_PDP_Asset_1_-_Crystal_Retinal_1_-_Packshot_-_ROW_c1c2a5da-431d-4f3f-be37-3f0a0aafc20c.jpg?v=1787221185",
+      "source_url": "https://www.medik8.com/products/crystal-retinal"
     },
-    "ZO_036": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwfe9109b8/images/ANTI%20AGING%20PROGRAM/New%202026/Anti-aging%20Kit-1.png"
+    "MK_020": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/Copy_of_Copy_of_20230922_-_PDP_-_Crystal_Retinal_Ceramide_Eye_-_ROW_-_For_Design20230922_-_PDP_Asset_1_-_Crystal_Retinal_Ceramide_3_-_Pa.jpg?v=1746541655",
+      "source_url": "https://www.medik8.com/products/crystal-retinal-ceramide-eye"
     },
-    "ZO_037": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw3ace5446/images/Anti-Aging%20High%20Potency%20Retinol%20Program/AntiAgingPotencyRetinolProgram-1.png"
+    "MK_021": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-DailyRadianceVitaminC-Packshot-ROW.jpg?v=1698419204",
+      "source_url": "https://www.medik8.com/products/daily-radiance-vitamin-c"
     },
-    "ZO_038": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwd04c04de/images/REDNESS%20RELIEF%20PROGRAM/Redness%20Kit_PLP.png"
+    "MK_022": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-DailyRefreshBalancingToner-Packshot-ROW.jpg?v=1703849507",
+      "source_url": "https://www.medik8.com/products/daily-refresh-balancing-toner"
     },
-    "ZO_039": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw11c69e69/images/Complexion%20Smoothing%20%2B%20Clarifying%20Program/ComplexionSmoothing%2BClarifyingProgram-1.png"
+    "MK_023": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20260216_-_EXO-PDRN_-_Web_Assets_-_PDP_-_Asset_1_-_Packshot_NEW_badge_-_ROW.jpg?v=1781868503",
+      "source_url": "https://www.medik8.com/products/exo-pdrn-prismatic"
     },
-    "ZO_040": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwad8a6957/images/Skin%20Tone%20Evening%20%2B%20Brightening%20Program/SkinToneEvening%2BBrighteningProgram-1.png"
+    "MK_024": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-EyeliftPeptides-Packshot-ROW.jpg?v=1704147095",
+      "source_url": "https://www.medik8.com/products/eyelift-peptides"
     },
-    "ZO_041": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwa1802ee6/images/Skin%20Tone%20Evening%20%2B%20Brightening%20High%20Potency%20Retinol%20Program/SkinToneEvening%2BBrighteningHighPotencyRetinolProgram-1.png"
+    "MK_025": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-GentleCleanse-Packshot-ROW.jpg?v=1708529427",
+      "source_url": "https://www.medik8.com/products/gentle-cleanse"
     },
-    "ZO_042": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwd0c48db3/images/EXFOLIATING%20CLEANSER/exf.cleanser.full.plp.gbl.png"
+    "MK_026": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-HEOMask-Packshot-ROW.jpg?v=1703771152",
+      "source_url": "https://www.medik8.com/products/h-e-o-mask"
     },
-    "ZO_043": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwd5b44550/images/HYDRATING%20CLEANSER/hycleanser.full.plp.gbl.png"
+    "MK_027": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-Hydr8B5-Packshot-ROW.jpg?v=1704146615",
+      "source_url": "https://www.medik8.com/products/hydr8-b5"
     },
-    "ZO_044": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwbfa94170/images/GENTLE%20CLEANSER/gencleans.full.plp.gbl.png"
+    "MK_028": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-Hydr8B5Intense-Packshot-ROW.jpg?v=1698419741",
+      "source_url": "https://www.medik8.com/products/hydr8-b5-intense"
     },
-    "ZO_045": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw58428331/images/EXFOLIATING%20POLISH/exfpol.full.plp.gbl.png"
+    "MK_029": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-IntelligentRetinol3TR-Packshot-ROW.jpg?v=1707992813",
+      "source_url": "https://www.medik8.com/products/intelligent-retinol"
     },
-    "ZO_046": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwcf13ad9f/images/DUAL%20ACTION%20SCRUB/dualscrub.full.plp.gbl.png"
+    "MK_030": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-IntelligentRetinolEyeTR-Packshot-ROW.jpg?v=1707995143",
+      "source_url": "https://www.medik8.com/products/retinol-eye-tr"
     },
-    "ZO_047": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw8541624c/images/COMPLEXION%20RENEWAL%20PADS/comprenpads.full.plp.gbl.png"
+    "MK_031": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-IntelligentRetinolSmoothingNightCream-Packshot-ROW.jpg?v=1703849771",
+      "source_url": "https://www.medik8.com/products/intelligent-retinol-smoothing-night-cream"
     },
-    "ZO_048": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwb43ac47a/images/CALMING%20TONER/calmtone.full.plp.gbl.png"
+    "MK_032": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-LipidBalanceCleansingOil-Packshot-ROW.jpg?v=1698426962",
+      "source_url": "https://www.medik8.com/products/lipid-balance-cleansing-oil"
     },
-    "ZO_049": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwffea0432/images/DAILY%20POWER%20DEFENSE/dpd.full.plp.gbl.png"
+    "MK_033": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20240822_-_PDP_Asset_2_-_Liquid_Peptides_-_Packshot_-_ROW.jpg?v=1734943962",
+      "source_url": "https://www.medik8.com/products/liquid-peptides"
     },
-    "ZO_050": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw31eacf14/images/Wrinkle%20and%20Texture/New%20without%20Repair/WrinkleTexture_PDP_Product_2201x3000.png"
+    "MK_034": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20260616_-_Liquid_Peptides_Advanced_MP_-_PDP_-_Packshot_-_ROW.jpg?v=1790344283",
+      "source_url": "https://www.medik8.com/products/liquid-peptides-advanced-mp"
     },
-    "ZO_051": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dweffcf32b/images/VITAMIN%20C/vitc.full.plp.gbl.png"
+    "MK_035": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-MicellarMousse-Packshot-ROW.jpg?v=1698427712",
+      "source_url": "https://www.medik8.com/products/micellar-mousse"
     },
-    "ZO_052": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwc013400c/images/EXFOLIATION%20ACCELERATOR/exfacc.full.plp.gbl.png"
+    "MK_036": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20250922_-_niacinamide_peptides_-_pdp_-_carousel__-_asset_1_-_row_720.jpg?v=1765446999",
+      "source_url": "https://www.medik8.com/products/niacinamide-peptides"
     },
-    "ZO_053": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw1919166b/images/BRIGHTALIVE/brighta.full.plp.gbl.png"
+    "MK_037": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-Oxy-RPeptides-Packshot-ROW.jpg?v=1703771274",
+      "source_url": "https://www.medik8.com/products/oxy-r-peptides"
     },
-    "ZO_054": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw07964dda/images/RETINOL%20SKIN%20BRIGHTENER%201/rsb1.full.plp.gbl.png"
+    "MK_038": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-PoreCleanseGelIntense-Packshot-ROW.jpg?v=1707996271",
+      "source_url": "https://www.medik8.com/products/pore-cleanse-gel-intense"
     },
-    "ZO_055": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwd8e71142/images/ROZATROL/rozatrol.full.plp.gbl.png"
+    "MK_039": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-Press_Clear-Packshot-ROW.jpg?v=1698424932",
+      "source_url": "https://www.medik8.com/products/press-clear"
     },
-    "ZO_056": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dwe27d2992/images/SUNSCREEN%20%2B%20PRIMER/US_NEW/Sunscreen%20%2B%20Primer%20PLP.png"
+    "MK_040": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-Press_Glow-Packshot-ROW.jpg?v=1698420523",
+      "source_url": "https://www.medik8.com/products/press-glow"
     },
-    "ZO_057": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw9addafa0/images/HYDRATING%20CREME/hycreme.full.plp.gbl.png"
+    "MK_041": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-Retinol3TR-Packshot-ROW.jpg?v=1707756204",
+      "source_url": "https://www.medik8.com/products/retinol-3tr"
     },
-    "ZO_059": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw3c2378cf/images/COMPLEXION%20CLARIFYING%20SERUM/ccserum.full.plp.gbl.png.png"
+    "MK_042": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-SleepGlycolic-Packshot-ROW.jpg?v=1698425241",
+      "source_url": "https://www.medik8.com/products/sleep-glycolic"
     },
-    "ZO_061": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw8f32b8d6/images/Peptide%20Concentrate/Peptide_Concentrate_hi-res.png"
+    "MK_043": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922_-_PDP_Asset_1_-_Super_C_Ferulic_-_Packshot_-_ROW.jpg?v=1721642942",
+      "source_url": "https://www.medik8.com/products/super-c-ferulic"
     },
-    "ZO_062": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw4b18570f/images/Soothing%20Hydro%20Mist/Soothing%20Hydro%20Mist_PLP.png"
+    "MK_044": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-SurfaceRadianceCleanse-Packshot-ROW.jpg?v=1698427411",
+      "source_url": "https://www.medik8.com/products/surface-radiance-cleanse"
     },
-    "ZO_063": {
-      "image_url": "https://zoskinhealth.com/on/demandware.static/-/Sites-zoskinhealth-master/default/dw586e3437/images/GEL%20SUNSCREEN/Gel%20Sunscreen%20SPF%2050/zo-gel-sunscreen-spf-50-front.png"
+    "MK_045": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20260326-TotalMoistureDailyCleansingGel-WebAssets-PDP-Asset1-Packshot-ROW.jpg?v=1778763701",
+      "source_url": "https://www.medik8.com/products/total-moisture-daily-cleansing-gel"
+    },
+    "MK_046": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20250227_-_PDP_Assets_-_Total_Moisture_Daily_Facial_Cream_-_Daisy_Beauty_Award_-_2000_x_2000_-_ROW_-_For_Web.jpg?v=1774520345",
+      "source_url": "https://www.medik8.com/products/total-moisture-daily-facial-cream"
+    },
+    "MK_047": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-UltimateRecovery-Packshot-ROW.jpg?v=1707756179",
+      "source_url": "https://www.medik8.com/products/ultimate-recovery-intense"
+    },
+    "MK_048": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-UltimateRecoveryBio-CelluloseMask-Packshot-ROW.jpg?v=1708528574",
+      "source_url": "https://www.medik8.com/products/ultimate-recovery-bio-cellulose-mask"
+    },
+    "MK_049": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-r-RetinoateDay_Night-Packshot-ROW.jpg?v=1703761344",
+      "source_url": "https://www.medik8.com/products/r-retinoate"
+    },
+    "MK_050": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-r-RetinoateDay_NightEye-Packshot-ROW.jpg?v=1703251190",
+      "source_url": "https://www.medik8.com/products/r-retinoate-eye-serum"
+    },
+    "MK_051": {
+      "image_url": "https://cdn.shopify.com/s/files/1/0486/3036/6360/files/20230922-PDPAsset1-r-RetinoateIntense-Packshot-ROW.jpg?v=1698422586",
+      "source_url": "https://www.medik8.com/products/r-retinoate-intense"
     }
   }
 }

@@ -66,9 +66,9 @@ export function ShopView() {
         </h1>
         <p className="mt-2 text-[13px] text-[var(--ink-2)]">
           {browseAll
-            ? "The full face list, still ranked by the scan. Prices are in ₪."
+            ? "The full face list, still ranked by the scan. Prices are in US dollars."
             : scan
-              ? "The concerns under 75, a few steps, suits ahead of patch-test. Prices are in ₪."
+              ? "The concerns under 75, a few steps, suits ahead of patch-test. Prices are in US dollars."
               : "Scan first. Without a photo, a short list would only be a guess."}
         </p>
         <button type="button" className="btn-ghost mt-2 h-11 text-left" onClick={() => setBrowseAll((value) => !value)}>
