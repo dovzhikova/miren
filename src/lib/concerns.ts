@@ -71,7 +71,7 @@ const COPY: Record<ConcernId, ConcernCopy> = {
   radiance: {
     label: "Radiance",
     direction: "Higher means more luminosity.",
-    steady: "The skin already looks luminous. A glow oil is a want, not a need.",
+    steady: "The skin already looks luminous. A face oil is a want, not a need.",
     mild: "A little dull, nothing dramatic. Consistency will do more than a highlight.",
     active: "The photo looks flat. Even-tone or hydrating products are a better match than shimmer.",
     priority: "Dullness is strong. Look at hydration and pigment first, not a sparkly oil.",

@@ -230,7 +230,7 @@ export function ResultsView() {
 
       <WhySheet open={howOpen} title="How is this calculated?" onClose={() => setHowOpen(false)}>
         <p>YouCam Skin Analysis reads the photo and returns a score per concern. Higher means healthier-looking. The large number is their adjusted UI score.</p>
-        <p>GlowCheck hides moles and eyelid shape, then matches products to the scores that are actually low. The follow-up compares the raw score, which YouCam says to keep over time.</p>
+        <p>Miren hides moles and eyelid shape, then matches products to the scores that are actually low. The follow-up compares the raw score, which YouCam says to keep over time.</p>
         <p>This is a cosmetic read, not a diagnosis.</p>
       </WhySheet>
     </div>

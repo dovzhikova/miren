@@ -17,12 +17,24 @@ const display = Manrope({
   variable: "--font-heading",
 });
 
+const description = "Check a product against your skin before you buy it, then see if it is actually working.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://miren-beta.vercel.app"),
+  applicationName: "Miren",
   title: {
-    default: "GlowCheck",
-    template: "%s · GlowCheck",
+    default: "Miren",
+    template: "%s · Miren",
   },
-  description: "Check a product against your skin before you buy it, then see if it is actually working.",
+  description,
+  openGraph: {
+    siteName: "Miren",
+    type: "website",
+    url: "/",
+  },
+  twitter: {
+    card: "summary",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

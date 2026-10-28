@@ -51,7 +51,7 @@ export function SiteHeader() {
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[70] focus:rounded focus:bg-white focus:p-3">Skip to content</a>
       <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-white pt-[env(safe-area-inset-top,0px)]">
         <div className="mx-auto flex h-16 w-full min-w-0 max-w-[960px] items-center gap-2 px-4 min-[390px]:gap-4 min-[390px]:px-5">
-          <Link href="/" className="shrink-0 font-display text-[18px] font-bold tracking-[-0.03em]">GlowCheck</Link>
+          <Link href="/" className="shrink-0 font-display text-[18px] font-bold tracking-[-0.03em]">Miren</Link>
           <nav aria-label="Main" className="ml-auto hidden items-center md:flex">
             {links.map((link) => (
               <Link key={link.href} href={link.href} aria-current={active(link.href) ? "page" : undefined} className={cn("grid min-h-11 place-items-center px-3 text-[15px] font-medium text-[var(--ink-2)]", active(link.href) && "font-semibold text-[var(--ink)] underline underline-offset-4")}>
