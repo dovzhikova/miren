@@ -102,6 +102,10 @@ describe("product catalog", () => {
     const medik8 = listProducts().filter((product) => product.brand === "Medik8");
     expect(medik8).toHaveLength(51);
     expect(medik8.every((product) => product.officialImageUrl?.startsWith("https://cdn.shopify.com/s/files/1/0486/3036/6360/"))).toBe(true);
+    // The packshot is the priced strength, an eye cream with SPF stays the eye step, and cleansers carry no SPF note.
+    expect(medik8.find((product) => product.slug === "medik8-crystal-retinal")?.officialImageUrl).toContain("Crystal_Retinal_1_");
+    expect(medik8.find((product) => product.slug === "medik8-advanced-day-eye-protect")?.routineRole).toBe("eye");
+    expect(medik8.filter((product) => product.routineRole === "cleanser").some((product) => product.warnings.includes("use SPF / sun protection"))).toBe(false);
     expect(withPhoto.every((product) => isAllowedOfficialImage(product.officialImageUrl))).toBe(true);
     const shopify = withPhoto.filter((product) => product.officialImageUrl?.includes("cdn.shopify.com"));
     expect(shopify.length).toBeGreaterThan(0);
