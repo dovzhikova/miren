@@ -2,9 +2,11 @@
 
 A shopper can read a product page and still not know whether it is doing anything on their own face. Miren answers “is this product working on *my* face?” with one flow: a YouCam Skin AI scan, catalog matches for the low scores, makeup virtual try-on on that same photo, and a later scan compared on measured raw scores. Scores are a cosmetic read, not a diagnosis, and a photo comparison cannot prove that a product caused a change.
 
-Demo: [https://glowcheck-beta.vercel.app](https://glowcheck-beta.vercel.app)
+Demo: [https://miren-beta.vercel.app](https://miren-beta.vercel.app)
 
-Previously named GlowCheck; not affiliated with the App Store app GlowCheck AI. The repository slug and this demo host are unchanged.
+```sh
+git clone https://github.com/dovzhikova/miren.git
+```
 
 This repository is private. To share it with the YouCam hackathon, invite `contact_event@PerfectCorp.com` (GitHub: Settings → Collaborators → Add people).
 
@@ -103,7 +105,7 @@ The cart starts a local routine and never charges a payment. Saved products have
 ```sh
 npm test
 npm run lint
-npm audit
+npm audit --audit-level=moderate
 npx playwright install chromium webkit
 npm run test:e2e
 ```
@@ -112,7 +114,7 @@ npm run test:e2e
 
 The browser suite covers Chromium at 320px, 390px, and 1440px, plus mobile WebKit. It exercises demo scanning, source-photo persistence, preview polling, saving, cart quantities, routines, follow-ups, mode isolation, deletion, malformed storage, unavailable live processing, keyboard controls, and automated accessibility checks. Camera capture uses Chromium's simulated device; physical camera and real YouCam acceptance remain separate checks.
 
-Unit integration tests simulate YouCam and Redis. Browser live-flow tests simulate API responses and check file dimensions in the browser; these tests spend no provider credits. The GitHub workflow runs lint, unit tests, dependency audit, production build, and browser checks.
+Unit integration tests simulate YouCam and Redis. Browser live-flow tests simulate API responses and check file dimensions in the browser; these tests spend no provider credits. The GitHub workflow runs lint, unit tests, a dependency audit that fails at moderate severity or higher, production build, and browser checks. Low-severity advisories in `shadcn`'s `deepmerge` dependency have no non-breaking fix, so they stay reported and do not fail the gate.
 
 ## Deploy
 

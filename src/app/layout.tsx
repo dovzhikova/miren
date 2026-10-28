@@ -20,7 +20,7 @@ const display = Manrope({
 const description = "Check a product against your skin before you buy it, then see if it is actually working.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://glowcheck-beta.vercel.app"),
+  metadataBase: new URL("https://miren-beta.vercel.app"),
   applicationName: "Miren",
   title: {
     default: "Miren",
