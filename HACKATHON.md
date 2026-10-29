@@ -51,7 +51,7 @@ The source image is stored in IndexedDB for previews. A smaller thumbnail is use
 ## Two-minute demonstration
 
 1. **The question:** open the home screen. The line is whether this product is working on the shopper’s own face: Skin AI scan, matched products, try-on, re-scan.
-2. **Live recording:** with credentials configured, leave the selector on My scans (the first-visit default). State that the selfie and makeup try-on are real YouCam calls. Without credentials, stay on Demo data, point at the single banner, and do not describe a render as live.
+2. **Live recording:** with credentials configured, select My scans (the first-visit default only when live configuration is complete). Upload an authorized photo or take a selfie; do not choose Use the sample photo, which always produces demo scores. Describe a scan or try-on as live only after its real result succeeds. Without credentials, stay on Demo data, point at the single banner, and do not describe a render as live.
 3. **Scan:** on Demo data, choose the sample photo (the same portrait as the home hero) and analyze. The Skin tab shows the annotated face, the overall verdict, and all concern scores.
 4. **Matching:** open the For you tab and Nighttime Repair plus. Explain that the catalog weight is a matching heuristic.
 5. **Preview:** on a makeup product, Try this on is the primary action. A live render shows before and after side by side. Demo data says the try-on did not run.
