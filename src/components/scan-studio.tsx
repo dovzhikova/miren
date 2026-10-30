@@ -119,7 +119,9 @@ function ScanContent() {
     }
     setBusy(true);
     setError("");
-    setStatus("Sending the photo to YouCam Skin Analysis…");
+    setStatus(nextSource === "sample" || workspace === "mock"
+      ? "Generating demo scores. This photo is not sent to YouCam."
+      : "Sending the photo to YouCam Skin Analysis…");
     const controller = new AbortController();
     requestRef.current?.abort();
     requestRef.current = controller;
@@ -312,7 +314,7 @@ function ScanContent() {
 
       {busy ? (
         <p className="text-center text-[17px] font-semibold" aria-live="polite">
-          {analyzingCopy[phrase]}
+          {workspace === "mock" || source === "sample" ? "Generating demo scores…" : analyzingCopy[phrase]}
         </p>
       ) : (
         <div className="flex flex-col gap-2" id="upload">
